@@ -9,6 +9,25 @@ Sistema interno de gestão de advertências disciplinares para unidade do SENAI.
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-24%2B-2496ED?logo=docker&logoColor=white)
+[![CI Quality Gate](https://github.com/SEU_USUARIO/senai-siga/actions/workflows/ci.yml/badge.svg)](https://github.com/SEU_USUARIO/senai-siga/actions)
+
+---
+
+## 📂 Estrutura do Monorepo
+
+```text
+senai-siga/
+├── backend/            # API RESTful em Laravel (PHP 8.4)
+│   ├── app/            # Models, Controllers, Services e Middlewares
+│   ├── database/       # Migrations e Seeders de banco de dados
+│   └── routes/         # Endpoints da aplicação (API, Web e Console)
+├── frontend/           # SPA em React 19 + TypeScript + Vite
+│   ├── src/            # Componentes, Páginas, Contexts e Rotas
+│   └── public/         # Assets públicos estáticos e ícones
+├── docs/               # Regras de negócio da FIAP, arquitetura e matriz RBAC
+├── .github/            # Workflows de CI (GitHub Actions) e templates de PR
+└── docker-compose.yml  # Orquestração local de containers (MySQL, Back e Front)
+```
 
 ---
 
@@ -45,7 +64,7 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
    docker compose up -d --build
    ```
 
-4. **Instale as dependências e prepare o banco de dados no container:**
+4. **Instale dependências, execute migrações e popule o banco de dados:**
    ```bash
    # Instala dependências do Composer
    docker compose exec backend composer install
@@ -55,6 +74,9 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
 
    # Executa todas as migrações no MySQL
    docker compose exec backend php artisan migrate
+
+   # Popula o banco com os usuários padrão (Admin, Instrutor, AQV)
+   docker compose exec backend php artisan db:seed
 
    # Cria o link simbólico para visualização/download de PDFs gerados
    docker compose exec backend php artisan storage:link
@@ -109,10 +131,11 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
    ```
    > Abra o arquivo `.env` e configure as credenciais da sua base local (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`).
 
-4. Gere a chave da aplicação, rode as migrações e crie o storage link:
+4. Gere a chave, execute as migrações, rode os seeds e crie o storage link:
    ```bash
    php artisan key:generate
    php artisan migrate
+   php artisan db:seed
    php artisan storage:link
    ```
 
@@ -141,6 +164,35 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
    npm run dev
    ```
    A aplicação estará disponível em `http://localhost:5173`.
+
+---
+
+## 👤 Credenciais Padrão para Testes (Seed)
+
+Após executar o comando `php artisan db:seed`, os seguintes usuários estarão disponíveis no banco para validação dos fluxos e perfis de acesso:
+
+| Perfil | E-mail | Senha Padrão | Responsabilidade no Sistema |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@senai.br` | `password` | Gestão de cadastros base, usuários e turmas |
+| **Instrutor** | `instrutor@senai.br` | `password` | Abertura e registro de FIAPs disciplinares/faltas |
+| **AQV** | `aqv@senai.br` | `password` | Atendimento do aluno, registro de justificativa e assinatura |
+
+---
+
+## 🛠️ Solução de Problemas Comuns (Troubleshooting)
+
+- **Conflito de Porta no MySQL (`3306` em uso):**  
+  Se você já possui um serviço MySQL rodando localmente na máquina, utilize o Docker normalmente: o `docker-compose.yml` mapeia a porta externa como `3307:3306`, evitando qualquer colisão de portas.
+- **Permissão de escrita no Docker (Linux / WSL):**  
+  Se o Laravel relatar erro de permissão ao criar arquivos em logs ou PDFs, execute no terminal:
+  ```bash
+  docker compose exec backend chmod -R 775 storage bootstrap/cache
+  ```
+- **Bloqueio de scripts PowerShell no Windows (`npm.ps1`):**  
+  Se ao rodar comandos `npm` no terminal do Windows você receber o erro `PSSecurityException`, libere a execução para a sessão atual com:
+  ```powershell
+  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+  ```
 
 ---
 
