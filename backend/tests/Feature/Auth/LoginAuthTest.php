@@ -4,13 +4,13 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use App\Enums\UserRole;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class LoginAuthTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     public function test_user_can_get_csrf_cookie(): void
     {
