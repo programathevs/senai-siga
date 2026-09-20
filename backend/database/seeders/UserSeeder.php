@@ -17,6 +17,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Administrador SENAI',
                 'email' => 'admin@senai.br',
+                'email_verified_at' => now(),
                 'password' => Hash::make('password'),
                 'role' => 'admin',
                 'deve_trocar_senha' => false,
@@ -24,6 +25,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Instrutor SENAI',
                 'email' => 'instrutor@senai.br',
+                'email_verified_at' => now(),
                 'password' => Hash::make('password'),
                 'role' => 'instrutor',
                 'deve_trocar_senha' => false,
@@ -31,6 +33,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Equipe AQV SENAI',
                 'email' => 'aqv@senai.br',
+                'email_verified_at' => now(),
                 'password' => Hash::make('password'),
                 'role' => 'aqv',
                 'deve_trocar_senha' => false,
