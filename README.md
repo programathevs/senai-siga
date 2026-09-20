@@ -3,7 +3,7 @@
 Sistema interno de gestão de advertências disciplinares para unidade do SENAI. Permite o registro de FIAPs por falta, comportamento ou desempenho com cálculo automático de faltas, geração de PDF, envio para a equipe da AQV, abertura de Planos de Recuperação vinculados e controle de acesso para Admin, Instrutor e AQV.
 
 <!-- Badges de Stack e Status -->
-![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?logo=php&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?logo=php&logoColor=white)
 ![Laravel](https://img.shields.io/badge/Laravel-11%2B-FF2D20?logo=laravel&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
@@ -17,7 +17,7 @@ Sistema interno de gestão de advertências disciplinares para unidade do SENAI.
 ## Como Rodar Localmente
 
 ### Pré-requisitos
-- PHP >= 8.3 e [Composer](https://getcomposer.org/)
+- PHP >= 8.4 e [Composer](https://getcomposer.org/)
 - Node.js >= 20 e npm
 - Servidor MySQL ativo com uma base de dados criada
 

@@ -51,10 +51,10 @@ jobs:
       - name: Baixar código do repositório
         uses: actions/checkout@v4
 
-      - name: Configurar PHP 8.3 e Extensões
+      - name: Configurar PHP 8.4 e Extensões
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: mbstring, pdo, pdo_sqlite, zip
           coverage: none
 
@@ -63,11 +63,11 @@ jobs:
           cd backend
           composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Preparar ambiente de testes (.env.testing)
+      - name: Preparar ambiente de testes
         run: |
           cd backend
           php -r "file_exists('.env') || copy('.env.example', '.env');"
-          php artisan key:generate --env=testing
+          php artisan key:generate
 
       - name: Executar Testes Automatizados (PHPUnit)
         run: |
