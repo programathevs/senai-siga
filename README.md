@@ -85,7 +85,7 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
 5. **Pronto! Acessos disponíveis:**
    - **Frontend (SPA):** [http://localhost:5173](http://localhost:5173)
    - **Backend (API REST):** [http://localhost:8000](http://localhost:8000)
-   - **Banco MySQL (acesso externo via DBeaver/Workbench):** Host `localhost`, Porta `3307`, Usuário `root`, Senha `root`, Database `laravel_app`.
+   - **Banco MySQL (acesso externo via DBeaver/Workbench):** Host `localhost`, Porta `3307`, Usuário `root`, Senha `root`, Database `senai_siga`.
 
 #### Comandos Úteis do Docker:
 - **Visualizar logs em tempo real:**
