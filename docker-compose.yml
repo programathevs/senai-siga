@@ -1,0 +1,61 @@
+services:
+  # --- BANCO DE DADOS (Imagem oficial do Docker Hub) ---
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: laravel_app
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_network
+
+  # --- BACKEND (Laravel) ---
+  backend:
+    build:
+      context: ./backend
+    container_name: laravel_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: laravel_app
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    depends_on:
+      - mysql
+    networks:
+      - app_network
+
+  # --- FRONTEND (React + TypeScript) ---
+  frontend:
+    build:
+      context: ./frontend
+    container_name: react_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      # Volume anônimo para impedir que a pasta local sobrescreva o node_modules do container
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+volumes:
+  db_data:
+
+networks:
+  app_network:
+    driver: bridge
