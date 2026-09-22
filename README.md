@@ -64,11 +64,10 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
    docker compose up -d --build
    ```
 
-4. **Instale dependências, execute migrações e popule o banco de dados:**
-   ```bash
-   # Instala dependências do Composer
-   docker compose exec backend composer install
+4. **Execute migrações e popule o banco de dados:**
+   > *Nota: O container do backend instala automaticamente as dependências do Composer (`vendor/`) na primeira inicialização caso ainda não existam.*
 
+   ```bash
    # Gera a chave única da aplicação
    docker compose exec backend php artisan key:generate
 
