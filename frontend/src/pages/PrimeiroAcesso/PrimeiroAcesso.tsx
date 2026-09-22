@@ -86,8 +86,8 @@ export function PrimeiroAcesso() {
         }
       );
 
-      // Atualiza o estado da sessão local do usuário
-      updateUser({ deve_trocar_senha: false });
+      // Atualiza o estado da sessão local do usuário com o retorno da API
+      updateUser(response.data.user);
 
       // Redireciona para o Dashboard liberado
       navigate("/");
