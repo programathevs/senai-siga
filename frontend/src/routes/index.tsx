@@ -1,23 +1,51 @@
 import { createBrowserRouter } from "react-router";
 
 import { Login } from "../pages/Login/Login";
+import { EsqueciSenha } from "../pages/EsqueciSenha/EsqueciSenha";
+import { RedefinirSenha } from "../pages/RedefinirSenha/RedefinirSenha";
+import { PrimeiroAcesso } from "../pages/PrimeiroAcesso/PrimeiroAcesso";
 import { Dashboard } from "../pages/Dashboard/Dashboard";
 import { DashboardLayout } from "../layouts/DashboardLayout";
+import { PrivateRoute } from "./PrivateRoute";
+import { PublicRoute } from "./PublicRoute";
 
 export const router = createBrowserRouter([
+  // Rotas Públicas (Apenas para convidados/deslogados)
   {
-    path: "/login",
-    element: <Login />,
-  },
-
-  {
-    path: "/",
-    element: <DashboardLayout />,
-
+    element: <PublicRoute />,
     children: [
       {
-        index: true,
-        element: <Dashboard />,
+        path: "/login",
+        element: <Login />,
+      },
+      {
+        path: "/esqueci-senha",
+        element: <EsqueciSenha />,
+      },
+      {
+        path: "/redefinir-senha",
+        element: <RedefinirSenha />,
+      },
+    ],
+  },
+
+  // Rotas Protegidas (Exigem autenticação ativa)
+  {
+    element: <PrivateRoute />,
+    children: [
+      {
+        path: "/primeiro-acesso",
+        element: <PrimeiroAcesso />,
+      },
+      {
+        path: "/",
+        element: <DashboardLayout />,
+        children: [
+          {
+            index: true,
+            element: <Dashboard />,
+          },
+        ],
       },
     ],
   },
