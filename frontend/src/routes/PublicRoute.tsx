@@ -1,12 +1,16 @@
-// import { Navigate, Outlet } from "react-router";
-// import { useAuth } from "../contexts/AuthContext";
+import { Navigate, Outlet } from "react-router";
+import { useAuth } from "../contexts/AuthContext";
 
-// export function PublicRoute() {
-//   const { isAuthenticated } = useAuth();
+export function PublicRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
 
-//   if (isAuthenticated) {
-//     return <Navigate to="/" replace />;
-//   }
+  if (isLoading) {
+    return null;
+  }
 
-//   return <Outlet />;
-// }
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
+}

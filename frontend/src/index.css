@@ -1,49 +1,105 @@
-/* CSS GLOBAL - RESET - VARIÁVEIS */
+/* ==========================================================================
+   senai_siga — Design tokens (identidade visual oficial SENAI)
+   Fonte: Manual de Identidade Visual (Revisão Marketing 2021)
+   Itens marcados com [derivado] não constam no manual — foram criados
+   para cobrir necessidades de interface que o manual não trata.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300;1,400;1,600;1,700&display=swap");
 
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Marca — vermelho SENAI e variantes (Pantone 485 / 7622 / 1815) */
+  --color-primary: #e30613;
+  --color-primary-hover: #9a1915;
+  --color-primary-pressed: #681413;
+  --color-on-primary: #ffffff;
 
-  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
-  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Monocromia oficial */
+  --color-black: #000000;
+  --color-gray: #878787;
+  --color-white: #ffffff;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Superfícies — [derivado] */
+  --color-background: #ffffff;
+  --color-surface: #f5f5f4;
+  --color-border: #e0e0de;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  /* Texto */
+  --color-text-primary: #000000;
+  --color-text-secondary: #878787;
+
+  /* Semânticas de status — [derivado]. O vermelho da marca já cobre
+     "alerta/falta"; verde e âmbar não existem no manual. */
+  --color-success: #1d9e75;
+  --color-warning: #ba7517;
+  --color-danger: var(--color-primary);
+
+  /* Tipografia oficial */
+  --font-sans: "Montserrat", system-ui, sans-serif;
+
+  /* Raio de borda padrão — [derivado] */
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+/* Modo escuro via atributo (ex: <html data-theme="dark">) */
+[data-theme="dark"] {
+  --color-primary: #ff3b3b;
+  /* [derivado] vermelho aclarado p/ contraste em fundo preto */
+  --color-primary-hover: #e30613;
+  --color-primary-pressed: #9a1915;
+  --color-on-primary: #000000;
+
+  --color-background: #000000;
+  --color-surface: #1a1a1a;
+  /* [derivado] */
+  --color-border: #333333;
+  /* [derivado] */
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a6a6a6;
+  /* [derivado] cinza oficial aclarado p/ contraste */
+
+  --color-success: #5dcaa5;
+  /* [derivado] */
+  --color-warning: #ef9f27;
+  /* [derivado] */
+  --color-danger: var(--color-primary);
+}
+
+/* Modo escuro automático via preferência do sistema — só quando não
+   houver data-theme definido manualmente pelo usuário */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-primary: #ff3b3b;
+    --color-primary-hover: #e30613;
+    --color-primary-pressed: #9a1915;
+    --color-on-primary: #000000;
+
+    --color-background: #000000;
+    --color-surface: #1a1a1a;
+    --color-border: #333333;
+
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #a6a6a6;
+
+    --color-success: #5dcaa5;
+    --color-warning: #ef9f27;
+    --color-danger: var(--color-primary);
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
 }

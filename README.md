@@ -9,7 +9,7 @@ Sistema interno de gestão de advertências disciplinares para unidade do SENAI.
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-24%2B-2496ED?logo=docker&logoColor=white)
-[![CI Quality Gate](https://github.com/SEU_USUARIO/senai-siga/actions/workflows/ci.yml/badge.svg)](https://github.com/SEU_USUARIO/senai-siga/actions)
+[![CI Quality Gate](https://github.com/programathevs/senai-siga/actions/workflows/ci.yml/badge.svg)](https://github.com/programathevs/senai-siga/actions)
 
 ---
 
@@ -49,7 +49,7 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
 
 1. **Clone o repositório e acesse a pasta:**
    ```bash
-   git clone https://github.com/SEU_USUARIO/senai-siga.git
+   git clone https://github.com/programathevs/senai-siga.git
    cd senai-siga
    ```
 
