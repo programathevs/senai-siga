@@ -9,7 +9,7 @@ Sistema interno de gestão de advertências disciplinares para unidade do SENAI.
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-24%2B-2496ED?logo=docker&logoColor=white)
-[![CI Quality Gate](https://github.com/SEU_USUARIO/senai-siga/actions/workflows/ci.yml/badge.svg)](https://github.com/SEU_USUARIO/senai-siga/actions)
+[![CI Quality Gate](https://github.com/programathevs/senai-siga/actions/workflows/ci.yml/badge.svg)](https://github.com/programathevs/senai-siga/actions)
 
 ---
 
@@ -49,7 +49,7 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
 
 1. **Clone o repositório e acesse a pasta:**
    ```bash
-   git clone https://github.com/SEU_USUARIO/senai-siga.git
+   git clone https://github.com/programathevs/senai-siga.git
    cd senai-siga
    ```
 
@@ -64,11 +64,10 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
    docker compose up -d --build
    ```
 
-4. **Instale dependências, execute migrações e popule o banco de dados:**
-   ```bash
-   # Instala dependências do Composer
-   docker compose exec backend composer install
+4. **Execute migrações e popule o banco de dados:**
+   > *Nota: O container do backend instala automaticamente as dependências do Composer (`vendor/`) na primeira inicialização caso ainda não existam.*
 
+   ```bash
    # Gera a chave única da aplicação
    docker compose exec backend php artisan key:generate
 
@@ -85,7 +84,7 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
 5. **Pronto! Acessos disponíveis:**
    - **Frontend (SPA):** [http://localhost:5173](http://localhost:5173)
    - **Backend (API REST):** [http://localhost:8000](http://localhost:8000)
-   - **Banco MySQL (acesso externo via DBeaver/Workbench):** Host `localhost`, Porta `3307`, Usuário `root`, Senha `root`, Database `laravel_app`.
+   - **Banco MySQL (acesso externo via DBeaver/Workbench):** Host `localhost`, Porta `3307`, Usuário `root`, Senha `root`, Database `senai_siga`.
 
 #### Comandos Úteis do Docker:
 - **Visualizar logs em tempo real:**
