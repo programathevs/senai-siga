@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\VerifyEmailController;
 use App\Http\Controllers\Api\ResendVerificationEmailController;
+use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\FirstAccessController;
 use Illuminate\Support\Facades\Route;
 
 // Cadastro de usuário
@@ -23,3 +25,11 @@ Route::get('/email/verify/{id}/{hash}', [VerifyEmailController::class, '__invoke
 
 Route::post('/email/verification-notification', [ResendVerificationEmailController::class, '__invoke'])
     ->name('verification.send');
+
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
+Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/first-access/update-password', [FirstAccessController::class, 'updatePassword'])
+        ->name('first-access.update-password');
+});
