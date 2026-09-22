@@ -4,6 +4,7 @@ namespace App\Models;
 
 
 use App\Enums\UserRole;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,6 +27,15 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'remember_token',
     ];
+
+
+     /**
+     * Sobrescreve a notificação padrão de reset de senha para usar a nossa customizada.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token, $this->getEmailForPasswordReset()));
+    }
 
     /**
      * Get the attributes that should be cast.
