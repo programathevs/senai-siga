@@ -62,6 +62,16 @@
   padding: 2.25rem 2rem;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
   position: relative;
+  overflow: hidden;
+}
+
+.cardAccentBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background-color: var(--color-primary);
 }
 
 .cardHeader {

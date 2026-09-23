@@ -8,8 +8,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  ShieldCheck,
-  Headphones,
   LogIn,
   AlertCircle,
   Loader2,
@@ -100,6 +98,8 @@ export function Login() {
       <main className={styles.pageWrapper}>
         <div className={styles.loginContainer}>
           <article className={styles.loginCard}>
+            <div className={styles.cardAccentBar} />
+
             {/* Cabeçalho */}
             <header className={styles.cardHeader}>
               <div className={styles.brandLogoWrapper}>
@@ -237,35 +237,7 @@ export function Login() {
                 )}
               </button>
             </form>
-
-            {/* Aviso Institucional de Segurança */}
-            <footer className={styles.securityNoticeCard}>
-              <div className={styles.securityHeader}>
-                <div className={styles.securityBadgeItem}>
-                  <ShieldCheck className={styles.securityIcon} size={18} aria-hidden="true" />
-                  <span>Criptografia SSL 256-bit</span>
-                </div>
-                <span className={styles.versionTag}>v2.4 LTS</span>
-              </div>
-            </footer>
           </article>
-
-          {/* Informações de Rodapé  */}
-          <footer className={styles.pageFooter}>
-            <div className={styles.supportChannel}>
-              <Headphones size={16} aria-hidden="true" />
-              <span>
-                Suporte Técnico TI:{" "}
-                <a href="https://github.com/programathevs" target="_blank" rel="noreferrer">
-                  Profº Matheus Luiz
-                </a>
-              </span>
-            </div>
-            <p className={styles.copyrightText}>
-              © 2026 SENAI Sumaré — Serviço Nacional de Aprendizagem Industrial. Todos os
-              direitos reservados.
-            </p>
-          </footer>
         </div>
       </main>
     </>

@@ -1,3 +1,41 @@
+.bgDecoration {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--color-surface);
+}
+
+.bgAmbientOrb {
+  position: absolute;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.6;
+}
+
+.bgAmbientOrbTopLeft {
+  top: -8rem;
+  left: -8rem;
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.bgAmbientOrbBottomRight {
+  bottom: -8rem;
+  right: -8rem;
+  background-color: color-mix(in srgb, var(--color-border) 60%, transparent);
+}
+
+.bgDotPattern {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.38;
+}
+
 .pageWrapper {
   min-height: 100vh;
   width: 100%;
@@ -5,9 +43,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem 1rem;
-  background-color: var(--color-surface);
+  justify-content: center;
+  padding: 2.5rem 1rem;
 }
 
 .topBar {
@@ -119,22 +156,18 @@
   background-color: var(--color-primary);
 }
 
-.logoIconBox {
-  width: 4rem;
-  height: 4rem;
-  border-radius: var(--radius);
-  background-color: var(--color-surface);
+.brandLogoWrapper {
+  height: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--color-border);
+  margin-bottom: 0.75rem;
 }
 
-.logoIconBox img {
-  width: 100%;
-  height: 100%;
+.brandLogo {
+  height: 3rem;
+  width: auto;
+  max-width: 170px;
   object-fit: contain;
 }
 
