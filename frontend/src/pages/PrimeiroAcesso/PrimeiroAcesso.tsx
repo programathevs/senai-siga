@@ -2,7 +2,6 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import axios from "axios";
 import {
-  ShieldCheck,
   Lock,
   KeyRound,
   Eye,
@@ -13,8 +12,6 @@ import {
   LogOut,
   AlertCircle,
   Loader2,
-  Info,
-  ExternalLink,
 } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth, type User } from "../../contexts/AuthContext";
@@ -116,314 +113,294 @@ export function PrimeiroAcesso() {
   }
 
   return (
-    <main className={styles.pageWrapper}>
-      {/* Top Bar Institucional */}
-      <header className={styles.topBar}>
-        <div className={styles.brandGroup}>
-          <img src={senaiLogo} alt="Logo SENAI" className={styles.brandLogoTop} />
-          <span className={styles.brandName}>SENAI</span>
-        </div>
-        <div className={styles.secureEnvBadge}>
-          <ShieldCheck size={18} color="var(--color-text-secondary)" />
-          <span>Ambiente Seguro</span>
-        </div>
-      </header>
+    <>
+      <div className={styles.bgDecoration} aria-hidden="true">
+        <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbTopLeft}`}></div>
+        <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbBottomRight}`}></div>
+        <svg className={styles.bgDotPattern} xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern
+              id="dot-grid-pattern-primeiro"
+              width="32"
+              height="32"
+              patternUnits="userSpaceOnUse"
+            >
+              <circle cx="2" cy="2" r="1.2" fill="#dcdcdc"></circle>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dot-grid-pattern-primeiro)"></rect>
+        </svg>
+      </div>
 
-      {/* Conteúdo Central */}
-      <div className={styles.contentCenter}>
-        <div className={styles.containerBox}>
-          <div className={styles.accessCard}>
-            <div className={styles.cardAccentBar} />
+      <main className={styles.pageWrapper}>
 
-            <div className={styles.headerArea}>
-              <div className={styles.badgePill}>
-                <span className={styles.badgeDot} />
-                Primeiro Acesso • Segurança
-              </div>
 
-              <div className={styles.logoIconBox}>
-                <img src={senaiLogo} alt="SENAI Logo" />
-              </div>
+        {/* Conteúdo Central */}
+        <div className={styles.contentCenter}>
+          <div className={styles.containerBox}>
+            <div className={styles.accessCard}>
+              <div className={styles.cardAccentBar} />
 
-              <h1 className={styles.cardTitle}>Bem-vindo! Crie sua nova senha</h1>
-              <p className={styles.cardDescription}>
-                Por motivos de segurança, é necessário cadastrar uma nova senha no seu primeiro acesso ao SGA-D.
-              </p>
-            </div>
-
-            {/* Alerta de erro */}
-            {errorMessage && (
-              <div className={styles.errorAlert} role="alert">
-                <AlertCircle size={18} />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            {/* Formulário de Criação de Senha */}
-            <form className={styles.accessForm} onSubmit={handleSubmit} method="POST">
-              {/* Campo 1: Nova Senha */}
-              <div className={styles.fieldGroup}>
-                <div className={styles.labelRow}>
-                  <label className={styles.fieldLabel} htmlFor="new-password">
-                    Nova Senha
-                  </label>
-                  <span className={styles.requiredBadge}>Obrigatório</span>
-                </div>
-
-                <div className={styles.inputWrapper}>
-                  <Lock className={styles.inputIcon} size={18} />
-                  <input
-                    id="new-password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    className={styles.inputField}
-                    placeholder="••••••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isSubmitting}
-                    autoComplete="new-password"
+              <div className={styles.headerArea}>
+                <div className={styles.brandLogoWrapper}>
+                  <img
+                    src={senaiLogo}
+                    alt="Logo SENAI Oficial"
+                    className={styles.brandLogo}
+                    loading="lazy"
                   />
-                  <button
-                    type="button"
-                    className={styles.toggleVisibilityBtn}
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    title={showPassword ? "Ocultar senha" : "Ver senha"}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
                 </div>
 
-                {/* Medidor de Força */}
-                <div className={styles.strengthMeterBox}>
-                  <div className={styles.strengthHeader}>
-                    <span className={styles.strengthLabel}>Força da senha:</span>
-                    <span className={styles.strengthValue} style={{ color: strength.color }}>
-                      {strength.text}
-                    </span>
-                  </div>
-
-                  <div className={styles.strengthBars}>
-                    <div
-                      className={styles.strengthBar}
-                      style={{
-                        backgroundColor:
-                          criteriaMet >= 1
-                            ? criteriaMet <= 2
-                              ? "var(--color-primary)"
-                              : criteriaMet === 3
-                              ? "var(--color-warning)"
-                              : "var(--color-success)"
-                            : undefined,
-                      }}
-                    />
-                    <div
-                      className={styles.strengthBar}
-                      style={{
-                        backgroundColor:
-                          criteriaMet >= 2
-                            ? criteriaMet === 2
-                              ? "var(--color-primary)"
-                              : criteriaMet === 3
-                              ? "var(--color-warning)"
-                              : "var(--color-success)"
-                            : undefined,
-                      }}
-                    />
-                    <div
-                      className={styles.strengthBar}
-                      style={{
-                        backgroundColor:
-                          criteriaMet >= 3
-                            ? criteriaMet === 3
-                              ? "var(--color-warning)"
-                              : "var(--color-success)"
-                            : undefined,
-                      }}
-                    />
-                    <div
-                      className={styles.strengthBar}
-                      style={{
-                        backgroundColor: criteriaMet === 4 ? "var(--color-success)" : undefined,
-                      }}
-                    />
-                  </div>
+                <div className={styles.badgePill}>
+                  <span className={styles.badgeDot} />
+                  Primeiro Acesso • Segurança
                 </div>
+
+                <h1 className={styles.cardTitle}>Bem-vindo! Crie sua nova senha</h1>
               </div>
 
-              {/* Campo 2: Confirmar Nova Senha */}
-              <div className={styles.fieldGroup}>
-                <div className={styles.labelRow}>
-                  <label className={styles.fieldLabel} htmlFor="confirm-password">
-                    Confirmar Nova Senha
-                  </label>
-                  {hasConfirmText && (
-                    <span
-                      className={
-                        passwordsMatch ? styles.matchStatusValid : styles.matchStatusInvalid
-                      }
+              {/* Alerta de erro */}
+              {errorMessage && (
+                <div className={styles.errorAlert} role="alert">
+                  <AlertCircle size={18} />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {/* Formulário de Criação de Senha */}
+              <form className={styles.accessForm} onSubmit={handleSubmit} method="POST">
+                {/* Campo 1: Nova Senha */}
+                <div className={styles.fieldGroup}>
+                  <div className={styles.labelRow}>
+                    <label className={styles.fieldLabel} htmlFor="new-password">
+                      Nova Senha
+                    </label>
+                    <span className={styles.requiredBadge}>Obrigatório</span>
+                  </div>
+
+                  <div className={styles.inputWrapper}>
+                    <Lock className={styles.inputIcon} size={18} />
+                    <input
+                      id="new-password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      className={styles.inputField}
+                      placeholder="••••••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={isSubmitting}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      className={styles.toggleVisibilityBtn}
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      title={showPassword ? "Ocultar senha" : "Ver senha"}
                     >
-                      {passwordsMatch ? (
-                        <>
-                          <CheckCircle2 size={14} />
-                          <span>Senhas conferem</span>
-                        </>
-                      ) : (
-                        <>
-                          <AlertCircle size={14} />
-                          <span>Senhas não conferem</span>
-                        </>
-                      )}
-                    </span>
-                  )}
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+
+                  {/* Medidor de Força */}
+                  <div className={styles.strengthMeterBox}>
+                    <div className={styles.strengthHeader}>
+                      <span className={styles.strengthLabel}>Força da senha:</span>
+                      <span className={styles.strengthValue} style={{ color: strength.color }}>
+                        {strength.text}
+                      </span>
+                    </div>
+
+                    <div className={styles.strengthBars}>
+                      <div
+                        className={styles.strengthBar}
+                        style={{
+                          backgroundColor:
+                            criteriaMet >= 1
+                              ? criteriaMet <= 2
+                                ? "var(--color-primary)"
+                                : criteriaMet === 3
+                                  ? "var(--color-warning)"
+                                  : "var(--color-success)"
+                              : undefined,
+                        }}
+                      />
+                      <div
+                        className={styles.strengthBar}
+                        style={{
+                          backgroundColor:
+                            criteriaMet >= 2
+                              ? criteriaMet === 2
+                                ? "var(--color-primary)"
+                                : criteriaMet === 3
+                                  ? "var(--color-warning)"
+                                  : "var(--color-success)"
+                              : undefined,
+                        }}
+                      />
+                      <div
+                        className={styles.strengthBar}
+                        style={{
+                          backgroundColor:
+                            criteriaMet >= 3
+                              ? criteriaMet === 3
+                                ? "var(--color-warning)"
+                                : "var(--color-success)"
+                              : undefined,
+                        }}
+                      />
+                      <div
+                        className={styles.strengthBar}
+                        style={{
+                          backgroundColor: criteriaMet === 4 ? "var(--color-success)" : undefined,
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className={styles.inputWrapper}>
-                  <KeyRound className={styles.inputIcon} size={18} />
-                  <input
-                    id="confirm-password"
-                    name="password_confirmation"
-                    type={showConfirmPassword ? "text" : "password"}
-                    className={styles.inputField}
-                    placeholder="••••••••••••"
-                    value={passwordConfirmation}
-                    onChange={(e) => setPasswordConfirmation(e.target.value)}
-                    required
-                    disabled={isSubmitting}
-                    autoComplete="new-password"
-                  />
+                {/* Campo 2: Confirmar Nova Senha */}
+                <div className={styles.fieldGroup}>
+                  <div className={styles.labelRow}>
+                    <label className={styles.fieldLabel} htmlFor="confirm-password">
+                      Confirmar Nova Senha
+                    </label>
+                    {hasConfirmText && (
+                      <span
+                        className={
+                          passwordsMatch ? styles.matchStatusValid : styles.matchStatusInvalid
+                        }
+                      >
+                        {passwordsMatch ? (
+                          <>
+                            <CheckCircle2 size={14} />
+                            <span>Senhas conferem</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle size={14} />
+                            <span>Senhas não conferem</span>
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className={styles.inputWrapper}>
+                    <KeyRound className={styles.inputIcon} size={18} />
+                    <input
+                      id="confirm-password"
+                      name="password_confirmation"
+                      type={showConfirmPassword ? "text" : "password"}
+                      className={styles.inputField}
+                      placeholder="••••••••••••"
+                      value={passwordConfirmation}
+                      onChange={(e) => setPasswordConfirmation(e.target.value)}
+                      required
+                      disabled={isSubmitting}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      className={styles.toggleVisibilityBtn}
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      title={showConfirmPassword ? "Ocultar senha" : "Ver senha"}
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Box de Critérios Regimentais */}
+                <div className={styles.criteriaBox}>
+                  <div className={styles.criteriaHeader}>
+                    <span className={styles.criteriaTitle}>Critérios Regimentais de Segurança</span>
+                    <span className={styles.criteriaCount}>{criteriaMet} de 4 cumpridos</span>
+                  </div>
+
+                  <ul className={styles.criteriaList}>
+                    <li
+                      className={`${styles.criteriaItem} ${hasMinLength ? styles.criteriaItemActive : ""
+                        }`}
+                    >
+                      {hasMinLength ? (
+                        <CheckCircle2 className={styles.criteriaIcon} size={16} />
+                      ) : (
+                        <Circle className={styles.criteriaIcon} size={16} />
+                      )}
+                      <span>Mínimo de 8 caracteres</span>
+                    </li>
+                    <li
+                      className={`${styles.criteriaItem} ${hasCase ? styles.criteriaItemActive : ""
+                        }`}
+                    >
+                      {hasCase ? (
+                        <CheckCircle2 className={styles.criteriaIcon} size={16} />
+                      ) : (
+                        <Circle className={styles.criteriaIcon} size={16} />
+                      )}
+                      <span>Pelo menos uma letra maiúscula e minúscula</span>
+                    </li>
+                    <li
+                      className={`${styles.criteriaItem} ${hasNumber ? styles.criteriaItemActive : ""
+                        }`}
+                    >
+                      {hasNumber ? (
+                        <CheckCircle2 className={styles.criteriaIcon} size={16} />
+                      ) : (
+                        <Circle className={styles.criteriaIcon} size={16} />
+                      )}
+                      <span>Pelo menos um número</span>
+                    </li>
+                    <li
+                      className={`${styles.criteriaItem} ${hasSymbol ? styles.criteriaItemActive : ""
+                        }`}
+                    >
+                      {hasSymbol ? (
+                        <CheckCircle2 className={styles.criteriaIcon} size={16} />
+                      ) : (
+                        <Circle className={styles.criteriaIcon} size={16} />
+                      )}
+                      <span>Pelo menos um caractere especial (!@#$%^&*)</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Botões de Ação */}
+                <div className={styles.btnGroup}>
+                  <button
+                    type="submit"
+                    className={styles.submitBtn}
+                    disabled={isSubmitting || criteriaMet < 4 || !passwordsMatch}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className={styles.spinner} size={18} />
+                        <span>Salvando nova senha...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Salvar nova senha e acessar</span>
+                        <ArrowRight size={18} />
+                      </>
+                    )}
+                  </button>
+
                   <button
                     type="button"
-                    className={styles.toggleVisibilityBtn}
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    title={showConfirmPassword ? "Ocultar senha" : "Ver senha"}
+                    onClick={handleCancelAndExit}
+                    className={styles.cancelBtn}
+                    disabled={isSubmitting}
                   >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    <LogOut size={16} />
+                    <span>Cancelar e sair</span>
                   </button>
                 </div>
-              </div>
-
-              {/* Box de Critérios Regimentais */}
-              <div className={styles.criteriaBox}>
-                <div className={styles.criteriaHeader}>
-                  <span className={styles.criteriaTitle}>Critérios Regimentais de Segurança</span>
-                  <span className={styles.criteriaCount}>{criteriaMet} de 4 cumpridos</span>
-                </div>
-
-                <ul className={styles.criteriaList}>
-                  <li
-                    className={`${styles.criteriaItem} ${
-                      hasMinLength ? styles.criteriaItemActive : ""
-                    }`}
-                  >
-                    {hasMinLength ? (
-                      <CheckCircle2 className={styles.criteriaIcon} size={16} />
-                    ) : (
-                      <Circle className={styles.criteriaIcon} size={16} />
-                    )}
-                    <span>Mínimo de 8 caracteres</span>
-                  </li>
-                  <li
-                    className={`${styles.criteriaItem} ${
-                      hasCase ? styles.criteriaItemActive : ""
-                    }`}
-                  >
-                    {hasCase ? (
-                      <CheckCircle2 className={styles.criteriaIcon} size={16} />
-                    ) : (
-                      <Circle className={styles.criteriaIcon} size={16} />
-                    )}
-                    <span>Pelo menos uma letra maiúscula e minúscula</span>
-                  </li>
-                  <li
-                    className={`${styles.criteriaItem} ${
-                      hasNumber ? styles.criteriaItemActive : ""
-                    }`}
-                  >
-                    {hasNumber ? (
-                      <CheckCircle2 className={styles.criteriaIcon} size={16} />
-                    ) : (
-                      <Circle className={styles.criteriaIcon} size={16} />
-                    )}
-                    <span>Pelo menos um número</span>
-                  </li>
-                  <li
-                    className={`${styles.criteriaItem} ${
-                      hasSymbol ? styles.criteriaItemActive : ""
-                    }`}
-                  >
-                    {hasSymbol ? (
-                      <CheckCircle2 className={styles.criteriaIcon} size={16} />
-                    ) : (
-                      <Circle className={styles.criteriaIcon} size={16} />
-                    )}
-                    <span>Pelo menos um caractere especial (!@#$%^&*)</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Botões de Ação */}
-              <div className={styles.btnGroup}>
-                <button
-                  type="submit"
-                  className={styles.submitBtn}
-                  disabled={isSubmitting || criteriaMet < 4 || !passwordsMatch}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className={styles.spinner} size={18} />
-                      <span>Salvando nova senha...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Salvar nova senha e acessar</span>
-                      <ArrowRight size={18} />
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCancelAndExit}
-                  className={styles.cancelBtn}
-                  disabled={isSubmitting}
-                >
-                  <LogOut size={16} />
-                  <span>Cancelar e sair</span>
-                </button>
-              </div>
-            </form>
-
-            {/* Rodapé Informativo */}
-            <div className={styles.footerHelpText}>
-              <p>
-                <Info size={14} color="var(--color-primary)" />
-                <span>Após a confirmação, você será redirecionado para o seu painel de controle.</span>
-              </p>
-              <div>
-                <span>Precisa de ajuda? </span>
-                <a href="mailto:suporte.ti@sp.senai.br" className={styles.supportLink}>
-                  <span>Entre em contato com o suporte</span>
-                  <ExternalLink size={12} />
-                </a>
-              </div>
+              </form>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Rodapé da Página */}
-      <footer className={styles.pageBottomFooter}>
-        <div className={styles.footerLeft}>
-          <ShieldCheck size={16} />
-          <span>Portal Acadêmico e Operacional Integrado • SENAI 2025</span>
-        </div>
-        <div className={styles.footerLinks}>
-          <a href="#">Termos de Uso</a>
-          <a href="#">Privacidade e Segurança</a>
-          <a href="#">Suporte Técnico</a>
-        </div>
-      </footer>
-    </main>
+      </main>
+    </>
   );
 }
