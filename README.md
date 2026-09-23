@@ -65,7 +65,7 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
    ```
 
 4. **Execute migrações e popule o banco de dados:**
-   > *Nota: O container do backend instala automaticamente as dependências do Composer (`vendor/`) na primeira inicialização caso ainda não existam.*
+   > *Nota: Na primeira inicialização, o container do backend instalará automaticamente as dependências do Composer (`vendor/`) em segundo plano. Aguarde alguns segundos (ou verifique com `docker compose logs -f backend`) até o termino da instalação antes de rodar os comandos abaixo.*
 
    ```bash
    # Gera a chave única da aplicação
