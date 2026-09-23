@@ -89,7 +89,7 @@ export function EsqueciSenha() {
               height="32"
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="2" cy="2" r="1.2" fill="#dcdcdc"></circle>
+              <circle cx="2" cy="2" r="1.2" fill="var(--color-dot-pattern)"></circle>
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#dot-grid-pattern-esqueci)"></rect>
