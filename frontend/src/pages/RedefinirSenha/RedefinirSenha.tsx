@@ -152,7 +152,7 @@ export function RedefinirSenha() {
               height="32"
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="2" cy="2" r="1.2" fill="#dcdcdc"></circle>
+              <circle cx="2" cy="2" r="1.2" fill="var(--color-dot-pattern)"></circle>
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#dot-grid-pattern-redefinir)"></rect>
@@ -166,29 +166,21 @@ export function RedefinirSenha() {
             {/* Card Principal */}
             <div className={styles.resetCard}>
               <div className={styles.cardAccentBar} />
-              <div className={styles.brandLogoWrapper}>
-                <img
-                  src={senaiLogo}
-                  alt="Logo SENAI Oficial"
-                  className={styles.brandLogo}
-                  loading="lazy"
-                />
-              </div>
-
-              {/* Linha de Status de Token e Timer */}
-              <div className={styles.statusHeaderRow}>
-                <div className={styles.statusPill}>
-                  <span className={styles.pulseDot} />
-                  <span>Redefinição de Senha • Link Autenticado</span>
+              <div className={styles.headerArea}>
+                <div className={styles.brandLogoWrapper}>
+                  <img
+                    src={senaiLogo}
+                    alt="Logo SENAI Oficial"
+                    className={styles.brandLogo}
+                    loading="lazy"
+                  />
                 </div>
-                <div className={styles.timerBadge}>
-                  <Timer size={16} color="var(--color-primary)" />
-                  <span>{formattedTime}</span>
-                </div>
-              </div>
 
-              {/* Título e Notificação de Destino */}
-              <div className={styles.cardHeading}>
+                <div className={styles.badgePill}>
+                  <span className={styles.badgeDot} />
+                  Redefinição de Senha • Link Autenticado
+                </div>
+
                 <h1 className={styles.cardTitle}>Crie uma nova senha</h1>
                 <p className={styles.cardDescription}>
                   {email ? (
@@ -201,6 +193,11 @@ export function RedefinirSenha() {
                     "Informe sua nova credencial de acesso regulamentar abaixo para restaurar o seu acesso."
                   )}
                 </p>
+
+                <div className={styles.timerBadge}>
+                  <Timer size={15} color="var(--color-primary)" />
+                  <span>{formattedTime}</span>
+                </div>
               </div>
 
               {/* Alerta de Link Ausente/Inválido */}

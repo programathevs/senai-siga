@@ -34,6 +34,9 @@
   --color-warning: #ba7517;
   --color-danger: var(--color-primary);
 
+  /* Padrão de fundo decorativo */
+  --color-dot-pattern: rgba(0, 0, 0, 0.18);
+
   /* Tipografia oficial */
   --font-sans: "Montserrat", system-ui, sans-serif;
 
@@ -65,6 +68,7 @@
   --color-warning: #ef9f27;
   /* [derivado] */
   --color-danger: var(--color-primary);
+  --color-dot-pattern: rgba(255, 255, 255, 0.18);
 }
 
 /* Modo escuro automático via preferência do sistema — só quando não
@@ -86,6 +90,7 @@
     --color-success: #5dcaa5;
     --color-warning: #ef9f27;
     --color-danger: var(--color-primary);
+    --color-dot-pattern: rgba(255, 255, 255, 0.18);
   }
 }
 
