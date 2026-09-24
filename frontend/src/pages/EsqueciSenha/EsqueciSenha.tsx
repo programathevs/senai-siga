@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { api } from "../../services/api";
 import senaiLogo from "../../assets/senai-logo.jpg";
+import { ThemeToggle } from "../../components/ThemeToggle/ThemeToggle";
 import styles from "./EsqueciSenha.module.css";
 
 export function EsqueciSenha() {
@@ -78,6 +79,8 @@ export function EsqueciSenha() {
 
   return (
     <>
+      <ThemeToggle variant="floating" />
+
       <div className={styles.bgDecoration} aria-hidden="true">
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbTopLeft}`}></div>
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbBottomRight}`}></div>
