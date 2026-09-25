@@ -16,6 +16,7 @@ import {
 import { api } from "../../services/api";
 import { useAuth, type User } from "../../contexts/AuthContext";
 import senaiLogo from "../../assets/senai-logo.jpg";
+import { ThemeToggle } from "../../components/ThemeToggle/ThemeToggle";
 import styles from "./PrimeiroAcesso.module.css";
 
 export function PrimeiroAcesso() {
@@ -114,6 +115,8 @@ export function PrimeiroAcesso() {
 
   return (
     <>
+      <ThemeToggle variant="floating" />
+
       <div className={styles.bgDecoration} aria-hidden="true">
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbTopLeft}`}></div>
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbBottomRight}`}></div>

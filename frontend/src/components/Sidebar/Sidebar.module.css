@@ -1,0 +1,375 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 280px;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+  transition:
+    width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* Modo Recolhido (Desktop) */
+.collapsed {
+  width: 72px;
+}
+
+/* Topo / Brand da Sidebar (altura exata de 64px alinhada ao Header) */
+.sidebarHeader {
+  height: 64px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  gap: 0.75rem;
+}
+
+.brandLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.brandLogo {
+  height: 2rem;
+  width: auto;
+  max-width: 120px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.toggleCollapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius);
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease-in-out;
+}
+
+.toggleCollapseBtn:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+}
+
+/* Conteúdo de Navegação */
+.navSection {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sectionHeader {
+  padding: 0.5rem 0.75rem 0.25rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.navLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.navItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-left: 4px solid transparent;
+  transition: all 0.18s ease-in-out;
+  white-space: nowrap;
+}
+
+.navItem:hover {
+  background-color: color-mix(in srgb, var(--color-border) 40%, transparent);
+  color: var(--color-text-primary);
+}
+
+.navItemActive {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+  font-weight: 600;
+  border-left: 4px solid var(--color-primary);
+}
+
+.navItemActive:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Ajustes quando a Sidebar estiver recolhida (isCollapsed) */
+.collapsed .sidebarHeader {
+  padding: 0;
+  justify-content: center;
+}
+
+.collapsed .brandLink {
+  display: none;
+}
+
+.collapsed .navSection {
+  padding: 0.75rem 0;
+  align-items: center;
+}
+
+.collapsed .navLinks {
+  width: 100%;
+  align-items: center;
+}
+
+.collapsed .navItem {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0 auto;
+  justify-content: center;
+  border-left: none;
+  border-radius: var(--radius);
+}
+
+.collapsed .navItemActive {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  border-left: none;
+}
+
+.collapsed .navItemActive::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 0 3px 3px 0;
+  background-color: var(--color-primary);
+}
+
+.collapsed .navLabel,
+.collapsed .sectionHeader {
+  display: none;
+}
+
+/* Card de Perfil no Rodapé */
+.profileCardWrapper {
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+.profileContent {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.avatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatarCircle {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  user-select: none;
+}
+
+.onlineBadge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 2px solid var(--color-surface);
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.profileName {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileRole {
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.05rem;
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: var(--radius);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  flex-shrink: 0;
+}
+
+.logoutBtn:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.collapsed .profileCardWrapper {
+  margin: 0.5rem auto 0.75rem auto;
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48px;
+}
+
+.collapsed .profileContent {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.collapsed .profileInfo {
+  display: none;
+}
+
+.collapsed .logoutBtn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsividade Mobile (< 1024px) */
+@media (max-width: 1023px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px !important;
+  }
+
+  .sidebar.mobileOpen {
+    transform: translateX(0);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .collapsed .sidebarHeader {
+    padding: 0 1rem !important;
+    justify-content: space-between !important;
+  }
+
+  .collapsed .brandLink {
+    display: flex !important;
+  }
+
+  .collapsed .navSection {
+    padding: 0.75rem 0.5rem !important;
+    align-items: stretch !important;
+  }
+
+  .collapsed .navLinks {
+    align-items: stretch !important;
+  }
+
+  .collapsed .navLabel,
+  .collapsed .sectionHeader,
+  .collapsed .profileInfo {
+    display: flex !important;
+  }
+
+  .collapsed .navItem {
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+    padding: 0.6rem 0.85rem !important;
+    border-left: 4px solid transparent !important;
+  }
+
+  .collapsed .navItemActive {
+    border-left: 4px solid var(--color-primary) !important;
+  }
+
+  .collapsed .navItemActive::before {
+    display: none !important;
+  }
+
+  .collapsed .profileCardWrapper {
+    width: auto !important;
+    margin: 0.5rem 0.65rem 0.75rem 0.65rem !important;
+    padding: 0.75rem !important;
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+
+  .collapsed .profileContent {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.65rem !important;
+  }
+}

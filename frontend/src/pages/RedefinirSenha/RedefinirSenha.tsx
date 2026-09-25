@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { api } from "../../services/api";
 import senaiLogo from "../../assets/senai-logo.jpg";
+import { ThemeToggle } from "../../components/ThemeToggle/ThemeToggle";
 import styles from "./RedefinirSenha.module.css";
 
 export function RedefinirSenha() {
@@ -141,6 +142,8 @@ export function RedefinirSenha() {
 
   return (
     <>
+      <ThemeToggle variant="floating" />
+
       <div className={styles.bgDecoration} aria-hidden="true">
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbTopLeft}`}></div>
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbBottomRight}`}></div>

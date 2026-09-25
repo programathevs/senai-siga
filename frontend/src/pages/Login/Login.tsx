@@ -13,6 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { ThemeToggle } from "../../components/ThemeToggle/ThemeToggle";
 import styles from "./Login.module.css";
 
 export function Login() {
@@ -77,6 +78,8 @@ export function Login() {
 
   return (
     <>
+      <ThemeToggle variant="floating" />
+
       <div className={styles.bgDecoration} aria-hidden="true">
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbTopLeft}`}></div>
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbBottomRight}`}></div>

@@ -1,0 +1,95 @@
+.toggleBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.375rem;
+  height: 2.375rem;
+  border-radius: var(--radius);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  outline: none;
+  overflow: hidden;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.toggleBtn:hover {
+  background-color: var(--color-background);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.toggleBtn:active {
+  transform: scale(0.94);
+}
+
+.toggleBtn:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+/* Variante flutuante para telas públicas (Login, Redefinir Senha, etc.) */
+.floating {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  background-color: var(--color-background);
+}
+
+/* Área de ícones com rotação e escala coordenadas */
+.iconWrapper {
+  position: relative;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition:
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease;
+}
+
+/* Sol (Tema Claro) */
+.sunIcon {
+  color: #ba7517; /* Dourado / Âmbar */
+  transform: rotate(0deg) scale(1);
+  opacity: 1;
+}
+
+/* Quando no modo escuro, o sol gira 90deg e encolhe até sumir */
+[data-theme="dark"] .sunIcon {
+  transform: rotate(90deg) scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Lua (Tema Escuro) */
+.moonIcon {
+  color: #ffcc00; /* Amarelo lunar */
+  transform: rotate(-90deg) scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Quando no modo escuro, a lua gira para 0deg e surge em escala total */
+[data-theme="dark"] .moonIcon {
+  transform: rotate(0deg) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
