@@ -38,6 +38,40 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Verifica se o usuário possui determinado papel (role) ou um dos papéis da lista.
+     *
+     * @param string|UserRole|array<string|UserRole> $roles
+     */
+    public function hasRole(string|UserRole|array $roles): bool
+    {
+        if (is_array($roles)) {
+            return in_array(
+                $this->role?->value ?? $this->role,
+                array_map(fn($r) => $r instanceof UserRole ? $r->value : $r, $roles),
+                true
+            );
+        }
+
+        $roleValue = $roles instanceof UserRole ? $roles->value : $roles;
+        return ($this->role?->value ?? $this->role) === $roleValue;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(UserRole::ADMIN);
+    }
+
+    public function isInstrutor(): bool
+    {
+        return $this->hasRole(UserRole::INSTRUTOR);
+    }
+
+    public function isAQV(): bool
+    {
+        return $this->hasRole(UserRole::AQV);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
