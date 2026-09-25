@@ -9,15 +9,9 @@ use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\FirstAccessController;
 use Illuminate\Support\Facades\Route;
 
-// Cadastro de usuário
+// Auth & Registro
 Route::post('/register', RegisterController::class)->name('auth.register');
-
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('auth.login');
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
-    Route::get('/me', [AuthController::class, 'me'])->name('auth.me');
-});
 
 Route::get('/email/verify/{id}/{hash}', [VerifyEmailController::class, '__invoke'])
     ->middleware(['signed'])
@@ -30,6 +24,22 @@ Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+    Route::get('/me', [AuthController::class, 'me'])->name('auth.me');
     Route::post('/first-access/update-password', [FirstAccessController::class, 'updatePassword'])
         ->name('first-access.update-password');
+
+    // --- CRUD DE CURSOS ---
+    // Leitura: Admin, Instrutor e AQV
+    Route::middleware('role:admin,instrutor,aqv')->group(function () {
+        Route::get('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'index'])->name('cursos.index');
+        Route::get('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'show'])->name('cursos.show');
+    });
+
+    // Modificação (Criar, Editar, Deletar): Apenas Admin
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'store'])->name('cursos.store');
+        Route::put('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'update'])->name('cursos.update');
+        Route::delete('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'destroy'])->name('cursos.destroy');
+    });
 });
