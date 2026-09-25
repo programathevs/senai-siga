@@ -11,15 +11,19 @@
   flex: 1;
   width: 100%;
   min-height: 100vh;
-  padding-top: 64px; /* Altura do Header */
-  padding-left: 280px; /* Largura da Sidebar expandida */
+  padding-top: 64px;
+  /* Altura do Header */
+  padding-left: 280px;
+  /* Largura da Sidebar expandida */
   transition:
     padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     background-color 0.2s ease;
+  background-color: var(--color-background);
 }
 
 .collapsedMain {
-  padding-left: 72px; /* Largura da Sidebar recolhida */
+  padding-left: 72px;
+  /* Largura da Sidebar recolhida */
 }
 
 /* Fundo escurecido semi-transparente para o menu mobile aberto */
@@ -37,6 +41,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

@@ -1,4 +1,4 @@
-import { Building2, Search, Bell, Menu } from "lucide-react";
+import { Building2, Search, Menu } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
@@ -63,17 +63,6 @@ export function Header() {
 
         {/* Alternador de Tema Sol ⟲ Lua */}
         <ThemeToggle />
-
-        {/* Notificações */}
-        <button
-          type="button"
-          className={styles.iconBtn}
-          title="Notificações institucionais"
-          aria-label="Ver notificações"
-        >
-          <Bell size={18} aria-hidden="true" />
-          <span className={styles.notificationBadge} aria-hidden="true" />
-        </button>
 
         {/* Avatar Mini */}
         <div className={styles.userAvatarMini} title={user?.name || "Usuário"}>
