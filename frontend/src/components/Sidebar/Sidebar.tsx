@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Gavel,
   ClipboardCheck,
+  GraduationCap,
   Users,
   Headphones,
   BarChart3,
@@ -53,6 +54,12 @@ export function Sidebar() {
       to: "/planos-recuperacao",
       label: "Planos de Recuperação",
       icon: ClipboardCheck,
+      allowedRoles: ["admin", "instrutor", "aqv"],
+    },
+    {
+      to: "/cursos",
+      label: "Gestão de Cursos",
+      icon: GraduationCap,
       allowedRoles: ["admin", "instrutor", "aqv"],
     },
     {
