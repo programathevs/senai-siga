@@ -3,6 +3,8 @@
   top: 0;
   right: 0;
   height: 64px;
+  box-sizing: border-box;
+  flex-shrink: 0;
   left: 280px;
   background-color: var(--color-background);
   border-bottom: 1px solid var(--color-border);
@@ -137,31 +139,6 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
 }
 
-.periodInfo {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
-  line-height: 1.2;
-}
-
-.periodYear {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.periodTerm {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.actionDivider {
-  width: 1px;
-  height: 1.5rem;
-  background-color: var(--color-border);
-}
-
 .iconBtn {
   position: relative;
   display: flex;
@@ -218,11 +195,6 @@
 
   .mobileMenuBtn {
     display: flex;
-  }
-
-  .periodInfo,
-  .actionDivider {
-    display: none;
   }
 }
 

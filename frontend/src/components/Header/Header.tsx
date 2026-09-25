@@ -40,9 +40,9 @@ export function Header() {
             <span className={styles.schoolLabel}>Unidade Escolar</span>
             <span
               className={styles.schoolName}
-              title="Escola SENAI Suíço-Brasileira Paulo Ernesto Tolle"
+              title="Escola SENAI 'Dr. Celso Charuri'"
             >
-              Escola SENAI Suíço-Brasileira Paulo Ernesto Tolle
+              Escola SENAI "Dr. Celso Charuri"
             </span>
           </div>
         </div>
@@ -60,14 +60,6 @@ export function Header() {
             aria-label="Campo de busca global"
           />
         </div>
-
-        {/* Período Letivo */}
-        <div className={styles.periodInfo}>
-          <span className={styles.periodYear}>Ano Letivo 2025</span>
-          <span className={styles.periodTerm}>1º Semestre Técnico</span>
-        </div>
-
-        <div className={styles.actionDivider} aria-hidden="true" />
 
         {/* Alternador de Tema Sol ⟲ Lua */}
         <ThemeToggle />
