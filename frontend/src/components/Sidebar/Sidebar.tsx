@@ -47,9 +47,8 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ""} ${
-        isMobileOpen ? styles.mobileOpen : ""
-      }`}
+      className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ""} ${isMobileOpen ? styles.mobileOpen : ""
+        }`}
       aria-label="Menu Lateral de Navegação"
     >
       <div className={styles.navSection}>
@@ -57,10 +56,6 @@ export function Sidebar() {
         <div className={styles.sidebarHeader}>
           <NavLink to="/" className={styles.brandLink} onClick={closeMobile} title="SENAI SIGA">
             <img src={senaiLogo} alt="Logo SENAI" className={styles.brandLogo} />
-            <div className={styles.brandText}>
-              <span className={styles.brandTitle}>SGA-D</span>
-              <span className={styles.brandSubtitle}>Gestão Disciplinar</span>
-            </div>
           </NavLink>
 
           <button
