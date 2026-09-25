@@ -36,14 +36,54 @@ export function Sidebar() {
   const initials = getInitials(user?.name);
 
   const navItems = [
-    { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
-    { to: "/ocorrencias", label: "Ocorrências & Advertências", icon: Gavel },
-    { to: "/planos-recuperacao", label: "Planos de Recuperação", icon: ClipboardCheck },
-    { to: "/turmas-alunos", label: "Turmas & Alunos", icon: Users },
-    { to: "/encaminhamentos-aqv", label: "Encaminhamentos AQV", icon: Headphones },
-    { to: "/relatorios", label: "Relatórios & Histórico", icon: BarChart3 },
-    { to: "/configuracoes", label: "Configurações", icon: Settings },
+    {
+      to: "/",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      end: true,
+      allowedRoles: ["admin", "instrutor", "aqv"],
+    },
+    {
+      to: "/ocorrencias",
+      label: "Ocorrências & Advertências",
+      icon: Gavel,
+      allowedRoles: ["admin", "instrutor", "aqv"],
+    },
+    {
+      to: "/planos-recuperacao",
+      label: "Planos de Recuperação",
+      icon: ClipboardCheck,
+      allowedRoles: ["admin", "instrutor", "aqv"],
+    },
+    {
+      to: "/turmas-alunos",
+      label: "Turmas & Alunos",
+      icon: Users,
+      allowedRoles: ["admin", "instrutor"],
+    },
+    {
+      to: "/encaminhamentos-aqv",
+      label: "Encaminhamentos AQV",
+      icon: Headphones,
+      allowedRoles: ["admin", "aqv"],
+    },
+    {
+      to: "/relatorios",
+      label: "Relatórios & Histórico",
+      icon: BarChart3,
+      allowedRoles: ["admin", "instrutor", "aqv"],
+    },
+    {
+      to: "/configuracoes",
+      label: "Configurações",
+      icon: Settings,
+      allowedRoles: ["admin"],
+    },
   ];
+
+  const visibleNavItems = navItems.filter(
+    (item) => !user?.role || item.allowedRoles.includes(user.role)
+  );
 
   return (
     <aside
@@ -76,7 +116,7 @@ export function Sidebar() {
 
         {/* Links de Navegação */}
         <nav className={styles.navLinks}>
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
