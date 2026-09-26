@@ -98,24 +98,24 @@ export function Sidebar() {
         }`}
       aria-label="Menu Lateral de Navegação"
     >
+      {/* Cabeçalho da Sidebar (mesma altura de 64px do Header) */}
+      <div className={styles.sidebarHeader}>
+        <NavLink to="/" className={styles.brandLink} onClick={closeMobile} title="SENAI SIGA">
+          <img src={senaiLogo} alt="Logo SENAI" className={styles.brandLogo} />
+        </NavLink>
+
+        <button
+          type="button"
+          className={styles.toggleCollapseBtn}
+          onClick={toggleCollapse}
+          aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
+          title={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
+        >
+          {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
+      </div>
+
       <div className={styles.navSection}>
-        {/* Cabeçalho da Sidebar */}
-        <div className={styles.sidebarHeader}>
-          <NavLink to="/" className={styles.brandLink} onClick={closeMobile} title="SENAI SIGA">
-            <img src={senaiLogo} alt="Logo SENAI" className={styles.brandLogo} />
-          </NavLink>
-
-          <button
-            type="button"
-            className={styles.toggleCollapseBtn}
-            onClick={toggleCollapse}
-            aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
-            title={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
-          >
-            {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          </button>
-        </div>
-
         {/* Categoria Menu Principal */}
         <div className={styles.sectionHeader}>
           <span>Menu Principal</span>

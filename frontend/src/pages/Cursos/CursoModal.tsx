@@ -3,7 +3,6 @@ import { X, GraduationCap, Plus, Trash2, Loader2 } from "lucide-react";
 import {
   cursoService,
   type Curso,
-  type UnidadeCurricular,
 } from "../../services/cursoService";
 import styles from "./CursoModal.module.css";
 
@@ -14,6 +13,13 @@ interface CursoModalProps {
   onSuccess: () => void;
 }
 
+interface FormUc {
+  id?: number;
+  nome: string;
+  carga_horaria: number | string;
+  semestre: number;
+}
+
 export function CursoModal({
   isOpen,
   curso,
@@ -21,49 +27,132 @@ export function CursoModal({
   onSuccess,
 }: CursoModalProps) {
   const [nome, setNome] = useState("");
+  const [plano, setPlano] = useState<"3" | "4">("3");
   const [cargaHoraria, setCargaHoraria] = useState("");
-  const [unidades, setUnidades] = useState<UnidadeCurricular[]>([]);
+  const [isManuallyEdited, setIsManuallyEdited] = useState(false);
+  const [unidades, setUnidades] = useState<FormUc[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     if (curso) {
       setNome(curso.nome);
-      setCargaHoraria(
-        curso.carga_horaria_total ? String(curso.carga_horaria_total) : ""
+
+      // Detecta se as matérias existentes estavam no plano de 4 semestres
+      const hasPlan4 = curso.unidades_curriculares?.some(
+        (uc) => uc.semestre_plano_4 !== null && uc.semestre_plano_4 !== undefined
       );
-      setUnidades(curso.unidades_curriculares || []);
+      const initialPlano = hasPlan4 ? "4" : "3";
+      setPlano(initialPlano);
+
+      const loadedUcs: FormUc[] =
+        curso.unidades_curriculares && curso.unidades_curriculares.length > 0
+          ? curso.unidades_curriculares.map((uc) => ({
+            id: uc.id,
+            nome: uc.nome,
+            carga_horaria: uc.carga_horaria,
+            semestre:
+              initialPlano === "4"
+                ? uc.semestre_plano_4 ?? uc.semestre_plano_3 ?? 1
+                : uc.semestre_plano_3 ?? 1,
+          }))
+          : [{ nome: "", carga_horaria: 75, semestre: 1 }];
+
+      setUnidades(loadedUcs);
+
+      const sumUcs = loadedUcs.reduce(
+        (acc, uc) => acc + (Number(uc.carga_horaria) || 0),
+        0
+      );
+
+      if (curso.carga_horaria_total) {
+        setCargaHoraria(String(curso.carga_horaria_total));
+        // Se a carga total salva for diferente da soma das matérias, mantemos como manual
+        setIsManuallyEdited(curso.carga_horaria_total !== sumUcs);
+      } else {
+        setCargaHoraria(sumUcs > 0 ? String(sumUcs) : "");
+        setIsManuallyEdited(false);
+      }
     } else {
       setNome("");
-      setCargaHoraria("");
-      setUnidades([
-        { nome: "", carga_horaria: 75, semestre_plano_3: 1, semestre_plano_4: 1 },
-      ]);
+      setPlano("3");
+      const defaultUcs: FormUc[] = [
+        { nome: "", carga_horaria: 75, semestre: 1 },
+      ];
+      setUnidades(defaultUcs);
+      setCargaHoraria("75");
+      setIsManuallyEdited(false);
     }
     setError(null);
   }, [curso, isOpen]);
 
   if (!isOpen) return null;
 
+  // Atualiza as UCs e recalcula a carga horária automaticamente caso não tenha sido editada manualmente
+  function updateUcsAndCarga(newUcs: FormUc[], forceAuto = false) {
+    setUnidades(newUcs);
+    const newSum = newUcs.reduce(
+      (acc, uc) => acc + (Number(uc.carga_horaria) || 0),
+      0
+    );
+
+    if (!isManuallyEdited || forceAuto) {
+      setCargaHoraria(newSum > 0 ? String(newSum) : "");
+    }
+  }
+
+  function handlePlanoChange(newPlano: "3" | "4") {
+    setPlano(newPlano);
+    // Se mudou para 3 semestres, ajusta matérias que estavam no 4º semestre para o 3º
+    if (newPlano === "3") {
+      const adjustedUcs = unidades.map((uc) =>
+        uc.semestre > 3 ? { ...uc, semestre: 3 } : uc
+      );
+      updateUcsAndCarga(adjustedUcs);
+    }
+  }
+
   function handleAddUc() {
-    setUnidades((prev) => [
-      ...prev,
-      { nome: "", carga_horaria: 75, semestre_plano_3: 1, semestre_plano_4: 1 },
-    ]);
+    const newUcs: FormUc[] = [
+      ...unidades,
+      { nome: "", carga_horaria: 75, semestre: 1 },
+    ];
+    updateUcsAndCarga(newUcs);
   }
 
   function handleRemoveUc(index: number) {
-    setUnidades((prev) => prev.filter((_, i) => i !== index));
+    const newUcs = unidades.filter((_, i) => i !== index);
+    updateUcsAndCarga(newUcs);
   }
 
   function handleUcChange(
     index: number,
-    field: keyof UnidadeCurricular,
-    value: any
+    field: keyof FormUc,
+    value: string | number
   ) {
-    setUnidades((prev) =>
-      prev.map((uc, i) => (i === index ? { ...uc, [field]: value } : uc))
+    const newUcs = unidades.map((uc, i) =>
+      i === index ? { ...uc, [field]: value } : uc
     );
+    updateUcsAndCarga(newUcs);
+  }
+
+  // Soma atual das cargas horárias de todas as UCs
+  const totalUcHours = unidades.reduce(
+    (acc, uc) => acc + (Number(uc.carga_horaria) || 0),
+    0
+  );
+
+  function handleCargaHorariaChange(val: string) {
+    if (val === "") {
+      // Se o admin apagou o valor, volta imediatamente a sincronizar com a soma automática
+      setIsManuallyEdited(false);
+      setCargaHoraria(totalUcHours > 0 ? String(totalUcHours) : "");
+    } else {
+      setIsManuallyEdited(true);
+      setCargaHoraria(val);
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -89,11 +178,11 @@ export function CursoModal({
         nome: nome.trim(),
         carga_horaria_total: cargaHoraria ? Number(cargaHoraria) : null,
         unidades_curriculares: unidades.map((uc) => ({
-          ...uc,
+          ...(uc.id ? { id: uc.id } : {}),
           nome: uc.nome.trim(),
           carga_horaria: Number(uc.carga_horaria) || 75,
-          semestre_plano_3: uc.semestre_plano_3 ? Number(uc.semestre_plano_3) : null,
-          semestre_plano_4: uc.semestre_plano_4 ? Number(uc.semestre_plano_4) : null,
+          semestre_plano_3: plano === "3" ? Number(uc.semestre) : null,
+          semestre_plano_4: plano === "4" ? Number(uc.semestre) : null,
         })),
       };
 
@@ -142,7 +231,9 @@ export function CursoModal({
         <form onSubmit={handleSubmit} className={styles.form}>
           {error && <div className={styles.errorBanner}>{error}</div>}
 
+          {/* Dados Gerais do Curso */}
           <div className={styles.gridRow}>
+            {/* Nome do Curso */}
             <div className={styles.fieldGroup}>
               <label htmlFor="curso-nome" className={styles.label}>
                 Nome do Curso <span className={styles.required}>*</span>
@@ -160,9 +251,27 @@ export function CursoModal({
               />
             </div>
 
+            {/* Duração / Plano do Curso */}
+            <div className={styles.fieldGroup}>
+              <label htmlFor="curso-plano" className={styles.label}>
+                Duração da Matriz <span className={styles.required}>*</span>
+              </label>
+              <select
+                id="curso-plano"
+                className={styles.select}
+                value={plano}
+                onChange={(e) => handlePlanoChange(e.target.value as "3" | "4")}
+                disabled={isSubmitting}
+              >
+                <option value="3">Plano de 3 Semestres</option>
+                <option value="4">Plano de 4 Semestres</option>
+              </select>
+            </div>
+
+            {/* Carga Horária Total com Auto-Sync */}
             <div className={styles.fieldGroup}>
               <label htmlFor="curso-carga-horaria" className={styles.label}>
-                Carga Horária Total (h)
+                Carga Horária (h)
               </label>
               <input
                 id="curso-carga-horaria"
@@ -172,7 +281,7 @@ export function CursoModal({
                 className={styles.input}
                 placeholder="Ex: 1200"
                 value={cargaHoraria}
-                onChange={(e) => setCargaHoraria(e.target.value)}
+                onChange={(e) => handleCargaHorariaChange(e.target.value)}
                 disabled={isSubmitting}
               />
             </div>
@@ -182,7 +291,7 @@ export function CursoModal({
           <div className={styles.ucSection}>
             <div className={styles.ucHeader}>
               <span className={styles.ucTitle}>
-                📚 Unidades Curriculares (Matriz Padrão)
+                📚 Unidades Curriculares ({plano === "3" ? "3 Semestres" : "4 Semestres"})
               </span>
               <button
                 type="button"
@@ -198,10 +307,11 @@ export function CursoModal({
             <div className={styles.ucList}>
               {unidades.map((uc, index) => (
                 <div key={index} className={styles.ucRow}>
+                  {/* Nome da Matéria */}
                   <input
                     type="text"
                     className={styles.input}
-                    placeholder={`Nome da UC #${index + 1}`}
+                    placeholder={`Nome da Matéria / UC #${index + 1}`}
                     value={uc.nome}
                     onChange={(e) =>
                       handleUcChange(index, "nome", e.target.value)
@@ -210,6 +320,7 @@ export function CursoModal({
                     required
                   />
 
+                  {/* Carga Horária */}
                   <input
                     type="number"
                     min="1"
@@ -224,45 +335,24 @@ export function CursoModal({
                     required
                   />
 
+                  {/* Semestre em que a matéria ocorre */}
                   <select
                     className={styles.select}
-                    value={uc.semestre_plano_3 || ""}
+                    value={uc.semestre}
                     onChange={(e) =>
-                      handleUcChange(
-                        index,
-                        "semestre_plano_3",
-                        e.target.value ? Number(e.target.value) : null
-                      )
+                      handleUcChange(index, "semestre", Number(e.target.value))
                     }
                     disabled={isSubmitting}
-                    title="Semestre no Plano de 3 Semestres"
+                    title={`Semestre no Plano de ${plano} Semestres`}
+                    required
                   >
-                    <option value="">P3: Semestre</option>
                     <option value="1">1º Semestre</option>
                     <option value="2">2º Semestre</option>
                     <option value="3">3º Semestre</option>
+                    {plano === "4" && <option value="4">4º Semestre</option>}
                   </select>
 
-                  <select
-                    className={styles.select}
-                    value={uc.semestre_plano_4 || ""}
-                    onChange={(e) =>
-                      handleUcChange(
-                        index,
-                        "semestre_plano_4",
-                        e.target.value ? Number(e.target.value) : null
-                      )
-                    }
-                    disabled={isSubmitting}
-                    title="Semestre no Plano de 4 Semestres"
-                  >
-                    <option value="">P4: Semestre</option>
-                    <option value="1">1º Semestre</option>
-                    <option value="2">2º Semestre</option>
-                    <option value="3">3º Semestre</option>
-                    <option value="4">4º Semestre</option>
-                  </select>
-
+                  {/* Botão Remover Linha */}
                   <button
                     type="button"
                     className={styles.removeUcBtn}
