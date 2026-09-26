@@ -13,7 +13,8 @@ class CursoRequest extends FormRequest
 
     public function rules(): array
     {
-        $cursoId = $this->route('curso') ? $this->route('curso')->id : null;
+        $curso = $this->route('curso');
+        $cursoId = $curso instanceof \App\Models\Curso ? $curso->id : $curso;
 
         return [
             'nome' => [
