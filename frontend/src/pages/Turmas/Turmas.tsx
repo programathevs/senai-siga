@@ -1,0 +1,235 @@
+import { useEffect, useState } from "react";
+import { Plus, Search, Edit2, Trash2, Users, School, Calendar, BookOpen, Loader2 } from "lucide-react";
+import { turmaService, type Turma } from "../../services/turmaService";
+import { cursoService, type Curso } from "../../services/cursoService";
+import { useAuth } from "../../contexts/AuthContext";
+import { TurmaModal } from "./TurmaModal";
+import { TurmaAlunosModal } from "./TurmaAlunosModal";
+import styles from "./Turmas.module.css";
+
+export function Turmas() {
+  const { user } = useAuth();
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [cursos, setCursos] = useState<Curso[]>([]);
+  const [search, setSearch] = useState("");
+  const [selectedCursoId, setSelectedCursoId] = useState<string>("");
+  const [selectedTurno, setSelectedTurno] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Modais
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTurma, setEditingTurma] = useState<Turma | null>(null);
+  const [selectedTurmaIdParaAlunos, setSelectedTurmaIdParaAlunos] = useState<number | null>(null);
+
+  const isAdmin = user?.role === "admin";
+
+  async function loadTurmas() {
+    try {
+      setIsLoading(true);
+      const data = await turmaService.getTurmas({
+        search: search.trim() || undefined,
+        curso_id: selectedCursoId ? Number(selectedCursoId) : undefined,
+        turno: selectedTurno || undefined,
+      });
+      setTurmas(data);
+    } catch {
+      setTurmas([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    cursoService.getCursos().then(setCursos).catch(() => setCursos([]));
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadTurmas();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, selectedCursoId, selectedTurno]);
+
+  function handleOpenCreateModal() {
+    setEditingTurma(null);
+    cursoService.getCursos().then(setCursos).catch(() => {});
+    setIsModalOpen(true);
+  }
+
+  function handleOpenEditModal(turma: Turma) {
+    setEditingTurma(turma);
+    cursoService.getCursos().then(setCursos).catch(() => {});
+    setIsModalOpen(true);
+  }
+
+  async function handleDeleteTurma(turma: Turma) {
+    if (
+      window.confirm(
+        `Tem certeza de que deseja remover a turma "${turma.nome}"? Os alunos vinculados serão mantidos no sistema e marcados como sem turma.`
+      )
+    ) {
+      try {
+        await turmaService.deleteTurma(turma.id);
+        loadTurmas();
+      } catch (err: any) {
+        alert(err.response?.data?.message || "Não foi possível remover a turma.");
+      }
+    }
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.pageHeader}>
+        <div className={styles.titleGroup}>
+          <h1 className={styles.title}>Gestão de Turmas</h1>
+          <p className={styles.subtitle}>
+            Organize os semestres, turnos e aloque os estudantes em suas respectivas turmas.
+          </p>
+        </div>
+
+        {isAdmin && (
+          <button type="button" className={styles.addBtn} onClick={handleOpenCreateModal}>
+            <Plus size={18} />
+            Nova Turma
+          </button>
+        )}
+      </div>
+
+      <div className={styles.filterCard}>
+        <div className={styles.searchWrapper}>
+          <Search size={18} className={styles.searchIcon} />
+          <input
+            type="text"
+            className={styles.searchInput}
+            placeholder="Buscar por código, nome da turma ou curso..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <select
+          className={styles.selectInput}
+          value={selectedCursoId}
+          onChange={(e) => setSelectedCursoId(e.target.value)}
+        >
+          <option value="">Todos os Cursos</option>
+          {cursos.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nome}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className={styles.selectInput}
+          value={selectedTurno}
+          onChange={(e) => setSelectedTurno(e.target.value)}
+        >
+          <option value="">Todos os Turnos</option>
+          <option value="Manhã">Manhã</option>
+          <option value="Tarde">Tarde</option>
+          <option value="Noite">Noite</option>
+          <option value="Integral">Integral</option>
+        </select>
+      </div>
+
+      {isLoading ? (
+        <div className={styles.emptyState}>
+          <Loader2 size={32} className="animate-spin" />
+          <p>Carregando turmas...</p>
+        </div>
+      ) : turmas.length === 0 ? (
+        <div className={styles.emptyState}>
+          <School size={48} className={styles.emptyIcon} />
+          <p>
+            {search || selectedCursoId || selectedTurno
+              ? "Nenhuma turma encontrada para os filtros aplicados."
+              : "Nenhuma turma cadastrada ainda."}
+          </p>
+        </div>
+      ) : (
+        <div className={styles.gridTurmas}>
+          {turmas.map((turma) => (
+            <div key={turma.id} className={styles.turmaCard}>
+              <div>
+                <div className={styles.cardTop}>
+                  <h3 className={styles.turmaNome}>{turma.nome}</h3>
+                  {turma.turno && <span className={styles.badgeTurno}>{turma.turno}</span>}
+                </div>
+
+                <p className={styles.cursoNome}>
+                  <BookOpen size={14} />
+                  {turma.curso?.nome || "Curso não informado"}
+                </p>
+              </div>
+
+              <div className={styles.cardDetails}>
+                <span className={styles.detailItem}>
+                  <Calendar size={13} />
+                  Ano: {turma.ano_letivo}
+                </span>
+                <span className={styles.detailItem}>
+                  Semestre: {turma.semestre_atual ? `${turma.semestre_atual}º` : "1º"}
+                </span>
+                <span className={styles.alunosBadge}>
+                  <Users size={14} />
+                  {turma.alunos_count || 0} alunos
+                </span>
+              </div>
+
+              <div className={styles.cardActions}>
+                <button
+                  type="button"
+                  className={styles.btnVerAlunos}
+                  onClick={() => setSelectedTurmaIdParaAlunos(turma.id)}
+                >
+                  <Users size={15} />
+                  Ver Alunos ({turma.alunos_count || 0})
+                </button>
+
+                {isAdmin && (
+                  <div className={styles.actionBtnsRight}>
+                    <button
+                      type="button"
+                      className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
+                      title="Editar Turma"
+                      onClick={() => handleOpenEditModal(turma)}
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
+                      title="Remover Turma"
+                      onClick={() => handleDeleteTurma(turma)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal de Criação / Edição de Turma */}
+      <TurmaModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={loadTurmas}
+        turmaToEdit={editingTurma}
+        cursos={cursos}
+      />
+
+      {/* Modal de Gestão de Alunos da Turma (Enturmação) */}
+      <TurmaAlunosModal
+        isOpen={selectedTurmaIdParaAlunos !== null}
+        onClose={() => setSelectedTurmaIdParaAlunos(null)}
+        turmaId={selectedTurmaIdParaAlunos}
+        onUpdated={loadTurmas}
+      />
+    </div>
+  );
+}
+export default Turmas;

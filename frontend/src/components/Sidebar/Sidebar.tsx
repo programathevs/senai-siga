@@ -6,6 +6,7 @@ import {
   GraduationCap,
   UserCheck,
   Users,
+  School,
   Headphones,
   BarChart3,
   Settings,
@@ -70,10 +71,16 @@ export function Sidebar() {
       allowedRoles: ["admin"],
     },
     {
-      to: "/turmas-alunos",
-      label: "Turmas & Alunos",
+      to: "/turmas",
+      label: "Gestão de Turmas",
+      icon: School,
+      allowedRoles: ["admin", "instrutor", "aqv"],
+    },
+    {
+      to: "/alunos",
+      label: "Gestão de Alunos",
       icon: Users,
-      allowedRoles: ["admin", "instrutor"],
+      allowedRoles: ["admin", "instrutor", "aqv"],
     },
     {
       to: "/encaminhamentos-aqv",
