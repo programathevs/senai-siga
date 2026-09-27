@@ -108,3 +108,19 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
+
+/* ==========================================================================
+   Utilitário global de rotação para spinners e loaders (Loader2, etc.)
+   ========================================================================== */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

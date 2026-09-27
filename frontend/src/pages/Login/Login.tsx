@@ -15,12 +15,20 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemeToggle } from "../../components/ThemeToggle/ThemeToggle";
+import { api } from "../../services/api";
 import styles from "./Login.module.css";
 
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Pré-carrega o cookie CSRF do Sanctum em background enquanto o usuário preenche o formulário
+  useEffect(() => {
+    if (!document.cookie.includes("XSRF-TOKEN")) {
+      api.get("/sanctum/csrf-cookie").catch(() => {});
+    }
+  }, []);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, FileText, Users, Loader2 } from "lucide-react";
 import { alunoService, type Aluno } from "../../services/alunoService";
 import { turmaService, type Turma } from "../../services/turmaService";
@@ -21,6 +21,9 @@ export function Alunos() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAluno, setEditingAluno] = useState<Aluno | null>(null);
   const [historicoAlunoId, setHistoricoAlunoId] = useState<number | null>(null);
+
+  const isFirstRender = useRef(true);
+  const prevSearchRef = useRef(search);
 
   const isAdmin = user?.role === "admin";
 
@@ -45,10 +48,26 @@ export function Alunos() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Carregamento imediato no primeiro render
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
       loadAlunos();
-    }, 300);
-    return () => clearTimeout(timer);
+      return;
+    }
+
+    // Se a alteração foi no campo de busca digitada, aplica debounce de 300ms
+    const isSearchChange = prevSearchRef.current !== search;
+    prevSearchRef.current = search;
+
+    if (isSearchChange) {
+      const timer = setTimeout(() => {
+        loadAlunos();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+
+    // Para seleções de dropdown (turma ou status), dispara imediatamente
+    loadAlunos();
   }, [search, selectedTurmaId, selectedStatus]);
 
   function handleOpenCreateModal() {
