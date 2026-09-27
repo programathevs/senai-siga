@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -69,6 +70,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isAQV(): bool
     {
         return $this->hasRole(UserRole::AQV);
+    }
+
+    /**
+     * Obtém o perfil profissional de instrutor associado a este usuário.
+     */
+    public function instrutor(): HasOne
+    {
+        return $this->hasOne(Instrutor::class);
     }
 
     /**

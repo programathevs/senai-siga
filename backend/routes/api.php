@@ -41,5 +41,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'store'])->name('cursos.store');
         Route::put('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'update'])->name('cursos.update');
         Route::delete('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'destroy'])->name('cursos.destroy');
+
+        // --- CRUD DE INSTRUTORES ---
+        Route::apiResource('instrutores', \App\Http\Controllers\Api\InstrutorController::class)
+            ->parameters(['instrutores' => 'instrutor']);
     });
 });

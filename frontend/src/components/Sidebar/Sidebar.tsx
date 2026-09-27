@@ -4,6 +4,7 @@ import {
   Gavel,
   ClipboardCheck,
   GraduationCap,
+  UserCheck,
   Users,
   Headphones,
   BarChart3,
@@ -61,6 +62,12 @@ export function Sidebar() {
       label: "Gestão de Cursos",
       icon: GraduationCap,
       allowedRoles: ["admin", "instrutor", "aqv"],
+    },
+    {
+      to: "/instrutores",
+      label: "Gestão de Instrutores",
+      icon: UserCheck,
+      allowedRoles: ["admin"],
     },
     {
       to: "/turmas-alunos",
