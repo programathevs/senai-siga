@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, UserCheck, AlertCircle, Mail, Loader2 } from "lucide-react";
 import { instrutorService, type Instrutor } from "../../services/instrutorService";
+import { formatPhoneNumber } from "../../utils/formatters";
 import styles from "./InstrutorModal.module.css";
 
 interface InstrutorModalProps {
@@ -26,7 +27,7 @@ export const InstrutorModal: React.FC<InstrutorModalProps> = ({
     if (instrutorToEdit) {
       setNome(instrutorToEdit.user?.name || "");
       setEmail(instrutorToEdit.user?.email || "");
-      setTelefone(instrutorToEdit.telefone || "");
+      setTelefone(formatPhoneNumber(instrutorToEdit.telefone || ""));
     } else {
       setNome("");
       setEmail("");
@@ -145,11 +146,12 @@ export const InstrutorModal: React.FC<InstrutorModalProps> = ({
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Telefone / WhatsApp</label>
               <input
-                type="text"
+                type="tel"
                 className={styles.input}
                 value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
-                placeholder="Ex: (11) 98765-4321"
+                onChange={(e) => setTelefone(formatPhoneNumber(e.target.value))}
+                placeholder="(11) 98765-4321"
+                maxLength={15}
               />
             </div>
           </div>

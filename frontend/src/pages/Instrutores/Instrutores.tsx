@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Search, Edit2, Trash2, UserCheck, Loader2 } from "lucide-react";
 import { instrutorService, type Instrutor } from "../../services/instrutorService";
+import { formatPhoneNumber } from "../../utils/formatters";
 import { InstrutorModal } from "./InstrutorModal";
 import styles from "./Instrutores.module.css";
 
@@ -138,7 +139,9 @@ export function Instrutores() {
                       </div>
                     </td>
                     <td className={styles.td}>
-                      {instrutor.telefone || "Não informado"}
+                      {instrutor.telefone
+                        ? formatPhoneNumber(instrutor.telefone)
+                        : "Não informado"}
                     </td>
                     <td className={styles.td}>
                       <div className={styles.actionsCell}>
