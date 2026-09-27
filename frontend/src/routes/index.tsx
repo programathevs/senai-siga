@@ -11,6 +11,8 @@ import { PublicRoute } from "./PublicRoute";
 import { RoleRoute } from "./RoleRoute";
 import { Cursos } from "../pages/Cursos/Cursos";
 import { Instrutores } from "../pages/Instrutores/Instrutores";
+import { Turmas } from "../pages/Turmas/Turmas";
+import { Alunos } from "../pages/Alunos/Alunos";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
@@ -54,6 +56,14 @@ export const router = createBrowserRouter([
               {
                 path: "/cursos",
                 element: <Cursos />,
+              },
+              {
+                path: "/turmas",
+                element: <Turmas />,
+              },
+              {
+                path: "/alunos",
+                element: <Alunos />,
               },
             ],
           },
