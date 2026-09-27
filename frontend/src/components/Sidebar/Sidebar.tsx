@@ -31,9 +31,9 @@ export function Sidebar() {
   const { isCollapsed, isMobileOpen, toggleCollapse, closeMobile } = useSidebar();
   const navigate = useNavigate();
 
-  async function handleLogout() {
-    await logout();
-    navigate("/login");
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
   }
 
   const initials = getInitials(user?.name);

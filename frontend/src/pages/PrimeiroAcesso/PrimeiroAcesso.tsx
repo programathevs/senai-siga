@@ -108,9 +108,9 @@ export function PrimeiroAcesso() {
     }
   }
 
-  async function handleCancelAndExit() {
-    await logout();
-    navigate("/login");
+  function handleCancelAndExit() {
+    logout();
+    navigate("/login", { replace: true });
   }
 
   return (

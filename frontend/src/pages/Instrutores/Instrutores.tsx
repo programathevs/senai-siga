@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, UserCheck, Loader2 } from "lucide-react";
 import { instrutorService, type Instrutor } from "../../services/instrutorService";
 import { formatPhoneNumber } from "../../utils/formatters";
@@ -11,6 +11,8 @@ export function Instrutores() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingInstrutor, setEditingInstrutor] = useState<Instrutor | null>(null);
+
+  const isFirstRender = useRef(true);
 
   async function loadInstrutores() {
     try {
@@ -25,6 +27,13 @@ export function Instrutores() {
   }
 
   useEffect(() => {
+    // Carregamento imediato no primeiro render
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      loadInstrutores();
+      return;
+    }
+
     const timer = setTimeout(() => {
       loadInstrutores();
     }, 300);

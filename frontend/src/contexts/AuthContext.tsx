@@ -61,8 +61,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   async function login(credentials: LoginCredentials): Promise<User> {
-    // 1. Obtém o token CSRF do Laravel Sanctum
-    await api.get("/sanctum/csrf-cookie");
+    // 1. Obtém o token CSRF do Laravel Sanctum apenas se ainda não estiver presente nos cookies
+    if (!document.cookie.includes("XSRF-TOKEN")) {
+      await api.get("/sanctum/csrf-cookie");
+    }
 
     // 2. Efetua a tentativa de login via sessão
     const response = await api.post<{ data: User }>("/api/login", credentials);
@@ -73,11 +75,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   async function logout(): Promise<void> {
-    try {
-      await api.post("/api/logout");
-    } finally {
-      setUser(null);
-    }
+    // Atualização otimista: limpa o usuário local imediatamente para a UI responder instantaneamente
+    setUser(null);
+
+    // Dispara a invalidação no backend em background sem prender a interface
+    api.post("/api/logout").catch((err) => {
+      console.warn("Falha na invalidação remota do logout:", err);
+    });
   }
 
   function updateUser(updatedData: Partial<User>) {

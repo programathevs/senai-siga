@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, GraduationCap, Loader2 } from "lucide-react";
 import { cursoService, type Curso } from "../../services/cursoService";
 import { useAuth } from "../../contexts/AuthContext";
@@ -12,6 +12,8 @@ export function Cursos() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCurso, setEditingCurso] = useState<Curso | null>(null);
+
+  const isFirstRender = useRef(true);
 
   const isAdmin = user?.role === "admin";
 
@@ -28,6 +30,13 @@ export function Cursos() {
   }
 
   useEffect(() => {
+    // Carregamento imediato no primeiro render
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      loadCursos();
+      return;
+    }
+
     const timer = setTimeout(() => {
       loadCursos();
     }, 300);

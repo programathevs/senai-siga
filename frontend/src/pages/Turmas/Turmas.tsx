@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, Users, School, Calendar, BookOpen, Loader2 } from "lucide-react";
 import { turmaService, type Turma } from "../../services/turmaService";
 import { cursoService, type Curso } from "../../services/cursoService";
@@ -20,6 +20,9 @@ export function Turmas() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTurma, setEditingTurma] = useState<Turma | null>(null);
   const [selectedTurmaIdParaAlunos, setSelectedTurmaIdParaAlunos] = useState<number | null>(null);
+
+  const isFirstRender = useRef(true);
+  const prevSearchRef = useRef(search);
 
   const isAdmin = user?.role === "admin";
 
@@ -44,10 +47,26 @@ export function Turmas() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Carregamento imediato no primeiro render
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
       loadTurmas();
-    }, 300);
-    return () => clearTimeout(timer);
+      return;
+    }
+
+    // Se a alteração foi no campo de busca digitada, aplica debounce de 300ms
+    const isSearchChange = prevSearchRef.current !== search;
+    prevSearchRef.current = search;
+
+    if (isSearchChange) {
+      const timer = setTimeout(() => {
+        loadTurmas();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+
+    // Para seleções de dropdown (curso ou turno), dispara imediatamente
+    loadTurmas();
   }, [search, selectedCursoId, selectedTurno]);
 
   function handleOpenCreateModal() {
