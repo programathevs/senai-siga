@@ -24,4 +24,9 @@ class Curso extends Model
     {
         return $this->hasMany(UnidadeCurricular::class, 'curso_id');
     }
+
+    public function turmas()
+    {
+        return $this->hasMany(Turma::class, 'curso_id');
+    }
 }

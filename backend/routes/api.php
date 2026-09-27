@@ -29,14 +29,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/first-access/update-password', [FirstAccessController::class, 'updatePassword'])
         ->name('first-access.update-password');
 
-    // --- CRUD DE CURSOS ---
-    // Leitura: Admin, Instrutor e AQV
+    // --- LEITURA DE CURSOS, TURMAS E ALUNOS (Admin, Instrutor e AQV) ---
     Route::middleware('role:admin,instrutor,aqv')->group(function () {
         Route::get('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'index'])->name('cursos.index');
         Route::get('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'show'])->name('cursos.show');
+
+        Route::get('/turmas', [\App\Http\Controllers\Api\TurmaController::class, 'index'])->name('turmas.index');
+        Route::get('/turmas/{turma}', [\App\Http\Controllers\Api\TurmaController::class, 'show'])->name('turmas.show');
+
+        Route::get('/alunos', [\App\Http\Controllers\Api\AlunoController::class, 'index'])->name('alunos.index');
+        Route::get('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'show'])->name('alunos.show');
+        Route::get('/alunos/{aluno}/historico', [\App\Http\Controllers\Api\AlunoController::class, 'historico'])->name('alunos.historico');
     });
 
-    // Modificação (Criar, Editar, Deletar): Apenas Admin
+    // --- MODIFICAÇÃO (Criar, Editar, Deletar): Apenas Admin ---
     Route::middleware('role:admin')->group(function () {
         Route::post('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'store'])->name('cursos.store');
         Route::put('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'update'])->name('cursos.update');
@@ -45,5 +51,17 @@ Route::middleware('auth:sanctum')->group(function () {
         // --- CRUD DE INSTRUTORES ---
         Route::apiResource('instrutores', \App\Http\Controllers\Api\InstrutorController::class)
             ->parameters(['instrutores' => 'instrutor']);
+
+        // --- GESTÃO DE TURMAS ---
+        Route::post('/turmas', [\App\Http\Controllers\Api\TurmaController::class, 'store'])->name('turmas.store');
+        Route::put('/turmas/{turma}', [\App\Http\Controllers\Api\TurmaController::class, 'update'])->name('turmas.update');
+        Route::delete('/turmas/{turma}', [\App\Http\Controllers\Api\TurmaController::class, 'destroy'])->name('turmas.destroy');
+        Route::post('/turmas/{turma}/enturmar', [\App\Http\Controllers\Api\TurmaController::class, 'enturmar'])->name('turmas.enturmar');
+        Route::post('/turmas/{turma}/desenturmar', [\App\Http\Controllers\Api\TurmaController::class, 'desenturmar'])->name('turmas.desenturmar');
+
+        // --- GESTÃO DE ALUNOS ---
+        Route::post('/alunos', [\App\Http\Controllers\Api\AlunoController::class, 'store'])->name('alunos.store');
+        Route::put('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'update'])->name('alunos.update');
+        Route::delete('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'destroy'])->name('alunos.destroy');
     });
 });
