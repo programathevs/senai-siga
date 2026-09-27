@@ -332,6 +332,20 @@
   animation: fadeIn 0.25s ease-in-out;
 }
 
+.alertSuccess {
+  padding: 0.65rem 0.85rem;
+  background-color: color-mix(in srgb, #10b981 12%, transparent);
+  border: 1px solid color-mix(in srgb, #10b981 35%, transparent);
+  border-radius: var(--radius);
+  color: #059669;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

@@ -1,7 +1,7 @@
 import senaiLogo from "../../assets/senai-logo.jpg";
 
 import { useState, useEffect, type FormEvent } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link, useSearchParams } from "react-router";
 import axios from "axios";
 import {
   AtSign,
@@ -10,6 +10,7 @@ import {
   EyeOff,
   LogIn,
   AlertCircle,
+  CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -19,21 +20,38 @@ import styles from "./Login.module.css";
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Faz a mensagem de erro desaparecer automaticamente após 3 segundos
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    const errorParam = searchParams.get("error");
+
+    if (verified === "1") {
+      setSuccessMessage(
+        "E-mail confirmado com sucesso! Utilize seu e-mail institucional e a senha temporária recebida para acessar."
+      );
+    } else if (verified === "already") {
+      setSuccessMessage("Seu e-mail já foi confirmado anteriormente. Efetue login para continuar.");
+    } else if (errorParam === "invalid_link") {
+      setErrorMessage("O link de confirmação é inválido ou já expirou. Contate a coordenação.");
+    }
+  }, [searchParams]);
+
+  // Faz a mensagem de erro desaparecer automaticamente após 4 segundos
   useEffect(() => {
     if (!errorMessage) return;
 
     const timer = setTimeout(() => {
       setErrorMessage("");
-    }, 3000);
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [errorMessage]);
@@ -212,6 +230,14 @@ export function Login() {
                   Esqueci minha senha
                 </Link>
               </div>
+
+              {/* Alerta de Sucesso (ex: e-mail confirmado) */}
+              {successMessage && (
+                <div className={styles.alertSuccess} role="status">
+                  <CheckCircle2 size={18} aria-hidden="true" />
+                  <span>{successMessage}</span>
+                </div>
+              )}
 
               {/* Alerta de Erro posicionado abaixo dos inputs */}
               {errorMessage && (

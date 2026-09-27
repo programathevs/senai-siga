@@ -10,6 +10,7 @@ import { PrivateRoute } from "./PrivateRoute";
 import { PublicRoute } from "./PublicRoute";
 import { RoleRoute } from "./RoleRoute";
 import { Cursos } from "../pages/Cursos/Cursos";
+import { Instrutores } from "../pages/Instrutores/Instrutores";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
@@ -53,6 +54,15 @@ export const router = createBrowserRouter([
               {
                 path: "/cursos",
                 element: <Cursos />,
+              },
+            ],
+          },
+          {
+            element: <RoleRoute allowedRoles={["admin"]} />,
+            children: [
+              {
+                path: "/instrutores",
+                element: <Instrutores />,
               },
             ],
           },
