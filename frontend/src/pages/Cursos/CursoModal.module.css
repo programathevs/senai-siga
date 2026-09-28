@@ -196,7 +196,7 @@
 
 .ucRow {
   display: grid;
-  grid-template-columns: 1fr 100px 140px 36px;
+  grid-template-columns: 1fr 100px 90px 130px 36px;
   gap: 0.5rem;
   align-items: center;
   padding: 0.5rem;

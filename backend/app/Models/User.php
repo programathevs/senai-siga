@@ -81,6 +81,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Ocorrências / FIAPs registradas por este usuário.
+     */
+    public function ocorrenciasRegistradas(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Ocorrencia::class, 'registrado_por');
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

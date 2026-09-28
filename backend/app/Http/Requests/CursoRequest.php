@@ -32,6 +32,7 @@ class CursoRequest extends FormRequest
             'unidades_curriculares' => ['nullable', 'array'],
             'unidades_curriculares.*.id' => ['nullable', 'integer', 'exists:unidades_curriculares,id'],
             'unidades_curriculares.*.nome' => ['required', 'string', 'max:255'],
+            'unidades_curriculares.*.sigla' => ['nullable', 'string', 'max:20'],
             'unidades_curriculares.*.carga_horaria' => ['required', 'integer', 'min:1'],
             'unidades_curriculares.*.semestre_plano_3' => ['nullable', 'integer', 'min:1', 'max:3'],
             'unidades_curriculares.*.semestre_plano_4' => ['nullable', 'integer', 'min:1', 'max:4'],

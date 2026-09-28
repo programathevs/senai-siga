@@ -34,4 +34,12 @@ class Aluno extends Model
     {
         return $this->belongsTo(Turma::class);
     }
+
+    /**
+     * Ocorrências / FIAPs registradas para o aluno.
+     */
+    public function ocorrencias(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Ocorrencia::class)->orderBy('data_ocorrencia', 'desc');
+    }
 }

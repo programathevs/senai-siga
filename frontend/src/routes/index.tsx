@@ -13,6 +13,7 @@ import { Cursos } from "../pages/Cursos/Cursos";
 import { Instrutores } from "../pages/Instrutores/Instrutores";
 import { Turmas } from "../pages/Turmas/Turmas";
 import { Alunos } from "../pages/Alunos/Alunos";
+import { Ocorrencias } from "../pages/Ocorrencias/Ocorrencias";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
           {
             element: <RoleRoute allowedRoles={["admin", "instrutor", "aqv"]} />,
             children: [
+              {
+                path: "/ocorrencias",
+                element: <Ocorrencias />,
+              },
               {
                 path: "/cursos",
                 element: <Cursos />,

@@ -15,6 +15,7 @@ class UnidadeCurricular extends Model
     protected $fillable = [
         'curso_id',
         'nome',
+        'sigla',
         'carga_horaria',
         'semestre_plano_3',
         'semestre_plano_4',

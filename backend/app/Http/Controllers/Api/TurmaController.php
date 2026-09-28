@@ -16,7 +16,7 @@ class TurmaController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Turma::with('curso')->withCount('alunos');
+        $query = Turma::with('curso.unidadesCurriculares')->withCount('alunos');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -55,7 +55,7 @@ class TurmaController extends Controller
 
         return response()->json([
             'message' => 'Turma cadastrada com sucesso.',
-            'data' => $turma->load('curso')->loadCount('alunos'),
+            'data' => $turma->load('curso.unidadesCurriculares')->loadCount('alunos'),
         ], 201);
     }
 
@@ -65,7 +65,7 @@ class TurmaController extends Controller
     public function show(Turma $turma): JsonResponse
     {
         $turma->load([
-            'curso',
+            'curso.unidadesCurriculares',
             'alunos' => function ($q) {
                 $q->orderBy('nome', 'asc');
             },
@@ -85,7 +85,7 @@ class TurmaController extends Controller
 
         return response()->json([
             'message' => 'Turma atualizada com sucesso.',
-            'data' => $turma->load('curso')->loadCount('alunos'),
+            'data' => $turma->load('curso.unidadesCurriculares')->loadCount('alunos'),
         ]);
     }
 

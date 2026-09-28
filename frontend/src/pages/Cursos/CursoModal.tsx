@@ -16,6 +16,7 @@ interface CursoModalProps {
 interface FormUc {
   id?: number;
   nome: string;
+  sigla?: string;
   carga_horaria: number | string;
   semestre: number;
 }
@@ -52,13 +53,14 @@ export function CursoModal({
           ? curso.unidades_curriculares.map((uc) => ({
             id: uc.id,
             nome: uc.nome,
+            sigla: uc.sigla || "",
             carga_horaria: uc.carga_horaria,
             semestre:
               initialPlano === "4"
                 ? uc.semestre_plano_4 ?? uc.semestre_plano_3 ?? 1
                 : uc.semestre_plano_3 ?? 1,
           }))
-          : [{ nome: "", carga_horaria: 75, semestre: 1 }];
+          : [{ nome: "", sigla: "", carga_horaria: 75, semestre: 1 }];
 
       setUnidades(loadedUcs);
 
@@ -79,7 +81,7 @@ export function CursoModal({
       setNome("");
       setPlano("3");
       const defaultUcs: FormUc[] = [
-        { nome: "", carga_horaria: 75, semestre: 1 },
+        { nome: "", sigla: "", carga_horaria: 75, semestre: 1 },
       ];
       setUnidades(defaultUcs);
       setCargaHoraria("75");
@@ -117,7 +119,7 @@ export function CursoModal({
   function handleAddUc() {
     const newUcs: FormUc[] = [
       ...unidades,
-      { nome: "", carga_horaria: 75, semestre: 1 },
+      { nome: "", sigla: "", carga_horaria: 75, semestre: 1 },
     ];
     updateUcsAndCarga(newUcs);
   }
@@ -180,6 +182,7 @@ export function CursoModal({
         unidades_curriculares: unidades.map((uc) => ({
           ...(uc.id ? { id: uc.id } : {}),
           nome: uc.nome.trim(),
+          sigla: uc.sigla?.trim() ? uc.sigla.trim().toUpperCase() : null,
           carga_horaria: Number(uc.carga_horaria) || 75,
           semestre_plano_3: plano === "3" ? Number(uc.semestre) : null,
           semestre_plano_4: plano === "4" ? Number(uc.semestre) : null,
@@ -318,6 +321,20 @@ export function CursoModal({
                     }
                     disabled={isSubmitting}
                     required
+                  />
+
+                  {/* Sigla da UC */}
+                  <input
+                    type="text"
+                    maxLength={10}
+                    className={styles.input}
+                    placeholder="Sigla (ex: TS)"
+                    title="Sigla da Unidade Curricular"
+                    value={uc.sigla || ""}
+                    onChange={(e) =>
+                      handleUcChange(index, "sigla", e.target.value.toUpperCase())
+                    }
+                    disabled={isSubmitting}
                   />
 
                   {/* Carga Horária */}

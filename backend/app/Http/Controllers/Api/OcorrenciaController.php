@@ -1,0 +1,315 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\OcorrenciaRequest;
+use App\Models\AqvRecebimento;
+use App\Models\Ocorrencia;
+use App\Models\OcorrenciaEdicao;
+use App\Models\OcorrenciaUnidade;
+use App\Models\UnidadeCurricular;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class OcorrenciaController extends Controller
+{
+    /**
+     * Lista todas as ocorrências / FIAPs com filtros combinados e estatísticas de topo.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = Ocorrencia::with([
+            'aluno.turma.curso',
+            'registradoPor',
+            'unidades.unidadeCurricular',
+            'instrutores.user',
+        ]);
+
+        // Filtro por busca textual (número sequencial, nome do aluno, matrícula ou CPF)
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('numero_sequencial', 'like', "%{$search}%")
+                  ->orWhereHas('aluno', function ($aq) use ($search) {
+                      $aq->where('nome', 'like', "%{$search}%")
+                         ->orWhere('matricula', 'like', "%{$search}%")
+                         ->orWhere('cpf', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filtro por Tipo de FIAP (falta, comportamento, desempenho)
+        if ($request->filled('tipo')) {
+            $query->where('tipo', $request->input('tipo'));
+        }
+
+        // Filtro por Status
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Filtro por Aluno específico
+        if ($request->filled('aluno_id')) {
+            $query->where('aluno_id', $request->input('aluno_id'));
+        }
+
+        // Filtro por Turma
+        if ($request->filled('turma_id')) {
+            $turmaId = $request->input('turma_id');
+            $query->whereHas('aluno', function ($aq) use ($turmaId) {
+                $aq->where('turma_id', $turmaId);
+            });
+        }
+
+        // Filtro por Curso
+        if ($request->filled('curso_id')) {
+            $cursoId = $request->input('curso_id');
+            $query->whereHas('aluno.turma', function ($tq) use ($cursoId) {
+                $tq->where('curso_id', $cursoId);
+            });
+        }
+
+        // Filtro por período
+        if ($request->filled('data_inicio')) {
+            $query->whereDate('data_ocorrencia', '>=', $request->input('data_inicio'));
+        }
+
+        if ($request->filled('data_fim')) {
+            $query->whereDate('data_ocorrencia', '<=', $request->input('data_fim'));
+        }
+
+        // Estatísticas rápidas de KPIs para o cabeçalho
+        $now = Carbon::now();
+        $stats = [
+            'total_mes' => Ocorrencia::whereMonth('data_ocorrencia', $now->month)
+                ->whereYear('data_ocorrencia', $now->year)
+                ->count(),
+            'total_falta' => Ocorrencia::where('tipo', 'falta')->count(),
+            'total_comportamento' => Ocorrencia::where('tipo', 'comportamento')->count(),
+            'total_desempenho' => Ocorrencia::where('tipo', 'desempenho')->count(),
+            'total_aqv' => Ocorrencia::where('status', 'enviado_aqv')->count(),
+            'total_pendente' => Ocorrencia::where('status', 'pendente')->count(),
+        ];
+
+        $ocorrencias = $query->orderBy('data_ocorrencia', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $ocorrencias,
+            'meta' => [
+                'estatisticas' => $stats,
+            ],
+        ]);
+    }
+
+    /**
+     * Registra uma nova ocorrência / FIAP com cálculo de faltas e geração sequencial.
+     */
+    public function store(OcorrenciaRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $ocorrencia = DB::transaction(function () use ($validated, $request) {
+            $numeroSequencial = Ocorrencia::gerarProximoNumeroSequencial();
+
+            $ocorrencia = Ocorrencia::create([
+                'aluno_id' => $validated['aluno_id'],
+                'registrado_por' => Auth::id(),
+                'numero_sequencial' => $numeroSequencial,
+                'versao' => 1,
+                'tipo' => $validated['tipo'],
+                'relato_dificuldades' => $validated['relato_dificuldades'] ?? null,
+                'recomendacoes_professor' => $validated['recomendacoes_professor'] ?? null,
+                'recomendacoes_gestao' => $validated['recomendacoes_gestao'] ?? null,
+                'providencias_gestao' => $validated['providencias_gestao'] ?? null,
+                'outras_observacoes' => $validated['outras_observacoes'] ?? null,
+                'data_ocorrencia' => $validated['data_ocorrencia'],
+                'status' => $validated['status'] ?? 'pendente',
+            ]);
+
+            // Se houver unidade curricular informada (obrigatório em falta, opcional em desempenho)
+            if (! empty($validated['unidade_curricular_id'])) {
+                $uc = UnidadeCurricular::find($validated['unidade_curricular_id']);
+                $cargaHoraria = $uc ? (int) $uc->carga_horaria : 80;
+                $totalAulas = (int) round($cargaHoraria / 0.75);
+                $limitePercentual = (float) ($validated['limite_percentual'] ?? 25.00);
+                $limiteFaltasAulas = (int) round(($totalAulas * $limitePercentual) / 100);
+
+                $qtdFaltas = (int) ($validated['quantidade_faltas'] ?? 0);
+                $percentualAtingido = $limiteFaltasAulas > 0
+                    ? round(($qtdFaltas / $limiteFaltasAulas) * 100, 1)
+                    : 0;
+
+                OcorrenciaUnidade::create([
+                    'ocorrencia_id' => $ocorrencia->id,
+                    'unidade_curricular_id' => $validated['unidade_curricular_id'],
+                    'total_aulas_dadas' => $validated['total_aulas_dadas'] ?? $qtdFaltas,
+                    'quantidade_faltas' => $qtdFaltas,
+                    'limite_percentual' => $limitePercentual,
+                    'limite_faltas_aulas' => $limiteFaltasAulas,
+                    'percentual_atingido' => $percentualAtingido,
+                ]);
+            }
+
+            // Vincula os instrutores notificantes selecionados
+            $instrutorIds = $validated['instrutor_ids'] ?? [];
+
+            // Se o usuário logado for instrutor e não estiver na lista, adiciona automaticamente
+            $user = Auth::user();
+            if ($user && $user->instrutor && ! in_array($user->instrutor->id, $instrutorIds)) {
+                $instrutorIds[] = $user->instrutor->id;
+            }
+
+            if (! empty($instrutorIds)) {
+                $ocorrencia->instrutores()->sync(array_unique($instrutorIds));
+            }
+
+            return $ocorrencia;
+        });
+
+        return response()->json([
+            'message' => "Ocorrência {$ocorrencia->numero_sequencial} registrada com sucesso.",
+            'data' => $ocorrencia->load([
+                'aluno.turma.curso',
+                'registradoPor',
+                'unidades.unidadeCurricular',
+                'instrutores.user',
+            ]),
+        ], 201);
+    }
+
+    /**
+     * Exibe a ficha completa de uma ocorrência / FIAP.
+     */
+    public function show(Ocorrencia $ocorrencia): JsonResponse
+    {
+        return response()->json([
+            'data' => $ocorrencia->load([
+                'aluno.turma.curso',
+                'registradoPor',
+                'unidades.unidadeCurricular',
+                'instrutores.user',
+                'edicoes.editadoPor',
+                'aqvRecebimento.recebidoPor',
+                'planosRecuperacao',
+            ]),
+        ]);
+    }
+
+    /**
+     * Atualiza os dados de uma ocorrência com versionamento no histórico de auditoria.
+     */
+    public function update(OcorrenciaRequest $request, Ocorrencia $ocorrencia): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $ocorrencia = DB::transaction(function () use ($validated, $ocorrencia) {
+            $novaVersao = $ocorrencia->versao + 1;
+
+            // Registra a alteração na tabela de auditoria de edições
+            OcorrenciaEdicao::create([
+                'ocorrencia_id' => $ocorrencia->id,
+                'editado_por' => Auth::id(),
+                'versao_anterior' => $ocorrencia->versao,
+                'versao_nova' => $novaVersao,
+                'motivo' => $validated['motivo_edicao'] ?? 'Atualização dos dados da ocorrência.',
+            ]);
+
+            $ocorrencia->update([
+                'aluno_id' => $validated['aluno_id'],
+                'versao' => $novaVersao,
+                'tipo' => $validated['tipo'],
+                'relato_dificuldades' => $validated['relato_dificuldades'] ?? null,
+                'recomendacoes_professor' => $validated['recomendacoes_professor'] ?? null,
+                'recomendacoes_gestao' => $validated['recomendacoes_gestao'] ?? null,
+                'providencias_gestao' => $validated['providencias_gestao'] ?? null,
+                'outras_observacoes' => $validated['outras_observacoes'] ?? null,
+                'data_ocorrencia' => $validated['data_ocorrencia'],
+                'status' => $validated['status'] ?? $ocorrencia->status,
+            ]);
+
+            // Atualiza unidade curricular e faltas se aplicável
+            if (! empty($validated['unidade_curricular_id'])) {
+                $uc = UnidadeCurricular::find($validated['unidade_curricular_id']);
+                $cargaHoraria = $uc ? (int) $uc->carga_horaria : 80;
+                $totalAulas = (int) round($cargaHoraria / 0.75);
+                $limitePercentual = (float) ($validated['limite_percentual'] ?? 25.00);
+                $limiteFaltasAulas = (int) round(($totalAulas * $limitePercentual) / 100);
+
+                $qtdFaltas = (int) ($validated['quantidade_faltas'] ?? 0);
+                $percentualAtingido = $limiteFaltasAulas > 0
+                    ? round(($qtdFaltas / $limiteFaltasAulas) * 100, 1)
+                    : 0;
+
+                OcorrenciaUnidade::updateOrCreate(
+                    ['ocorrencia_id' => $ocorrencia->id],
+                    [
+                        'unidade_curricular_id' => $validated['unidade_curricular_id'],
+                        'total_aulas_dadas' => $validated['total_aulas_dadas'] ?? $qtdFaltas,
+                        'quantidade_faltas' => $qtdFaltas,
+                        'limite_percentual' => $limitePercentual,
+                        'limite_faltas_aulas' => $limiteFaltasAulas,
+                        'percentual_atingido' => $percentualAtingido,
+                    ]
+                );
+            }
+
+            // Atualiza instrutores notificantes
+            if (isset($validated['instrutor_ids'])) {
+                $ocorrencia->instrutores()->sync($validated['instrutor_ids']);
+            }
+
+            return $ocorrencia;
+        });
+
+        return response()->json([
+            'message' => 'Ocorrência atualizada com sucesso.',
+            'data' => $ocorrencia->load([
+                'aluno.turma.curso',
+                'registradoPor',
+                'unidades.unidadeCurricular',
+                'instrutores.user',
+                'edicoes.editadoPor',
+            ]),
+        ]);
+    }
+
+    /**
+     * Remove o registro da ocorrência do sistema.
+     */
+    public function destroy(Ocorrencia $ocorrencia): JsonResponse
+    {
+        $ocorrencia->delete();
+
+        return response()->json([
+            'message' => 'Ocorrência removida com sucesso.',
+        ]);
+    }
+
+    /**
+     * Encaminha formalmente a ocorrência para a equipe de Apoio e Qualidade de Vida (AQV).
+     */
+    public function encaminharAqv(Request $request, Ocorrencia $ocorrencia): JsonResponse
+    {
+        $ocorrencia->update([
+            'status' => 'enviado_aqv',
+        ]);
+
+        AqvRecebimento::updateOrCreate(
+            ['ocorrencia_id' => $ocorrencia->id],
+            [
+                'enviado_em' => now(),
+            ]
+        );
+
+        return response()->json([
+            'message' => "Ocorrência {$ocorrencia->numero_sequencial} encaminhada para a equipe AQV com sucesso.",
+            'data' => $ocorrencia->load(['aluno.turma.curso', 'aqvRecebimento']),
+        ]);
+    }
+}

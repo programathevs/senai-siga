@@ -64,4 +64,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'update'])->name('alunos.update');
         Route::delete('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'destroy'])->name('alunos.destroy');
     });
+
+    // --- GESTÃO DE OCORRÊNCIAS / FIAPS ---
+    // Leitura: Admin, Instrutor e AQV
+    Route::middleware('role:admin,instrutor,aqv')->group(function () {
+        Route::get('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'index'])->name('ocorrencias.index');
+        Route::get('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'show'])->name('ocorrencias.show');
+    });
+
+    // Modificação / Registro / Encaminhamento: Admin e Instrutor
+    Route::middleware('role:admin,instrutor')->group(function () {
+        Route::post('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'store'])->name('ocorrencias.store');
+        Route::put('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'update'])->name('ocorrencias.update');
+        Route::delete('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'destroy'])->name('ocorrencias.destroy');
+        Route::post('/ocorrencias/{ocorrencia}/encaminhar-aqv', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharAqv'])->name('ocorrencias.encaminhar-aqv');
+    });
 });
