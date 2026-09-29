@@ -33,9 +33,20 @@ class Ocorrencia extends Model
     ];
 
     protected $casts = [
-        'data_ocorrencia' => 'date',
+        'aluno_id' => 'integer',
+        'registrado_por' => 'integer',
+        'data_ocorrencia' => 'date:Y-m-d',
         'versao' => 'integer',
     ];
+
+    protected $appends = [
+        'registrado_por_id',
+    ];
+
+    public function getRegistradoPorIdAttribute(): int
+    {
+        return (int) ($this->attributes['registrado_por'] ?? 0);
+    }
 
     /**
      * Aluno associado à ocorrência / FIAP.

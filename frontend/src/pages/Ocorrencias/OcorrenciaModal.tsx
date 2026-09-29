@@ -49,7 +49,6 @@ export function OcorrenciaModal({
   );
   const [selectedUcId, setSelectedUcId] = useState<string>("");
   const [quantidadeFaltas, setQuantidadeFaltas] = useState<number>(4);
-  const [totalAulasDadas, setTotalAulasDadas] = useState<number>(20);
   const [selectedInstrutorIds, setSelectedInstrutorIds] = useState<number[]>([]);
 
   const [relatoDificuldades, setRelatoDificuldades] = useState("");
@@ -100,9 +99,6 @@ export function OcorrenciaModal({
           setSelectedUcId(String(primaryUc.unidade_curricular_id));
         }
         setQuantidadeFaltas(primaryUc.quantidade_faltas);
-        if (primaryUc.total_aulas_dadas) {
-          setTotalAulasDadas(primaryUc.total_aulas_dadas);
-        }
       }
 
       if (ocorrenciaToEdit.instrutores) {
@@ -120,7 +116,6 @@ export function OcorrenciaModal({
     setDataOcorrencia(new Date().toISOString().split("T")[0]);
     setSelectedUcId("");
     setQuantidadeFaltas(4);
-    setTotalAulasDadas(20);
     setSelectedInstrutorIds([]);
     setRelatoDificuldades("");
     setRecomendacoesProfessor("");
@@ -265,7 +260,6 @@ export function OcorrenciaModal({
         data_ocorrencia: dataOcorrencia,
         unidade_curricular_id: selectedUcId ? Number(selectedUcId) : undefined,
         quantidade_faltas: tipo === "falta" ? Number(quantidadeFaltas) : undefined,
-        total_aulas_dadas: tipo === "falta" ? Number(totalAulasDadas) : undefined,
         limite_percentual: 25.0,
         instrutor_ids: selectedInstrutorIds,
         relato_dificuldades: relatoDificuldades.trim() || undefined,
@@ -499,17 +493,6 @@ export function OcorrenciaModal({
                       required
                     />
                   </div>
-
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>Aulas Dadas até o Momento</label>
-                    <input
-                      type="number"
-                      min="1"
-                      className={styles.input}
-                      value={totalAulasDadas}
-                      onChange={(e) => setTotalAulasDadas(Math.max(1, Number(e.target.value)))}
-                    />
-                  </div>
                 </div>
 
                 <div className={styles.calcStatsRow}>
@@ -589,27 +572,29 @@ export function OcorrenciaModal({
                   : "3. Diagnóstico de Aproveitamento Pedagógico"}
               </span>
 
-              <button
-                type="button"
-                onClick={handlePreencherPadraoSenai}
-                style={{
-                  fontSize: "0.75rem",
-                  padding: "0.25rem 0.65rem",
-                  borderRadius: "var(--radius-sm)",
-                  border: "1px solid var(--color-primary)",
-                  backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
-                  color: "var(--color-primary)",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                }}
-                title="Preencher campos com o modelo institucional padrão da Unidade Sumaré"
-              >
-                <FileText size={13} />
-                Preencher Texto Padrão SENAI
-              </button>
+              {tipo === "falta" && (
+                <button
+                  type="button"
+                  onClick={handlePreencherPadraoSenai}
+                  style={{
+                    fontSize: "0.75rem",
+                    padding: "0.25rem 0.65rem",
+                    borderRadius: "var(--radius-sm)",
+                    border: "1px solid var(--color-primary)",
+                    backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
+                    color: "var(--color-primary)",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                  }}
+                  title="Preencher campos com o modelo institucional padrão da Unidade Sumaré"
+                >
+                  <FileText size={13} />
+                  Preencher Texto Padrão SENAI
+                </button>
+              )}
             </div>
 
             <div className={styles.fieldGroup}>

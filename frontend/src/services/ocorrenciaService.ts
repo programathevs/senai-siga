@@ -43,7 +43,8 @@ export interface Ocorrencia {
   id: number;
   aluno_id: number;
   aluno?: Aluno;
-  registrado_por: number;
+  registrado_por: number | { id: number; name: string; email: string };
+  registrado_por_id?: number;
   registrado_por_user?: {
     id: number;
     name: string;

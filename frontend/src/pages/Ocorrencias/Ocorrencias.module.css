@@ -218,7 +218,7 @@
 }
 
 .td {
-  padding: 0.85rem 1rem;
+  padding: 0.5rem 0.5rem;
   color: var(--color-text-primary);
   font-size: 0.875rem;
   vertical-align: middle;
@@ -226,14 +226,17 @@
 
 /* Células e Badges customizados */
 .seqNumberBadge {
-  font-family: monospace;
+  display: inline-flex;
+  align-items: center;
+  font-family: inherit;
   font-size: 0.75rem;
-  font-weight: 700;
-  background-color: color-mix(in srgb, var(--color-border) 35%, transparent);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
-  display: inline-block;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius);
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+  letter-spacing: 0.02em;
 }
 
 .alunoCell {
@@ -328,14 +331,10 @@
   white-space: nowrap;
 }
 
-.limiteAlertBadge {
-  background-color: #ef4444;
-  color: #ffffff;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  text-transform: uppercase;
+.ucNomeSpan {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Badges de Status */
@@ -394,6 +393,17 @@
 
 .actionBtn:hover {
   background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.editBtn {
+  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.editBtn:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router";
 import {
   Calendar,
   Download,
@@ -130,6 +131,7 @@ const INITIAL_OCCURRENCES: OccurrenceRecord[] = [
 
 export function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
   const [selectedCourse, setSelectedCourse] = useState("todas");
@@ -200,10 +202,14 @@ export function Dashboard() {
             <span className={styles.versionTag}>• SGA-D v2.4</span>
           </div>
           <h1 className={styles.pageTitle}>
-            {user?.role === "admin" ? "Painel de Administração" : "Painel do Docente"}
+            {user?.role === "admin"
+              ? "Painel de Administração"
+              : user?.role === "aqv"
+              ? "Painel de Apoio e Qualidade de Vida (AQV)"
+              : "Painel do Docente"}
           </h1>
           <p className={styles.pageSubtitle}>
-            Bem-vindo de volta, <strong>{user?.name || "Professor"}</strong>. Gerencie suas turmas, ocorrências e planos de mediação disciplinar.
+            Bem-vindo de volta, <strong>{user?.name || "Usuário"}</strong>. Gerencie suas turmas, ocorrências e planos de mediação disciplinar.
           </p>
         </div>
 
@@ -218,10 +224,16 @@ export function Dashboard() {
             <span>Relatório</span>
           </button>
 
-          <button type="button" className={styles.primaryActionBtn}>
-            <PlusCircle size={18} />
-            <span>+ Nova Ocorrência</span>
-          </button>
+          {user?.role === "instrutor" && (
+            <button
+              type="button"
+              className={styles.primaryActionBtn}
+              onClick={() => navigate("/ocorrencias")}
+            >
+              <PlusCircle size={18} />
+              <span>+ Nova Ocorrência</span>
+            </button>
+          )}
         </div>
       </section>
 

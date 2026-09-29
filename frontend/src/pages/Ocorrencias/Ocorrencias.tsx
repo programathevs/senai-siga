@@ -26,6 +26,18 @@ import { OcorrenciaModal } from "./OcorrenciaModal";
 import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
 import styles from "./Ocorrencias.module.css";
 
+function formatDate(dateStr?: string | null) {
+  if (!dateStr) return "—";
+  const clean = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr.split(" ")[0];
+  const parts = clean.split("-");
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+  }
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("pt-BR");
+}
+
 export function Ocorrencias() {
   const { user } = useAuth();
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
@@ -47,7 +59,7 @@ export function Ocorrencias() {
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
 
-  const canCreate = user?.role === "admin" || user?.role === "instrutor";
+  const canCreate = user?.role === "instrutor";
 
   async function loadOcorrencias() {
     try {
@@ -311,7 +323,7 @@ export function Ocorrencias() {
                   <th className={styles.th}>Estudante</th>
                   <th className={styles.th}>Modalidade</th>
                   <th className={styles.th}>Data</th>
-                  <th className={styles.th}>Resumo / Indicadores</th>
+                  <th className={styles.th}>Resumo</th>
                   <th className={styles.th}>Status</th>
                   <th className={styles.th} style={{ textAlign: "right" }}>
                     Ações
@@ -323,14 +335,22 @@ export function Ocorrencias() {
                   const aluno = oc.aluno;
                   const initial = (aluno?.nome || "A").charAt(0).toUpperCase();
                   const primaryUc = oc.unidades && oc.unidades.length > 0 ? oc.unidades[0] : null;
-                  const isCriticalAbsence =
-                    oc.tipo === "falta" &&
-                    ((primaryUc?.percentual_atingido || 0) >= 100 ||
-                      (primaryUc?.quantidade_faltas || 0) >= (primaryUc?.limite_faltas_aulas || 999));
+                  const creatorId =
+                    typeof oc.registrado_por === "object" && oc.registrado_por !== null
+                      ? (oc.registrado_por as any).id
+                      : (oc as any).registrado_por_user?.id ??
+                        (oc as any).registrado_por_id ??
+                        oc.registrado_por;
 
+                  const isOwner = Boolean(
+                    user?.id && creatorId && Number(creatorId) === Number(user.id)
+                  );
                   const canEdit =
                     user?.role === "admin" ||
-                    (user?.role === "instrutor" && oc.registrado_por === user.id);
+                    user?.role === "aqv" ||
+                    (user?.role === "instrutor" && isOwner);
+
+                  const canDelete = user?.role === "admin";
 
                   return (
                     <tr key={oc.id} className={styles.tr}>
@@ -378,9 +398,7 @@ export function Ocorrencias() {
 
                       {/* Data */}
                       <td className={styles.td}>
-                        {oc.data_ocorrencia
-                          ? new Date(oc.data_ocorrencia + "T00:00:00").toLocaleDateString("pt-BR")
-                          : "—"}
+                        {formatDate(oc.data_ocorrencia)}
                       </td>
 
                       {/* Resumo / Indicadores */}
@@ -389,12 +407,9 @@ export function Ocorrencias() {
                           {oc.tipo === "falta" && primaryUc && (
                             <>
                               <div className={styles.resumoPrimary}>
-                                <span>{primaryUc.unidade_curricular?.nome || "Unidade Curricular"}</span>
-                                {isCriticalAbsence && (
-                                  <span className={styles.limiteAlertBadge}>
-                                    Limite Atingido
-                                  </span>
-                                )}
+                                <span className={styles.ucNomeSpan}>
+                                  {primaryUc.unidade_curricular?.nome || "Unidade Curricular"}
+                                </span>
                               </div>
                               <span className={styles.resumoSecondary}>
                                 {primaryUc.quantidade_faltas} faltas registradas (
@@ -406,7 +421,9 @@ export function Ocorrencias() {
                           {oc.tipo === "comportamento" && (
                             <>
                               <div className={styles.resumoPrimary}>
-                                <span>{oc.providencias_gestao || "Medida Pedagógica"}</span>
+                                <span className={styles.ucNomeSpan}>
+                                  {oc.providencias_gestao || "Medida Pedagógica"}
+                                </span>
                               </div>
                               <span className={styles.resumoSecondary} title={oc.relato_dificuldades || ""}>
                                 {oc.relato_dificuldades || "Sem relato descritivo"}
@@ -417,7 +434,9 @@ export function Ocorrencias() {
                           {oc.tipo === "desempenho" && (
                             <>
                               <div className={styles.resumoPrimary}>
-                                <span>{primaryUc?.unidade_curricular?.nome || "Dificuldade Pedagógica"}</span>
+                                <span className={styles.ucNomeSpan}>
+                                  {primaryUc?.unidade_curricular?.nome || "Dificuldade Pedagógica"}
+                                </span>
                               </div>
                               <span
                                 className={styles.resumoSecondary}
@@ -471,7 +490,7 @@ export function Ocorrencias() {
                             <Eye size={16} />
                           </button>
 
-                          {oc.status !== "enviado_aqv" && (
+                          {user?.role !== "aqv" && oc.status !== "enviado_aqv" && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.aqvBtn}`}
@@ -485,15 +504,16 @@ export function Ocorrencias() {
                           {canEdit && (
                             <button
                               type="button"
-                              className={styles.actionBtn}
+                              className={`${styles.actionBtn} ${styles.editBtn}`}
                               onClick={() => handleOpenEdit(oc)}
-                              title="Editar Ocorrência"
+                              title="Editar FIAP / Ocorrência"
+                              aria-label="Editar FIAP"
                             >
                               <Edit2 size={16} />
                             </button>
                           )}
 
-                          {canEdit && (
+                          {canDelete && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.deleteBtn}`}
@@ -531,6 +551,21 @@ export function Ocorrencias() {
         onClose={() => setSelectedDetalhes(null)}
         ocorrencia={selectedDetalhes}
         onEncaminharAqv={handleEncaminharAqv}
+        onEdit={(oc) => {
+          setSelectedDetalhes(null);
+          handleOpenEdit(oc);
+        }}
+        canEdit={(() => {
+          if (!selectedDetalhes || !user) return false;
+          if (user.role === "admin" || user.role === "aqv") return true;
+          const cId =
+            typeof selectedDetalhes.registrado_por === "object" && selectedDetalhes.registrado_por !== null
+              ? (selectedDetalhes.registrado_por as any).id
+              : (selectedDetalhes as any).registrado_por_user?.id ??
+                (selectedDetalhes as any).registrado_por_id ??
+                selectedDetalhes.registrado_por;
+          return user.role === "instrutor" && Number(cId) === Number(user.id);
+        })()}
       />
     </div>
   );

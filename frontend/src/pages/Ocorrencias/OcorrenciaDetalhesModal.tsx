@@ -5,6 +5,7 @@ import {
   Headphones,
   Download,
   Loader2,
+  Edit2,
 } from "lucide-react";
 import html2pdf from "html2pdf.js";
 import type { Ocorrencia } from "../../services/ocorrenciaService";
@@ -16,6 +17,8 @@ interface OcorrenciaDetalhesModalProps {
   onClose: () => void;
   ocorrencia: Ocorrencia | null;
   onEncaminharAqv?: (id: number) => void;
+  onEdit?: (ocorrencia: Ocorrencia) => void;
+  canEdit?: boolean;
 }
 
 export function OcorrenciaDetalhesModal({
@@ -23,6 +26,8 @@ export function OcorrenciaDetalhesModal({
   onClose,
   ocorrencia,
   onEncaminharAqv,
+  onEdit,
+  canEdit,
 }: OcorrenciaDetalhesModalProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
@@ -75,9 +80,18 @@ export function OcorrenciaDetalhesModal({
   const nomeUc = primaryUc?.unidade_curricular?.nome || "Componente Curricular";
   const compCurricularDisplay = siglaUc ? `${nomeUc} (${siglaUc})` : nomeUc;
 
-  const dataFormatada = ocorrencia.data_ocorrencia
-    ? new Date(ocorrencia.data_ocorrencia + "T00:00:00").toLocaleDateString("pt-BR")
-    : new Date().toLocaleDateString("pt-BR");
+  const dataFormatada = (() => {
+    if (!ocorrencia.data_ocorrencia) return new Date().toLocaleDateString("pt-BR");
+    const clean = ocorrencia.data_ocorrencia.includes("T")
+      ? ocorrencia.data_ocorrencia.split("T")[0]
+      : ocorrencia.data_ocorrencia.split(" ")[0];
+    const parts = clean.split("-");
+    if (parts.length === 3) {
+      return `${parts[2].padStart(2, "0")}/${parts[1].padStart(2, "0")}/${parts[0]}`;
+    }
+    const d = new Date(ocorrencia.data_ocorrencia);
+    return isNaN(d.getTime()) ? ocorrencia.data_ocorrencia : d.toLocaleDateString("pt-BR");
+  })();
 
   // Recomendações e textos institucionais padrão
   const relatoPadrao = `O aluno(a) está ciente que as ausências às aulas causam prejuízos para seu aproveitamento e o mesmo apresenta excesso de faltas na unidade curricular ${compCurricularDisplay} – ${horasTotais} h/a: Limite de 25% h/a possui até a data de hoje ${quantidadeFaltas} faltas ${porcentagemFaltas}% do permitido.`;
@@ -300,6 +314,30 @@ export function OcorrenciaDetalhesModal({
               >
                 <Headphones size={15} />
                 Encaminhar ao AQV
+              </button>
+            )}
+
+            {canEdit && onEdit && (
+              <button
+                type="button"
+                className={styles.btnAction}
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
+                  color: "var(--color-primary)",
+                  borderColor: "color-mix(in srgb, var(--color-primary) 30%, transparent)",
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                }}
+                onClick={() => {
+                  onClose();
+                  onEdit(ocorrencia);
+                }}
+                title="Editar dados desta FIAP"
+              >
+                <Edit2 size={15} />
+                Editar FIAP
               </button>
             )}
           </div>

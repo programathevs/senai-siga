@@ -62,7 +62,7 @@ export function Sidebar() {
       to: "/cursos",
       label: "Gestão de Cursos",
       icon: GraduationCap,
-      allowedRoles: ["admin", "instrutor", "aqv"],
+      allowedRoles: ["admin"],
     },
     {
       to: "/instrutores",
@@ -74,13 +74,13 @@ export function Sidebar() {
       to: "/turmas",
       label: "Gestão de Turmas",
       icon: School,
-      allowedRoles: ["admin", "instrutor", "aqv"],
+      allowedRoles: ["admin"],
     },
     {
       to: "/alunos",
       label: "Gestão de Alunos",
       icon: Users,
-      allowedRoles: ["admin", "instrutor", "aqv"],
+      allowedRoles: ["admin"],
     },
     {
       to: "/encaminhamentos-aqv",
