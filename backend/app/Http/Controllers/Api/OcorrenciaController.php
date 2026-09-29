@@ -82,17 +82,41 @@ class OcorrenciaController extends Controller
             $query->whereDate('data_ocorrencia', '<=', $request->input('data_fim'));
         }
 
+        // Escopo de visibilidade: Instrutor visualiza apenas alunos das turmas que leciona ou ocorrências registradas por ele
+        $user = $request->user();
+        $turmaIds = [];
+        $userId = $user?->id;
+        if ($user && $user->hasRole('instrutor')) {
+            $instrutor = $user->instrutor;
+            $turmaIds = $instrutor ? $instrutor->turmas()->pluck('turmas.id')->toArray() : [];
+
+            $query->where(function ($q) use ($turmaIds, $userId) {
+                $q->whereHas('aluno', function ($aq) use ($turmaIds) {
+                    $aq->whereIn('turma_id', $turmaIds);
+                })->orWhere('registrado_por', $userId);
+            });
+        }
+
         // Estatísticas rápidas de KPIs para o cabeçalho
         $now = Carbon::now();
+        $statsBaseQuery = Ocorrencia::query();
+        if ($user && $user->hasRole('instrutor')) {
+            $statsBaseQuery->where(function ($q) use ($turmaIds, $userId) {
+                $q->whereHas('aluno', function ($aq) use ($turmaIds) {
+                    $aq->whereIn('turma_id', $turmaIds);
+                })->orWhere('registrado_por', $userId);
+            });
+        }
+
         $stats = [
-            'total_mes' => Ocorrencia::whereMonth('data_ocorrencia', $now->month)
+            'total_mes' => (clone $statsBaseQuery)->whereMonth('data_ocorrencia', $now->month)
                 ->whereYear('data_ocorrencia', $now->year)
                 ->count(),
-            'total_falta' => Ocorrencia::where('tipo', 'falta')->count(),
-            'total_comportamento' => Ocorrencia::where('tipo', 'comportamento')->count(),
-            'total_desempenho' => Ocorrencia::where('tipo', 'desempenho')->count(),
-            'total_aqv' => Ocorrencia::where('status', 'enviado_aqv')->count(),
-            'total_pendente' => Ocorrencia::where('status', 'pendente')->count(),
+            'total_falta' => (clone $statsBaseQuery)->where('tipo', 'falta')->count(),
+            'total_comportamento' => (clone $statsBaseQuery)->where('tipo', 'comportamento')->count(),
+            'total_desempenho' => (clone $statsBaseQuery)->where('tipo', 'desempenho')->count(),
+            'total_aqv' => (clone $statsBaseQuery)->where('status', 'enviado_aqv')->count(),
+            'total_pendente' => (clone $statsBaseQuery)->where('status', 'pendente')->count(),
         ];
 
         $ocorrencias = $query->orderBy('data_ocorrencia', 'desc')
@@ -206,6 +230,13 @@ class OcorrenciaController extends Controller
      */
     public function update(OcorrenciaRequest $request, Ocorrencia $ocorrencia): JsonResponse
     {
+        $user = $request->user();
+        if ($user && $user->hasRole('instrutor') && $ocorrencia->registrado_por !== $user->id) {
+            return response()->json([
+                'message' => 'Você só pode editar ocorrências que foram registradas por você.',
+            ], 403);
+        }
+
         $validated = $request->validated();
 
         $ocorrencia = DB::transaction(function () use ($validated, $ocorrencia) {

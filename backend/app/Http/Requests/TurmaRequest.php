@@ -19,6 +19,8 @@ class TurmaRequest extends FormRequest
             'turno' => ['nullable', 'string', 'max:50'],
             'ano_letivo' => ['required', 'string', 'max:10'],
             'semestre_atual' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'instrutor_ids' => ['nullable', 'array'],
+            'instrutor_ids.*' => ['exists:instrutores,id'],
         ];
     }
 

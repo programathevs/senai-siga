@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, School, AlertCircle, Loader2 } from "lucide-react";
 import { turmaService, type Turma } from "../../services/turmaService";
 import { cursoService, type Curso } from "../../services/cursoService";
+import { instrutorService, type Instrutor } from "../../services/instrutorService";
 import styles from "./TurmaModal.module.css";
 
 interface TurmaModalProps {
@@ -25,6 +26,8 @@ export const TurmaModal: React.FC<TurmaModalProps> = ({
   const [turno, setTurno] = useState("Manhã");
   const [anoLetivo, setAnoLetivo] = useState(new Date().getFullYear().toString());
   const [semestreAtual, setSemestreAtual] = useState(1);
+  const [instrutores, setInstrutores] = useState<Instrutor[]>([]);
+  const [selectedInstrutorIds, setSelectedInstrutorIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,18 +37,24 @@ export const TurmaModal: React.FC<TurmaModalProps> = ({
         setCursos(cursosProp);
       }
       cursoService.getCursos().then(setCursos).catch(() => {});
+      instrutorService.getInstrutores().then(setInstrutores).catch(() => setInstrutores([]));
+
       if (turmaToEdit) {
         setCursoId(turmaToEdit.curso_id);
         setNome(turmaToEdit.nome);
         setTurno(turmaToEdit.turno || "Manhã");
         setAnoLetivo(turmaToEdit.ano_letivo);
         setSemestreAtual(turmaToEdit.semestre_atual || 1);
+        setSelectedInstrutorIds(
+          turmaToEdit.instrutores ? turmaToEdit.instrutores.map((i) => i.id) : []
+        );
       } else {
         setCursoId("");
         setNome("");
         setTurno("Manhã");
         setAnoLetivo(new Date().getFullYear().toString());
         setSemestreAtual(1);
+        setSelectedInstrutorIds([]);
       }
       setError(null);
     }
@@ -78,6 +87,7 @@ export const TurmaModal: React.FC<TurmaModalProps> = ({
         turno,
         ano_letivo: anoLetivo.trim(),
         semestre_atual: Number(semestreAtual),
+        instrutor_ids: selectedInstrutorIds,
       };
 
       if (turmaToEdit) {
@@ -198,6 +208,55 @@ export const TurmaModal: React.FC<TurmaModalProps> = ({
                 <option value={3}>3º Semestre</option>
                 <option value={4}>4º Semestre</option>
               </select>
+            </div>
+          </div>
+
+          {/* Seleção de Docentes / Instrutores Responsáveis */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>
+              Docentes / Instrutores Responsáveis
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--color-text-secondary)",
+                  marginLeft: "0.5rem",
+                  fontWeight: 400,
+                }}
+              >
+                (Marque todos os professores que lecionam nesta turma)
+              </span>
+            </label>
+            <div className={styles.instrutoresContainer}>
+              {instrutores.length === 0 ? (
+                <p style={{ fontSize: "0.8125rem", color: "var(--color-text-secondary)", padding: "0.5rem" }}>
+                  Nenhum instrutor cadastrado.
+                </p>
+              ) : (
+                instrutores.map((inst) => {
+                  const isChecked = selectedInstrutorIds.includes(inst.id);
+                  return (
+                    <label
+                      key={inst.id}
+                      className={`${styles.instrutorCheckboxItem} ${
+                        isChecked ? styles.instrutorCheckboxChecked : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          setSelectedInstrutorIds((prev) =>
+                            prev.includes(inst.id)
+                              ? prev.filter((id) => id !== inst.id)
+                              : [...prev, inst.id]
+                          );
+                        }}
+                      />
+                      <span>{inst.user?.name || `Instrutor #${inst.id}`}</span>
+                    </label>
+                  );
+                })
+              )}
             </div>
           </div>
 

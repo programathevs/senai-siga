@@ -209,3 +209,43 @@
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
+
+.instrutoresContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.5rem;
+  max-height: 10rem;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background-color: color-mix(in srgb, var(--color-background) 70%, transparent);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.instrutorCheckboxItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.instrutorCheckboxItem:hover {
+  border-color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+
+.instrutorCheckboxChecked {
+  border-color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  font-weight: 600;
+}

@@ -16,7 +16,16 @@ class TurmaController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Turma::with('curso.unidadesCurriculares')->withCount('alunos');
+        $query = Turma::with(['curso.unidadesCurriculares', 'instrutores.user'])->withCount('alunos');
+
+        // Se for Instrutor, lista apenas as turmas vinculadas ao seu perfil
+        if ($request->user() && $request->user()->hasRole('instrutor')) {
+            $instrutor = $request->user()->instrutor;
+            $instrutorId = $instrutor?->id ?? 0;
+            $query->whereHas('instrutores', function ($iq) use ($instrutorId) {
+                $iq->where('instrutores.id', $instrutorId);
+            });
+        }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -51,11 +60,16 @@ class TurmaController extends Controller
      */
     public function store(TurmaRequest $request): JsonResponse
     {
-        $turma = Turma::create($request->validated());
+        $validated = $request->validated();
+        $turma = Turma::create($validated);
+
+        if ($request->has('instrutor_ids')) {
+            $turma->instrutores()->sync($request->input('instrutor_ids', []));
+        }
 
         return response()->json([
             'message' => 'Turma cadastrada com sucesso.',
-            'data' => $turma->load('curso.unidadesCurriculares')->loadCount('alunos'),
+            'data' => $turma->load(['curso.unidadesCurriculares', 'instrutores.user'])->loadCount('alunos'),
         ], 201);
     }
 
@@ -66,6 +80,7 @@ class TurmaController extends Controller
     {
         $turma->load([
             'curso.unidadesCurriculares',
+            'instrutores.user',
             'alunos' => function ($q) {
                 $q->orderBy('nome', 'asc');
             },
@@ -81,11 +96,16 @@ class TurmaController extends Controller
      */
     public function update(TurmaRequest $request, Turma $turma): JsonResponse
     {
-        $turma->update($request->validated());
+        $validated = $request->validated();
+        $turma->update($validated);
+
+        if ($request->has('instrutor_ids')) {
+            $turma->instrutores()->sync($request->input('instrutor_ids', []));
+        }
 
         return response()->json([
             'message' => 'Turma atualizada com sucesso.',
-            'data' => $turma->load('curso.unidadesCurriculares')->loadCount('alunos'),
+            'data' => $turma->load(['curso.unidadesCurriculares', 'instrutores.user'])->loadCount('alunos'),
         ]);
     }
 
