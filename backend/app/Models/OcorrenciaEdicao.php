@@ -25,12 +25,19 @@ class OcorrenciaEdicao extends Model
         'versao_nova' => 'integer',
     ];
 
+    protected $with = ['user'];
+
     public function ocorrencia(): BelongsTo
     {
         return $this->belongsTo(Ocorrencia::class, 'ocorrencia_id');
     }
 
     public function editadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'editado_por');
+    }
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'editado_por');
     }

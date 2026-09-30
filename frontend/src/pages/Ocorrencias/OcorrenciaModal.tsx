@@ -17,7 +17,6 @@ import {
 } from "../../services/ocorrenciaService";
 import { turmaService, type Turma } from "../../services/turmaService";
 import { alunoService, type Aluno } from "../../services/alunoService";
-import { instrutorService, type Instrutor } from "../../services/instrutorService";
 import { cursoService, type Curso } from "../../services/cursoService";
 import styles from "./OcorrenciaModal.module.css";
 
@@ -37,7 +36,6 @@ export function OcorrenciaModal({
   // Dados auxiliares para seleção
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
-  const [instrutores, setInstrutores] = useState<Instrutor[]>([]);
   const [cursos, setCursos] = useState<Curso[]>([]);
 
   // Estados do Formulário
@@ -49,7 +47,6 @@ export function OcorrenciaModal({
   );
   const [selectedUcId, setSelectedUcId] = useState<string>("");
   const [quantidadeFaltas, setQuantidadeFaltas] = useState<number>(4);
-  const [selectedInstrutorIds, setSelectedInstrutorIds] = useState<number[]>([]);
 
   const [relatoDificuldades, setRelatoDificuldades] = useState("");
   const [recomendacoesProfessor, setRecomendacoesProfessor] = useState("");
@@ -63,12 +60,11 @@ export function OcorrenciaModal({
 
   const isEditing = !!ocorrenciaToEdit;
 
-  // Carrega turmas, cursos e instrutores ao abrir o modal
+  // Carrega turmas e cursos ao abrir o modal
   useEffect(() => {
     if (isOpen) {
       turmaService.getTurmas().then(setTurmas).catch(() => setTurmas([]));
       alunoService.getAlunos().then(setAlunos).catch(() => setAlunos([]));
-      instrutorService.getInstrutores().then(setInstrutores).catch(() => setInstrutores([]));
       cursoService.getCursos().then(setCursos).catch(() => setCursos([]));
     }
   }, [isOpen]);
@@ -100,10 +96,6 @@ export function OcorrenciaModal({
         }
         setQuantidadeFaltas(primaryUc.quantidade_faltas);
       }
-
-      if (ocorrenciaToEdit.instrutores) {
-        setSelectedInstrutorIds(ocorrenciaToEdit.instrutores.map((i) => i.id));
-      }
     } else {
       resetForm();
     }
@@ -116,7 +108,6 @@ export function OcorrenciaModal({
     setDataOcorrencia(new Date().toISOString().split("T")[0]);
     setSelectedUcId("");
     setQuantidadeFaltas(4);
-    setSelectedInstrutorIds([]);
     setRelatoDificuldades("");
     setRecomendacoesProfessor("");
     setRecomendacoesGestao("");
@@ -152,6 +143,25 @@ export function OcorrenciaModal({
     const foundCurso = cursos.find((c) => c.id === turmaSelecionada.curso_id);
     return foundCurso?.unidades_curriculares || [];
   }, [turmaSelecionada, cursos]);
+
+  // Filtra UCs vigentes do semestre da turma (com fallback caso não haja UCs no semestre)
+  const unidadesCurricularesFiltradas = useMemo(() => {
+    if (!turmaSelecionada?.semestre_atual) {
+      return unidadesCurriculares;
+    }
+
+    const semAtual = Number(turmaSelecionada.semestre_atual);
+
+    const filtradas = unidadesCurriculares.filter((uc) => {
+      // Se a UC não especifica nenhum semestre (ambos nulos), ela é mantida
+      if (uc.semestre_plano_3 == null && uc.semestre_plano_4 == null) {
+        return true;
+      }
+      return uc.semestre_plano_3 === semAtual || uc.semestre_plano_4 === semAtual;
+    });
+
+    return filtradas.length > 0 ? filtradas : unidadesCurriculares;
+  }, [unidadesCurriculares, turmaSelecionada]);
 
   // Obtém a UC selecionada e sua carga horária
   const ucSelecionada = useMemo(() => {
@@ -226,12 +236,6 @@ export function OcorrenciaModal({
     setOutrasObservacoes("----");
   }
 
-  function toggleInstrutor(id: number) {
-    setSelectedInstrutorIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  }
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setErrorMessage("");
@@ -261,7 +265,6 @@ export function OcorrenciaModal({
         unidade_curricular_id: selectedUcId ? Number(selectedUcId) : undefined,
         quantidade_faltas: tipo === "falta" ? Number(quantidadeFaltas) : undefined,
         limite_percentual: 25.0,
-        instrutor_ids: selectedInstrutorIds,
         relato_dificuldades: relatoDificuldades.trim() || undefined,
         recomendacoes_professor: recomendacoesProfessor.trim() || undefined,
         recomendacoes_gestao: recomendacoesGestao.trim() || undefined,
@@ -445,6 +448,7 @@ export function OcorrenciaModal({
                   Unidade Curricular (UC)
                   {tipo === "falta" && <span className={styles.required}>*</span>}
                 </label>
+
                 <select
                   className={styles.select}
                   value={selectedUcId}
@@ -454,17 +458,19 @@ export function OcorrenciaModal({
                 >
                   <option value="">
                     {selectedTurmaId
-                      ? unidadesCurriculares.length > 0
+                      ? unidadesCurricularesFiltradas.length > 0
                         ? "Selecione a unidade curricular..."
-                        : "Nenhuma UC cadastrada para o curso desta turma"
+                        : "Nenhuma UC cadastrada para este semestre"
                       : "Selecione uma turma primeiro"}
                   </option>
-                  {unidadesCurriculares.map((uc) => {
+                  {unidadesCurricularesFiltradas.map((uc) => {
                     const aulas = Math.round(uc.carga_horaria / 0.75);
                     const limite = Math.round(aulas * 0.25);
+                    const sem = uc.semestre_plano_3 || uc.semestre_plano_4;
+                    const semBadge = sem ? ` (${sem}º Sem)` : "";
                     return (
                       <option key={uc.id} value={uc.id}>
-                        {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome} — {uc.carga_horaria}h ({aulas} aulas, limite: {limite} aulas)
+                        {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome}{semBadge} — {uc.carga_horaria}h ({aulas} aulas, limite: {limite} aulas)
                       </option>
                     );
                   })}
@@ -638,28 +644,6 @@ export function OcorrenciaModal({
                   onChange={(e) => setProvidenciasGestao(e.target.value)}
                 />
               </div>
-            </div>
-          </div>
-
-          {/* 5. INSTRUTORES NOTIFICANTES */}
-          <div className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <span>Docentes / Instrutores Notificantes</span>
-            </div>
-
-            <div className={styles.instrutoresCheckGrid}>
-              {instrutores.map((inst) => (
-                <label key={inst.id} className={styles.instrutorCheckItem}>
-                  <input
-                    type="checkbox"
-                    checked={selectedInstrutorIds.includes(inst.id)}
-                    onChange={() => toggleInstrutor(inst.id)}
-                  />
-                  <span>
-                    {inst.user?.name || "Instrutor"} ({inst.user?.email || "Sem e-mail"})
-                  </span>
-                </label>
-              ))}
             </div>
           </div>
 

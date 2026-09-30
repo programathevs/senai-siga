@@ -68,8 +68,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'update'])->name('alunos.update');
         Route::delete('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'destroy'])->name('alunos.destroy');
 
-        // --- EXCLUSÃO DE OCORRÊNCIAS / FIAPS ---
-        Route::delete('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'destroy'])->name('ocorrencias.destroy');
+        // --- RESTAURAÇÃO DE OCORRÊNCIAS / FIAPS (Apenas Admin) ---
+        Route::post('/ocorrencias/{id}/restaurar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'restaurar'])->name('ocorrencias.restaurar');
     });
 
     // --- GESTÃO DE OCORRÊNCIAS / FIAPS ---
@@ -80,9 +80,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'update'])->name('ocorrencias.update');
     });
 
-    // Modificação / Registro / Encaminhamento: Admin e Instrutor (Docente registra a FIAP)
+    // Modificação / Registro / Encaminhamento / Exclusão: Admin e Instrutor (Docente registra e apaga a própria FIAP)
     Route::middleware('role:admin,instrutor')->group(function () {
         Route::post('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'store'])->name('ocorrencias.store');
+        Route::delete('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'destroy'])->name('ocorrencias.destroy');
         Route::post('/ocorrencias/{ocorrencia}/encaminhar-aqv', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharAqv'])->name('ocorrencias.encaminhar-aqv');
     });
 });

@@ -6,9 +6,11 @@ import {
   Download,
   Loader2,
   Edit2,
+  History,
 } from "lucide-react";
 import html2pdf from "html2pdf.js";
 import type { Ocorrencia } from "../../services/ocorrenciaService";
+import { useAuth } from "../../contexts/AuthContext";
 import senaiLogo from "../../assets/senai-logo.jpg";
 import styles from "./OcorrenciaDetalhesModal.module.css";
 
@@ -29,9 +31,21 @@ export function OcorrenciaDetalhesModal({
   onEdit,
   canEdit,
 }: OcorrenciaDetalhesModalProps) {
+  const { user } = useAuth();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   if (!isOpen || !ocorrencia) return null;
+
+  const canSendAqv = (() => {
+    if (ocorrencia.status === "enviado_aqv" || !user) return false;
+    if (user.role === "admin") return true;
+    if (user.role === "instrutor") {
+      const regId = typeof ocorrencia.registrado_por === "number" ? ocorrencia.registrado_por : ocorrencia.registrado_por?.id;
+      const creatorId = ocorrencia.registrado_por_user?.id || ocorrencia.registrado_por_id || regId;
+      return creatorId === user.id;
+    }
+    return false;
+  })();
 
   const aluno = ocorrencia.aluno;
   const primaryUc =
@@ -70,9 +84,10 @@ export function OcorrenciaDetalhesModal({
       : "0.0";
 
   const nomeDocente =
-    ocorrencia.instrutores && ocorrencia.instrutores.length > 0
-      ? ocorrencia.instrutores.map((i) => i.user?.name || "Docente").join(", ")
-      : ocorrencia.registrado_por_user?.name || "Docente Responsável";
+    ocorrencia.registrado_por_user?.name ||
+    (ocorrencia.instrutores && ocorrencia.instrutores.length > 0
+      ? ocorrencia.instrutores[0].user?.name
+      : "Docente Responsável");
 
   const nomeAluno = aluno?.nome || "Aluno(a)";
   const nomeTurma = aluno?.turma?.nome || "Turma não informada";
@@ -180,7 +195,7 @@ export function OcorrenciaDetalhesModal({
                     Nº Sequencial: {formattedSeq}
                   </p>
                   <p className={`${styles.headerDetailsItem} ${styles.headerVersion}`}>
-                    VERSÃO <br /> V. 01
+                    VERSÃO <br /> V. {String(ocorrencia.versao || 1).padStart(2, "0")}
                   </p>
                 </div>
               </div>
@@ -301,12 +316,44 @@ export function OcorrenciaDetalhesModal({
               </div>
             </section>
           </main>
+
+          {/* Histórico de Auditoria & Justificativas (Exibido apenas no Modal, FORA do PDF e Impressão) */}
+          {ocorrencia.edicoes && ocorrencia.edicoes.length > 0 && (
+            <div className={styles.auditContainer}>
+              <div className={styles.auditHeader}>
+                <History size={16} color="var(--color-primary)" />
+                <span>Histórico de Alterações & Justificativas (Auditoria Interna)</span>
+              </div>
+              <ul className={styles.auditList}>
+                {ocorrencia.edicoes.map((ed) => (
+                  <li key={ed.id} className={styles.auditItem}>
+                    <div className={styles.auditItemHeader}>
+                      <span className={styles.auditBadge}>
+                        Versão {String(ed.versao_nova).padStart(2, "0")}
+                      </span>
+                      <span className={styles.auditUserDate}>
+                        {ed.user?.name || ed.editado_por_user?.name || "Usuário"} •{" "}
+                        {new Date(ed.created_at).toLocaleDateString("pt-BR")} às{" "}
+                        {new Date(ed.created_at).toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    <p className={styles.auditReason}>
+                      <strong>Justificativa:</strong> "{ed.motivo}"
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Rodapé de Ações */}
         <div className={styles.modalFooter}>
           <div className={styles.footerLeft}>
-            {onEncaminharAqv && ocorrencia.status !== "enviado_aqv" && (
+            {onEncaminharAqv && canSendAqv && (
               <button
                 type="button"
                 className={`${styles.btnAction} ${styles.btnAqv}`}

@@ -12,6 +12,7 @@ import {
   Eye,
   Loader2,
   Send,
+  RotateCcw,
 } from "lucide-react";
 import {
   ocorrenciaService,
@@ -60,6 +61,17 @@ export function Ocorrencias() {
   const prevSearchRef = useRef(search);
 
   const canCreate = user?.role === "instrutor";
+
+  function canSendAqv(oc: Ocorrencia): boolean {
+    if (oc.status === "enviado_aqv" || !user) return false;
+    if (user.role === "admin") return true;
+    if (user.role === "instrutor") {
+      const regId = typeof oc.registrado_por === "number" ? oc.registrado_por : oc.registrado_por?.id;
+      const creatorId = oc.registrado_por_user?.id || oc.registrado_por_id || regId;
+      return creatorId === user.id;
+    }
+    return false;
+  }
 
   async function loadOcorrencias() {
     try {
@@ -131,6 +143,22 @@ export function Ocorrencias() {
         loadOcorrencias();
       } catch (err: any) {
         alert(err.response?.data?.message || "Não foi possível remover a ocorrência.");
+      }
+    }
+  }
+
+  async function handleRestore(oc: Ocorrencia) {
+    if (
+      window.confirm(
+        `Deseja restaurar a FIAP "${oc.numero_sequencial}" do aluno "${oc.aluno?.nome}"?`
+      )
+    ) {
+      try {
+        await ocorrenciaService.restaurarOcorrencia(oc.id);
+        alert(`FIAP "${oc.numero_sequencial}" restaurada com sucesso!`);
+        loadOcorrencias();
+      } catch (err: any) {
+        alert(err.response?.data?.message || "Erro ao restaurar ocorrência.");
       }
     }
   }
@@ -345,15 +373,21 @@ export function Ocorrencias() {
                   const isOwner = Boolean(
                     user?.id && creatorId && Number(creatorId) === Number(user.id)
                   );
-                  const canEdit =
-                    user?.role === "admin" ||
-                    user?.role === "aqv" ||
-                    (user?.role === "instrutor" && isOwner);
+                  const isDeleted = Boolean(oc.deleted_at);
 
-                  const canDelete = user?.role === "admin";
+                  const canEdit =
+                    !isDeleted &&
+                    (user?.role === "admin" ||
+                      user?.role === "aqv" ||
+                      (user?.role === "instrutor" && isOwner));
+
+                  const canDelete =
+                    !isDeleted &&
+                    (user?.role === "admin" || (user?.role === "instrutor" && isOwner));
+                  const canRestore = isDeleted && user?.role === "admin";
 
                   return (
-                    <tr key={oc.id} className={styles.tr}>
+                    <tr key={oc.id} className={`${styles.tr} ${isDeleted ? styles.trDeleted : ""}`}>
                       {/* Nº Sequencial */}
                       <td className={styles.td}>
                         <span className={styles.seqNumberBadge}>
@@ -451,30 +485,38 @@ export function Ocorrencias() {
 
                       {/* Status */}
                       <td className={styles.td}>
-                        {oc.status === "pendente" && (
-                          <span className={`${styles.statusBadge} ${styles.statusPendente}`}>
-                            Pendente
+                        {isDeleted ? (
+                          <span className={`${styles.statusBadge} ${styles.statusExcluido}`}>
+                            Excluída
                           </span>
-                        )}
-                        {oc.status === "enviado_aqv" && (
-                          <span className={`${styles.statusBadge} ${styles.statusEnviadoAqv}`}>
-                            Enviado ao AQV
-                          </span>
-                        )}
-                        {oc.status === "pdf_gerado" && (
-                          <span className={`${styles.statusBadge} ${styles.statusPdfGerado}`}>
-                            PDF Gerado
-                          </span>
-                        )}
-                        {oc.status === "impresso" && (
-                          <span className={`${styles.statusBadge} ${styles.statusPdfGerado}`}>
-                            Impresso
-                          </span>
-                        )}
-                        {oc.status === "assinado" && (
-                          <span className={`${styles.statusBadge} ${styles.statusAssinado}`}>
-                            Assinado
-                          </span>
+                        ) : (
+                          <>
+                            {oc.status === "pendente" && (
+                              <span className={`${styles.statusBadge} ${styles.statusPendente}`}>
+                                Pendente
+                              </span>
+                            )}
+                            {oc.status === "enviado_aqv" && (
+                              <span className={`${styles.statusBadge} ${styles.statusEnviadoAqv}`}>
+                                Enviado ao AQV
+                              </span>
+                            )}
+                            {oc.status === "pdf_gerado" && (
+                              <span className={`${styles.statusBadge} ${styles.statusPdfGerado}`}>
+                                PDF Gerado
+                              </span>
+                            )}
+                            {oc.status === "impresso" && (
+                              <span className={`${styles.statusBadge} ${styles.statusPdfGerado}`}>
+                                Impresso
+                              </span>
+                            )}
+                            {oc.status === "assinado" && (
+                              <span className={`${styles.statusBadge} ${styles.statusAssinado}`}>
+                                Assinado
+                              </span>
+                            )}
+                          </>
                         )}
                       </td>
 
@@ -490,7 +532,19 @@ export function Ocorrencias() {
                             <Eye size={16} />
                           </button>
 
-                          {user?.role !== "aqv" && oc.status !== "enviado_aqv" && (
+                          {canRestore && (
+                            <button
+                              type="button"
+                              className={`${styles.actionBtn} ${styles.restoreBtn}`}
+                              onClick={() => handleRestore(oc)}
+                              title="Restaurar FIAP excluída"
+                            >
+                              <RotateCcw size={15} />
+                              <span>Restaurar</span>
+                            </button>
+                          )}
+
+                          {canSendAqv(oc) && !isDeleted && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.aqvBtn}`}

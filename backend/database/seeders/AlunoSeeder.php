@@ -5,10 +5,22 @@ namespace Database\Seeders;
 use App\Models\Aluno;
 use App\Models\Turma;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class AlunoSeeder extends Seeder
 {
+    /**
+     * Helper para formatar nome próprio em Title Case respeitando partículas em português.
+     */
+    private function formatarNomeProprio(string $nome): string
+    {
+        $nomeFormato = mb_convert_case(mb_strtolower($nome, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
+
+        $search = [' De ', ' Da ', ' Do ', ' Dos ', ' Das ', ' E '];
+        $replace = [' de ', ' da ', ' do ', ' dos ', ' das ', ' e '];
+
+        return str_replace($search, $replace, $nomeFormato);
+    }
+
     /**
      * Run the database seeds.
      */
@@ -20,38 +32,38 @@ class AlunoSeeder extends Seeder
 
         // 1. Turma DES-I2HN (32 alunos)
         $alunosI2HN = [
-            ['matricula' => '25161435', 'nome' => 'ANA CAROLINE DA SILVA NOVAIS', 'status' => 'ativo'],
-            ['matricula' => '25161699', 'nome' => 'ANA JULIA MONTEIRO PANIZO', 'status' => 'ativo'],
-            ['matricula' => '25161437', 'nome' => 'ANA LAURA BACHEGA', 'status' => 'ativo'],
-            ['matricula' => '25161439', 'nome' => 'ANA LIVIA MONDINI', 'status' => 'ativo'],
-            ['matricula' => '25161442', 'nome' => 'BEATRIZ BONFIM MACHADO', 'status' => 'ativo'],
-            ['matricula' => '25161492', 'nome' => 'BEATRIZ BRAGA DE PAULA', 'status' => 'ativo'],
-            ['matricula' => '25161540', 'nome' => 'BIANCA DA SILVA PEREZ', 'status' => 'ativo'],
-            ['matricula' => '25161510', 'nome' => 'CLARA CLOE DOS SANTOS ARCANJO', 'status' => 'ativo'],
-            ['matricula' => '25161590', 'nome' => 'EDUARDO LUCAS DE OLIVEIRA', 'status' => 'ativo'],
-            ['matricula' => '25161692', 'nome' => 'GABRIEL SANTOS DE ANDRADE', 'status' => 'ativo'],
-            ['matricula' => '25161444', 'nome' => 'GUILHERME BARBOZA TEIXEIRA', 'status' => 'ativo'],
-            ['matricula' => '25161446', 'nome' => 'GUSTAVO ALVES DE SOUSA MOREIRA', 'status' => 'ativo'],
-            ['matricula' => '25161448', 'nome' => 'GUSTAVO MATOS SILVA', 'status' => 'ativo'],
-            ['matricula' => '25161450', 'nome' => 'ÍCARO MORAES SILVA', 'status' => 'ativo'],
-            ['matricula' => '25161452', 'nome' => 'LAURA TEODORO', 'status' => 'ativo'],
-            ['matricula' => '25161454', 'nome' => 'LETÍCIA AMARAL MONARI', 'status' => 'ativo'],
-            ['matricula' => '25161498', 'nome' => 'LETÍCIA RIBEIRO', 'status' => 'ativo'],
-            ['matricula' => '25161694', 'nome' => 'LETÍCIA XAVIER DA SILVA', 'status' => 'ativo'],
-            ['matricula' => '25161502', 'nome' => 'LUCAS MUNHOZ PENHA', 'status' => 'ativo'],
-            ['matricula' => '25161456', 'nome' => 'LUCAS PEREZ NAITZKI', 'status' => 'ativo'],
-            ['matricula' => '25161458', 'nome' => 'LUIZA DOS SANTOS SILVA', 'status' => 'ativo'],
-            ['matricula' => '25161504', 'nome' => 'MARCELLO AUGUSTO DA SILVA SANTOS', 'status' => 'ativo'],
-            ['matricula' => '25161479', 'nome' => 'MARIA CLARA FERREIRA CARVALHO', 'status' => 'ativo'],
-            ['matricula' => '25161462', 'nome' => 'MATHEUS HENRIQUE DA SILVEIRA MIGUEL', 'status' => 'ativo'],
-            ['matricula' => '25161506', 'nome' => 'MAYLLA FATIMA MOREIRA DE MORAIS', 'status' => 'ativo'],
-            ['matricula' => '25161550', 'nome' => 'MILENA BORGES DA SILVA', 'status' => 'ativo'],
-            ['matricula' => '25161726', 'nome' => 'PAULO ROBERTO REGIANI JÚNIOR', 'status' => 'ativo'],
-            ['matricula' => '25161483', 'nome' => 'PEDRO GABRIEL BETTIM', 'status' => 'ativo'],
-            ['matricula' => '25161696', 'nome' => 'PIETRO SCHIAVINATO', 'status' => 'ativo'],
-            ['matricula' => '25161548', 'nome' => 'RAFAEL LIMA DE SOUZA', 'status' => 'ativo'],
-            ['matricula' => '25161465', 'nome' => 'RENATO GUILHERME SILVINO SANTANA', 'status' => 'ativo'],
-            ['matricula' => '25161690', 'nome' => 'THUANNY BORIM PEREIRA', 'status' => 'ativo'],
+            ['matricula' => '25161435', 'nome' => 'Ana Caroline da Silva Novais', 'status' => 'ativo'],
+            ['matricula' => '25161699', 'nome' => 'Ana Julia Monteiro Panizo', 'status' => 'ativo'],
+            ['matricula' => '25161437', 'nome' => 'Ana Laura Bachega', 'status' => 'ativo'],
+            ['matricula' => '25161439', 'nome' => 'Ana Livia Mondini', 'status' => 'ativo'],
+            ['matricula' => '25161442', 'nome' => 'Beatriz Bonfim Machado', 'status' => 'ativo'],
+            ['matricula' => '25161492', 'nome' => 'Beatriz Braga de Paula', 'status' => 'ativo'],
+            ['matricula' => '25161540', 'nome' => 'Bianca da Silva Perez', 'status' => 'ativo'],
+            ['matricula' => '25161510', 'nome' => 'Clara Cloe dos Santos Arcanjo', 'status' => 'ativo'],
+            ['matricula' => '25161590', 'nome' => 'Eduardo Lucas de Oliveira', 'status' => 'ativo'],
+            ['matricula' => '25161692', 'nome' => 'Gabriel Santos de Andrade', 'status' => 'ativo'],
+            ['matricula' => '25161444', 'nome' => 'Guilherme Barboza Teixeira', 'status' => 'ativo'],
+            ['matricula' => '25161446', 'nome' => 'Gustavo Alves de Sousa Moreira', 'status' => 'ativo'],
+            ['matricula' => '25161448', 'nome' => 'Gustavo Matos Silva', 'status' => 'ativo'],
+            ['matricula' => '25161450', 'nome' => 'Ícaro Moraes Silva', 'status' => 'ativo'],
+            ['matricula' => '25161452', 'nome' => 'Laura Teodoro', 'status' => 'ativo'],
+            ['matricula' => '25161454', 'nome' => 'Letícia Amaral Monari', 'status' => 'ativo'],
+            ['matricula' => '25161498', 'nome' => 'Letícia Ribeiro', 'status' => 'ativo'],
+            ['matricula' => '25161694', 'nome' => 'Letícia Xavier da Silva', 'status' => 'ativo'],
+            ['matricula' => '25161502', 'nome' => 'Lucas Munhoz Penha', 'status' => 'ativo'],
+            ['matricula' => '25161456', 'nome' => 'Lucas Perez Naitzki', 'status' => 'ativo'],
+            ['matricula' => '25161458', 'nome' => 'Luiza dos Santos Silva', 'status' => 'ativo'],
+            ['matricula' => '25161504', 'nome' => 'Marcello Augusto da Silva Santos', 'status' => 'ativo'],
+            ['matricula' => '25161479', 'nome' => 'Maria Clara Ferreira Carvalho', 'status' => 'ativo'],
+            ['matricula' => '25161462', 'nome' => 'Matheus Henrique da Silveira Miguel', 'status' => 'ativo'],
+            ['matricula' => '25161506', 'nome' => 'Maylla Fátima Moreira de Morais', 'status' => 'ativo'],
+            ['matricula' => '25161550', 'nome' => 'Milena Borges da Silva', 'status' => 'ativo'],
+            ['matricula' => '25161726', 'nome' => 'Paulo Roberto Regiani Júnior', 'status' => 'ativo'],
+            ['matricula' => '25161483', 'nome' => 'Pedro Gabriel Bettim', 'status' => 'ativo'],
+            ['matricula' => '25161696', 'nome' => 'Pietro Schiavinato', 'status' => 'ativo'],
+            ['matricula' => '25161548', 'nome' => 'Rafael Lima de Souza', 'status' => 'ativo'],
+            ['matricula' => '25161465', 'nome' => 'Renato Guilherme Silvino Santana', 'status' => 'ativo'],
+            ['matricula' => '25161690', 'nome' => 'Thuanny Borim Pereira', 'status' => 'ativo'],
         ];
 
         if ($turmaI2HN) {
@@ -60,7 +72,7 @@ class AlunoSeeder extends Seeder
                     ['matricula' => $alunoData['matricula']],
                     [
                         'turma_id' => $turmaI2HN->id,
-                        'nome' => $alunoData['nome'],
+                        'nome' => $this->formatarNomeProprio($alunoData['nome']),
                         'email' => $alunoData['matricula'] . '@aluno.senai.br',
                         'status' => $alunoData['status'],
                     ]
@@ -70,42 +82,42 @@ class AlunoSeeder extends Seeder
 
         // 2. Turma DES-I1HNA (32 ativos + 3 cancelados/inativos)
         $alunosI1HNA = [
-            ['matricula' => '26170543', 'nome' => 'ANA CLARA DOS REIS', 'status' => 'ativo'],
-            ['matricula' => '26168261', 'nome' => 'ANA CLARA SCHULTZ DA SILVA', 'status' => 'ativo'],
-            ['matricula' => '26168263', 'nome' => 'ANA LIVIA FURINI DA SILVA', 'status' => 'ativo'],
-            ['matricula' => '26168353', 'nome' => 'ANNA GABRIELLY DE QUEIROZ MARTINS', 'status' => 'ativo'],
-            ['matricula' => '26169042', 'nome' => 'ARIELLE DA SILVA SENA', 'status' => 'ativo'],
-            ['matricula' => '26168461', 'nome' => 'BRUNA OLIVEIRA DA SILVA', 'status' => 'ativo'],
-            ['matricula' => '26168337', 'nome' => 'CAUÃ HENRIQUE DOS SANTOS', 'status' => 'ativo'],
-            ['matricula' => '26168220', 'nome' => 'DAVI DE FREITAS PICONE', 'status' => 'ativo'],
-            ['matricula' => '26170574', 'nome' => 'EDUARDA BEATRIZ GONÇALVES DA SILVA', 'status' => 'ativo'],
-            ['matricula' => '26168271', 'nome' => 'ELOY FELIPE DOS SANTOS OLIVEIRA', 'status' => 'ativo'],
-            ['matricula' => '26168506', 'nome' => 'GABRIEL NASCIMENTO GALBIATI', 'status' => 'ativo'],
-            ['matricula' => '26168414', 'nome' => 'GABRIELLE OLIMPIO DE SOUZA', 'status' => 'ativo'],
-            ['matricula' => '26168578', 'nome' => 'HELENA FRIZONI DE CASTRO', 'status' => 'ativo'],
-            ['matricula' => '26168632', 'nome' => 'JULIA FURTADO', 'status' => 'ativo'],
-            ['matricula' => '26168639', 'nome' => 'CHRISTIAN CAPUTI', 'status' => 'ativo'],
-            ['matricula' => '26168494', 'nome' => 'JULIA PEZZATO JUSTINO', 'status' => 'ativo'],
-            ['matricula' => '26168647', 'nome' => 'LEONARDO HENRIQUE SUBIRES DE ANDRADE', 'status' => 'ativo'],
-            ['matricula' => '26168279', 'nome' => 'LUCAS MIGUEL FATINATTI VIEIRA', 'status' => 'ativo'],
-            ['matricula' => '26168643', 'nome' => 'LUIS FELIPE SOUZA DA MATA', 'status' => 'ativo'],
-            ['matricula' => '26170600', 'nome' => 'LUIZ GABRIEL NASCIMENTO MAGNOS', 'status' => 'ativo'],
-            ['matricula' => '26168281', 'nome' => 'MALIKA MELO BERTONHA', 'status' => 'ativo'],
-            ['matricula' => '26168498', 'nome' => 'MAYNA BEATRIZ BARBOSA', 'status' => 'ativo'],
-            ['matricula' => '26168287', 'nome' => 'MIGUEL NOVAES TOULOUZAS', 'status' => 'ativo'],
-            ['matricula' => '26168500', 'nome' => 'MILENA APARECIDA PANIZO NASCIMENTO', 'status' => 'ativo'],
-            ['matricula' => '26168508', 'nome' => 'NICOLAS DE SOUSA BANI', 'status' => 'ativo'],
-            ['matricula' => '26168504', 'nome' => 'NÍCOLAS DUARTE DA COSTA', 'status' => 'ativo'],
-            ['matricula' => '26168289', 'nome' => 'PEDRO KALEB PAULINO', 'status' => 'ativo'],
-            ['matricula' => '26168463', 'nome' => 'THIAGO LUIZ SALDANHA LINS', 'status' => 'ativo'],
-            ['matricula' => '26168666', 'nome' => 'VÍCTOR HUGO GOIS DE PAULA', 'status' => 'ativo'],
-            ['matricula' => '26168576', 'nome' => 'VITOR GAZOLA RAMOS', 'status' => 'ativo'],
-            ['matricula' => '26168465', 'nome' => 'YAGO KAUAN DE SOUZA NOGUEIRA', 'status' => 'ativo'],
-            ['matricula' => '26168480', 'nome' => 'YURI ORUAM CAMARGO NEVES', 'status' => 'ativo'],
+            ['matricula' => '26170543', 'nome' => 'Ana Clara dos Reis', 'status' => 'ativo'],
+            ['matricula' => '26168261', 'nome' => 'Ana Clara Schultz da Silva', 'status' => 'ativo'],
+            ['matricula' => '26168263', 'nome' => 'Ana Livia Furini da Silva', 'status' => 'ativo'],
+            ['matricula' => '26168353', 'nome' => 'Anna Gabrielly de Queiroz Martins', 'status' => 'ativo'],
+            ['matricula' => '26169042', 'nome' => 'Arielle da Silva Sena', 'status' => 'ativo'],
+            ['matricula' => '26168461', 'nome' => 'Bruna Oliveira da Silva', 'status' => 'ativo'],
+            ['matricula' => '26168337', 'nome' => 'Cauã Henrique dos Santos', 'status' => 'ativo'],
+            ['matricula' => '26168220', 'nome' => 'Davi de Freitas Picone', 'status' => 'ativo'],
+            ['matricula' => '26170574', 'nome' => 'Eduarda Beatriz Gonçalves da Silva', 'status' => 'ativo'],
+            ['matricula' => '26168271', 'nome' => 'Eloy Felipe dos Santos Oliveira', 'status' => 'ativo'],
+            ['matricula' => '26168506', 'nome' => 'Gabriel Nascimento Galbiati', 'status' => 'ativo'],
+            ['matricula' => '26168414', 'nome' => 'Gabrielle Olimpio de Souza', 'status' => 'ativo'],
+            ['matricula' => '26168578', 'nome' => 'Helena Frizoni de Castro', 'status' => 'ativo'],
+            ['matricula' => '26168632', 'nome' => 'Julia Furtado', 'status' => 'ativo'],
+            ['matricula' => '26168639', 'nome' => 'Christian Caputi', 'status' => 'ativo'],
+            ['matricula' => '26168494', 'nome' => 'Julia Pezzato Justino', 'status' => 'ativo'],
+            ['matricula' => '26168647', 'nome' => 'Leonardo Henrique Subires de Andrade', 'status' => 'ativo'],
+            ['matricula' => '26168279', 'nome' => 'Lucas Miguel Fatinatti Vieira', 'status' => 'ativo'],
+            ['matricula' => '26168643', 'nome' => 'Luis Felipe Souza da Mata', 'status' => 'ativo'],
+            ['matricula' => '26170600', 'nome' => 'Luiz Gabriel Nascimento Magnos', 'status' => 'ativo'],
+            ['matricula' => '26168281', 'nome' => 'Malika Melo Bertonha', 'status' => 'ativo'],
+            ['matricula' => '26168498', 'nome' => 'Mayna Beatriz Barbosa', 'status' => 'ativo'],
+            ['matricula' => '26168287', 'nome' => 'Miguel Novaes Toulouzas', 'status' => 'ativo'],
+            ['matricula' => '26168500', 'nome' => 'Milena Aparecida Panizo Nascimento', 'status' => 'ativo'],
+            ['matricula' => '26168508', 'nome' => 'Nicolas de Sousa Bani', 'status' => 'ativo'],
+            ['matricula' => '26168504', 'nome' => 'Nícolas Duarte da Costa', 'status' => 'ativo'],
+            ['matricula' => '26168289', 'nome' => 'Pedro Kaleb Paulino', 'status' => 'ativo'],
+            ['matricula' => '26168463', 'nome' => 'Thiago Luiz Saldanha Lins', 'status' => 'ativo'],
+            ['matricula' => '26168666', 'nome' => 'Víctor Hugo Gois de Paula', 'status' => 'ativo'],
+            ['matricula' => '26168576', 'nome' => 'Vitor Gazola Ramos', 'status' => 'ativo'],
+            ['matricula' => '26168465', 'nome' => 'Yago Kauan de Souza Nogueira', 'status' => 'ativo'],
+            ['matricula' => '26168480', 'nome' => 'Yuri Oruam Camargo Neves', 'status' => 'ativo'],
             // Alunos com matrícula cancelada no diário (inativos)
-            ['matricula' => '26168307', 'nome' => 'ANA LUIZA GONÇALVES ZUPPELLO', 'status' => 'inativo'],
-            ['matricula' => '26168640', 'nome' => 'CHRISTIAN CAPUTI', 'status' => 'inativo'],
-            ['matricula' => '26168496', 'nome' => 'ENZO FELIPE NOVAES', 'status' => 'inativo'],
+            ['matricula' => '26168307', 'nome' => 'Ana Luiza Gonçalves Zuppello', 'status' => 'inativo'],
+            ['matricula' => '26168640', 'nome' => 'Christian Caputi', 'status' => 'inativo'],
+            ['matricula' => '26168496', 'nome' => 'Enzo Felipe Novaes', 'status' => 'inativo'],
         ];
 
         if ($turmaI1HNA) {
@@ -114,7 +126,7 @@ class AlunoSeeder extends Seeder
                     ['matricula' => $alunoData['matricula']],
                     [
                         'turma_id' => $turmaI1HNA->id,
-                        'nome' => $alunoData['nome'],
+                        'nome' => $this->formatarNomeProprio($alunoData['nome']),
                         'email' => $alunoData['matricula'] . '@aluno.senai.br',
                         'status' => $alunoData['status'],
                     ]
@@ -124,22 +136,22 @@ class AlunoSeeder extends Seeder
 
         // 3. Turma DES-M4H (14 ativos + 1 evadido/inativo)
         $alunosM4H = [
-            ['matricula' => '25162318', 'nome' => 'CAUAN JOSÉ FAVERI MARREIROS', 'status' => 'ativo'],
-            ['matricula' => '25162312', 'nome' => 'CHRISTOPHER COIMBRA MONTEIRO', 'status' => 'ativo'],
-            ['matricula' => '25162293', 'nome' => 'GABRIEL ALVES NUNES PIMENTEL', 'status' => 'ativo'],
-            ['matricula' => '25162346', 'nome' => 'GABRIELE FURLAN CAVALCANTI', 'status' => 'ativo'],
-            ['matricula' => '25162289', 'nome' => 'GUILHERME MUNIZ CLARO', 'status' => 'ativo'],
-            ['matricula' => '25162301', 'nome' => 'HELEN CRYSTINA ANDRADE DE SOUZA', 'status' => 'ativo'],
-            ['matricula' => '25162303', 'nome' => 'IANN ARTHUR MARTAROLI', 'status' => 'ativo'],
-            ['matricula' => '25162310', 'nome' => 'ISABELLA DE SOUZA FLORENTINO', 'status' => 'ativo'],
-            ['matricula' => '25162314', 'nome' => 'JULIANA VIEIRA SILVA', 'status' => 'ativo'],
-            ['matricula' => '25162316', 'nome' => 'LUCAS DE SOUZA FERREIRA', 'status' => 'ativo'],
-            ['matricula' => '25162291', 'nome' => 'MANOELA LEITE DE CAMPOS', 'status' => 'ativo'],
-            ['matricula' => '25162305', 'nome' => 'MARIA EDUARDA DE SOUZA BIGATI', 'status' => 'ativo'],
-            ['matricula' => '25162295', 'nome' => 'MATHEUS DE SANTANA FARIA', 'status' => 'ativo'],
-            ['matricula' => '25162287', 'nome' => 'RAFAEL AUGUSTO BARROS', 'status' => 'ativo'],
+            ['matricula' => '25162318', 'nome' => 'Cauan José Faveri Marreiros', 'status' => 'ativo'],
+            ['matricula' => '25162312', 'nome' => 'Christopher Coimbra Monteiro', 'status' => 'ativo'],
+            ['matricula' => '25162293', 'nome' => 'Gabriel Alves Nunes Pimentel', 'status' => 'ativo'],
+            ['matricula' => '25162346', 'nome' => 'Gabriele Furlan Cavalcanti', 'status' => 'ativo'],
+            ['matricula' => '25162289', 'nome' => 'Guilherme Muniz Claro', 'status' => 'ativo'],
+            ['matricula' => '25162301', 'nome' => 'Helen Crystina Andrade de Souza', 'status' => 'ativo'],
+            ['matricula' => '25162303', 'nome' => 'Iann Arthur Martaroli', 'status' => 'ativo'],
+            ['matricula' => '25162310', 'nome' => 'Isabella de Souza Florentino', 'status' => 'ativo'],
+            ['matricula' => '25162314', 'nome' => 'Juliana Vieira Silva', 'status' => 'ativo'],
+            ['matricula' => '25162316', 'nome' => 'Lucas de Souza Ferreira', 'status' => 'ativo'],
+            ['matricula' => '25162291', 'nome' => 'Manoela Leite de Campos', 'status' => 'ativo'],
+            ['matricula' => '25162305', 'nome' => 'Maria Eduarda de Souza Bigati', 'status' => 'ativo'],
+            ['matricula' => '25162295', 'nome' => 'Matheus de Santana Faria', 'status' => 'ativo'],
+            ['matricula' => '25162287', 'nome' => 'Rafael Augusto Barros', 'status' => 'ativo'],
             // Aluno evadido no diário (inativo)
-            ['matricula' => '25162269', 'nome' => 'VIVIAN CARAZZATTO ALEIXO', 'status' => 'inativo'],
+            ['matricula' => '25162269', 'nome' => 'Vivian Carazzatto Aleixo', 'status' => 'inativo'],
         ];
 
         if ($turmaM4H) {
@@ -148,7 +160,7 @@ class AlunoSeeder extends Seeder
                     ['matricula' => $alunoData['matricula']],
                     [
                         'turma_id' => $turmaM4H->id,
-                        'nome' => $alunoData['nome'],
+                        'nome' => $this->formatarNomeProprio($alunoData['nome']),
                         'email' => $alunoData['matricula'] . '@aluno.senai.br',
                         'status' => $alunoData['status'],
                     ]

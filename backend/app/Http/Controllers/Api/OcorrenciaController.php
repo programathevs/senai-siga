@@ -22,12 +22,24 @@ class OcorrenciaController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Ocorrencia::with([
-            'aluno.turma.curso',
-            'registradoPor',
-            'unidades.unidadeCurricular',
-            'instrutores.user',
-        ]);
+        $user = $request->user();
+
+        // Admins visualizam inclusive FIAPs excluídas (Soft Delete)
+        $query = $user && $user->hasRole('admin')
+            ? Ocorrencia::withTrashed()->with([
+                'aluno.turma.curso',
+                'registradoPor',
+                'unidades.unidadeCurricular',
+                'instrutores.user',
+                'edicoes.editadoPor',
+            ])
+            : Ocorrencia::with([
+                'aluno.turma.curso',
+                'registradoPor',
+                'unidades.unidadeCurricular',
+                'instrutores.user',
+                'edicoes.editadoPor',
+            ]);
 
         // Filtro por busca textual (número sequencial, nome do aluno, matrícula ou CPF)
         if ($request->filled('search')) {
@@ -83,7 +95,6 @@ class OcorrenciaController extends Controller
         }
 
         // Escopo de visibilidade: Instrutor visualiza apenas alunos das turmas que leciona ou ocorrências registradas por ele
-        $user = $request->user();
         $turmaIds = [];
         $userId = $user?->id;
         if ($user && $user->hasRole('instrutor')) {
@@ -311,10 +322,18 @@ class OcorrenciaController extends Controller
     }
 
     /**
-     * Remove o registro da ocorrência do sistema.
+     * Remove o registro da ocorrência do sistema (Soft Delete).
      */
-    public function destroy(Ocorrencia $ocorrencia): JsonResponse
+    public function destroy(Request $request, Ocorrencia $ocorrencia): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user && ! $user->hasRole('admin') && $ocorrencia->registrado_por !== $user->id) {
+            return response()->json([
+                'message' => 'Você só pode excluir ocorrências que foram registradas por você.',
+            ], 403);
+        }
+
         $ocorrencia->delete();
 
         return response()->json([
@@ -323,10 +342,45 @@ class OcorrenciaController extends Controller
     }
 
     /**
+     * Restaura uma ocorrência / FIAP excluída (Soft Delete).
+     */
+    public function restaurar(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user->hasRole('admin')) {
+            return response()->json([
+                'message' => 'Apenas o administrador pode restaurar ocorrências excluídas.',
+            ], 403);
+        }
+
+        $ocorrencia = Ocorrencia::withTrashed()->findOrFail($id);
+        $ocorrencia->restore();
+
+        return response()->json([
+            'message' => "Ocorrência {$ocorrencia->numero_sequencial} restaurada com sucesso.",
+            'data' => $ocorrencia->load([
+                'aluno.turma.curso',
+                'registradoPor',
+                'unidades.unidadeCurricular',
+                'instrutores.user',
+            ]),
+        ]);
+    }
+
+    /**
      * Encaminha formalmente a ocorrência para a equipe de Apoio e Qualidade de Vida (AQV).
      */
     public function encaminharAqv(Request $request, Ocorrencia $ocorrencia): JsonResponse
     {
+        $user = $request->user();
+
+        // Apenas ADMIN ou o PRÓPRIO criador da FIAP podem encaminhá-la para a AQV
+        if (! $user->hasRole('admin') && $ocorrencia->registrado_por !== $user->id) {
+            return response()->json([
+                'message' => 'Apenas o administrador ou o próprio instrutor que criou a FIAP podem encaminhá-la para a AQV.',
+            ], 403);
+        }
+
         $ocorrencia->update([
             'status' => 'enviado_aqv',
         ]);

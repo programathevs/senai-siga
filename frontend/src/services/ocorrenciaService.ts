@@ -28,6 +28,11 @@ export interface OcorrenciaEdicao {
   id: number;
   ocorrencia_id: number;
   editado_por: number;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
   editado_por_user?: {
     id: number;
     name: string;
@@ -66,6 +71,7 @@ export interface Ocorrencia {
   edicoes?: OcorrenciaEdicao[];
   created_at?: string;
   updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface OcorrenciaEstatisticas {
@@ -149,6 +155,13 @@ export const ocorrenciaService = {
   async encaminharAqv(id: number): Promise<Ocorrencia> {
     const response = await api.post<{ message: string; data: Ocorrencia }>(
       `/api/ocorrencias/${id}/encaminhar-aqv`
+    );
+    return response.data.data;
+  },
+
+  async restaurarOcorrencia(id: number): Promise<Ocorrencia> {
+    const response = await api.post<{ message: string; data: Ocorrencia }>(
+      `/api/ocorrencias/${id}/restaurar`
     );
     return response.data.data;
   },

@@ -440,6 +440,40 @@
   opacity: 0.5;
 }
 
+/* Soft Deleted Row & Restore Button */
+.trDeleted {
+  opacity: 0.55;
+  background-color: color-mix(in srgb, var(--color-danger, #ef4444) 4%, transparent);
+}
+
+.trDeleted:hover {
+  opacity: 0.85;
+  background-color: color-mix(in srgb, var(--color-danger, #ef4444) 8%, transparent);
+}
+
+.statusExcluido {
+  background-color: color-mix(in srgb, #ef4444 15%, transparent);
+  color: #dc2626;
+  border: 1px dashed color-mix(in srgb, #ef4444 40%, transparent);
+}
+
+.restoreBtn {
+  width: auto;
+  padding: 0 0.65rem;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #059669;
+  border-color: color-mix(in srgb, #10b981 35%, transparent);
+  background-color: color-mix(in srgb, #10b981 10%, transparent);
+}
+
+.restoreBtn:hover {
+  background-color: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
 @media (max-width: 768px) {
   .kpiGrid {
     grid-template-columns: 1fr 1fr;
