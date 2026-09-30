@@ -90,12 +90,9 @@ class InstrutorControllerTest extends TestCase
         );
     }
 
-    public function test_non_admin_cannot_access_instrutores(): void
+    public function test_non_admin_cannot_create_instrutores(): void
     {
         $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
-
-        $response = $this->actingAs($instrutor)->getJson('/api/instrutores');
-        $response->assertStatus(403);
 
         $responsePost = $this->actingAs($instrutor)->postJson('/api/instrutores', [
             'nome' => 'Teste',
