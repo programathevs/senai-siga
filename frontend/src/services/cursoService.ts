@@ -4,6 +4,7 @@ export interface UnidadeCurricular {
   id?: number;
   curso_id?: number;
   nome: string;
+  sigla?: string | null;
   carga_horaria: number;
   semestre_plano_3: number | null;
   semestre_plano_4: number | null;

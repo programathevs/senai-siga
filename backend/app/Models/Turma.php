@@ -47,4 +47,13 @@ class Turma extends Model
             ->withPivot('instrutor_id', 'semestre', 'carga_horaria')
             ->withTimestamps();
     }
+
+    /**
+     * Instrutores / Docentes responsáveis por esta turma.
+     */
+    public function instrutores(): BelongsToMany
+    {
+        return $this->belongsToMany(Instrutor::class, 'turma_instrutores')
+            ->withTimestamps();
+    }
 }

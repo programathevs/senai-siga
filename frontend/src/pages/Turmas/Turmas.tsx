@@ -180,6 +180,28 @@ export function Turmas() {
                   <BookOpen size={14} />
                   {turma.curso?.nome || "Curso não informado"}
                 </p>
+
+                {turma.instrutores && turma.instrutores.length > 0 && (
+                  <div style={{ marginTop: "0.4rem", display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
+                    {turma.instrutores.map((inst) => (
+                      <span
+                        key={inst.id}
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 600,
+                          padding: "0.15rem 0.45rem",
+                          borderRadius: "var(--radius-sm)",
+                          backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)",
+                          color: "var(--color-primary)",
+                          border: "1px solid color-mix(in srgb, var(--color-primary) 20%, transparent)",
+                        }}
+                        title={`Docente: ${inst.user?.name || "Instrutor"}`}
+                      >
+                        {inst.user?.name ? inst.user.name.split(" ")[0] : "Instrutor"}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className={styles.cardDetails}>

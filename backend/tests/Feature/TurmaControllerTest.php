@@ -16,12 +16,15 @@ class TurmaControllerTest extends TestCase
 
     public function test_authenticated_users_can_list_turmas(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
         $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
+        $instrutorProfile = \App\Models\Instrutor::create(['user_id' => $instrutor->id]);
         $curso = Curso::factory()->create();
+        $turmas = Turma::factory()->count(3)->create(['curso_id' => $curso->id]);
+        foreach ($turmas as $t) {
+            $t->instrutores()->attach($instrutorProfile->id);
+        }
 
-        Turma::factory()->count(3)->create(['curso_id' => $curso->id]);
-
+        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
         $responseAdmin = $this->actingAs($admin)->getJson('/api/turmas');
         $responseAdmin->assertOk()->assertJsonCount(3, 'data');
 

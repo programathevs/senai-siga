@@ -1,5 +1,6 @@
 import { api } from "./api";
 import type { Curso } from "./cursoService";
+import type { Instrutor } from "./instrutorService";
 
 export interface Turma {
   id: number;
@@ -12,6 +13,7 @@ export interface Turma {
   updated_at: string;
   curso?: Curso;
   alunos_count?: number;
+  instrutores?: Instrutor[];
   alunos?: Array<{
     id: number;
     turma_id: number | null;
@@ -30,6 +32,7 @@ export interface TurmaPayload {
   turno?: string | null;
   ano_letivo: string;
   semestre_atual?: number | null;
+  instrutor_ids?: number[];
 }
 
 export const turmaService = {

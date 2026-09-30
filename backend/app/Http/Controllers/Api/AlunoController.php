@@ -100,18 +100,29 @@ class AlunoController extends Controller
      */
     public function historico(Aluno $aluno): JsonResponse
     {
-        $aluno->load('turma.curso');
+        $aluno->load([
+            'turma.curso',
+            'ocorrencias' => function ($q) {
+                $q->with(['unidades.unidadeCurricular', 'instrutores.user', 'registradoPor', 'aqvRecebimento'])
+                  ->orderBy('data_ocorrencia', 'desc')
+                  ->orderBy('id', 'desc');
+            },
+        ]);
 
-        // Estrutura para consolidação das ocorrências disciplinares futuras
+        $ocorrencias = $aluno->ocorrencias;
+        $totalFaltas = $ocorrencias->where('tipo', 'falta')->sum(function ($oc) {
+            return $oc->unidades->sum('quantidade_faltas');
+        });
+
         return response()->json([
             'data' => [
                 'aluno' => $aluno,
                 'estatisticas' => [
-                    'total_ocorrencias' => 0,
-                    'total_faltas' => 0,
-                    'planos_recuperacao_ativos' => 0,
+                    'total_ocorrencias' => $ocorrencias->count(),
+                    'total_faltas' => $totalFaltas,
+                    'planos_recuperacao_ativos' => $ocorrencias->where('status', 'enviado_aqv')->count(),
                 ],
-                'ocorrencias' => [],
+                'ocorrencias' => $ocorrencias,
             ],
         ]);
     }

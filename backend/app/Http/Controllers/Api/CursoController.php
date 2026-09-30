@@ -48,6 +48,7 @@ class CursoController extends Controller
                 foreach ($validated['unidades_curriculares'] as $uc) {
                     $curso->unidadesCurriculares()->create([
                         'nome' => $uc['nome'],
+                        'sigla' => $uc['sigla'] ?? null,
                         'carga_horaria' => $uc['carga_horaria'] ?? 75,
                         'semestre_plano_3' => $uc['semestre_plano_3'] ?? null,
                         'semestre_plano_4' => $uc['semestre_plano_4'] ?? null,
@@ -106,6 +107,7 @@ class CursoController extends Controller
                             ->where('curso_id', $curso->id)
                             ->update([
                                 'nome' => $ucData['nome'],
+                                'sigla' => $ucData['sigla'] ?? null,
                                 'carga_horaria' => $ucData['carga_horaria'] ?? 75,
                                 'semestre_plano_3' => $ucData['semestre_plano_3'] ?? null,
                                 'semestre_plano_4' => $ucData['semestre_plano_4'] ?? null,
@@ -113,6 +115,7 @@ class CursoController extends Controller
                     } else {
                         $curso->unidadesCurriculares()->create([
                             'nome' => $ucData['nome'],
+                            'sigla' => $ucData['sigla'] ?? null,
                             'carga_horaria' => $ucData['carga_horaria'] ?? 75,
                             'semestre_plano_3' => $ucData['semestre_plano_3'] ?? null,
                             'semestre_plano_4' => $ucData['semestre_plano_4'] ?? null,

@@ -1,5 +1,6 @@
 import { api } from "./api";
 import type { Turma } from "./turmaService";
+import type { Ocorrencia } from "./ocorrenciaService";
 
 export interface Aluno {
   id: number;
@@ -34,7 +35,7 @@ export interface AlunoHistorico {
     total_faltas: number;
     planos_recuperacao_ativos: number;
   };
-  ocorrencias: any[];
+  ocorrencias: Ocorrencia[];
 }
 
 export const alunoService = {

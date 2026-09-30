@@ -1,0 +1,530 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 880px;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.modalHeader {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-surface);
+}
+
+.headerTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeBtn:hover {
+  background-color: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+  color: var(--color-text-primary);
+}
+
+.modalBody {
+  padding: 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: color-mix(in srgb, var(--color-border) 25%, transparent);
+}
+
+/* ========================================================
+   DOCUMENTO OFICIAL FIAP (Padronizado SENAI Sumaré)
+   ======================================================== */
+.contentPdfContainer {
+  width: 100%;
+  max-width: 800px;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+  padding: 10px;
+}
+
+/* Cabeçalho Oficial */
+.headerContainer {
+  padding: 0px 0px 0px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #000000;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.logoImage {
+  width: 22%;
+  height: 50px;
+  margin: 8px 10px;
+  object-fit: contain;
+}
+
+.headerTextContainer {
+  width: 75%;
+  text-align: center;
+  border: none;
+  border-left: 1px solid #000000;
+  box-sizing: border-box;
+}
+
+.headerTitle {
+  font-size: 14px;
+  margin: 0px;
+  font-weight: 700;
+  border: none;
+  border-bottom: 1px solid #000000;
+  padding: 5px 4px;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.headerDetails {
+  display: flex;
+  justify-content: space-between;
+  min-height: 52px;
+}
+
+.headerDetailsItem {
+  font-size: 11px;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.headerToken {
+  width: 52%;
+  padding: 4px 10px;
+  border: none;
+  border-right: 1px solid #000000;
+  font-size: 10.5px;
+  font-weight: normal;
+  line-height: 1.25;
+}
+
+.headerSequential {
+  width: 32%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.headerVersion {
+  width: 16%;
+  border: none;
+  border-left: 1px solid #000000;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Seção de Informações do Estudante e Ocorrência */
+.infoSection {
+  padding: 0px;
+  margin: 12px 0px 0px 0px;
+  border: 1px solid #000000;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.studentInfoRow {
+  padding: 6px 8px;
+  margin: 0px;
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  border: none;
+  border-bottom: 1px solid #000000;
+  row-gap: 5px;
+  line-height: 1.35;
+  color: #000000;
+}
+
+.studentInfoItem {
+  margin: 0;
+  width: 50%;
+  color: #000000;
+}
+
+.studentInfoItemDoc {
+  margin: 0;
+  width: 38%;
+  color: #000000;
+}
+
+.studentInfoItemVist {
+  margin: 0;
+  width: 16%;
+  color: #000000;
+}
+
+.studentInfoItemCompC {
+  margin: 0;
+  width: 46%;
+  color: #000000;
+}
+
+.studentInfoItemLess {
+  margin: 0;
+  width: 33.33%;
+  color: #000000;
+}
+
+.studentInfoItemDate {
+  margin: 0;
+  width: 60%;
+  color: #000000;
+}
+
+.studentInfoItemLimit {
+  margin: 0;
+  width: 40%;
+  color: #000000;
+}
+
+/* Blocos de Feedback e Texto Descritivo */
+.feedback {
+  padding: 6px 8px;
+  margin: 0px;
+  border: none;
+  border-bottom: 1px solid #000000;
+  font-size: 12px;
+  color: #000000;
+  box-sizing: border-box;
+}
+
+.feedbackTitle {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.feedbackDescription {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #000000;
+  text-align: justify;
+}
+
+.feedbackDifficulty {
+  min-height: 90px;
+}
+
+.feedbackRecommendations {
+  min-height: 55px;
+}
+
+.feedbackTeamRecommendations {
+  min-height: 85px;
+}
+
+.feedbackProvidencias {
+  min-height: 60px;
+}
+
+.feedbackObs {
+  min-height: 38px;
+}
+
+/* Seção de Assinaturas */
+.feedbackSubscriptionSection {
+  padding: 6px 8px 14px 8px;
+  margin: 0px;
+  border: none;
+  box-sizing: border-box;
+}
+
+.feedbackSignatures {
+  margin-top: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  text-align: center;
+  row-gap: 26px;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.feedbackSignaturesTitle {
+  font-size: 9px;
+  margin: 0;
+  border: none;
+  border-top: 1px solid #000000;
+  padding-top: 3px;
+  color: #000000;
+  box-sizing: border-box;
+  width: 14%;
+}
+
+.signatureWide {
+  width: 32% !important;
+}
+
+/* ========================================================
+   RODAPÉ DO MODAL (Ações)
+   ======================================================== */
+.modalFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background-color: var(--color-surface);
+  flex-wrap: wrap;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btnAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 1rem;
+  height: 2.375rem;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+.btnAction:hover {
+  background-color: color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+
+.btnPrimary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.btnPrimary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.btnAqv {
+  background-color: color-mix(in srgb, #8b5cf6 15%, transparent);
+  border-color: color-mix(in srgb, #8b5cf6 30%, transparent);
+  color: #7c3aed;
+}
+
+.btnAqv:hover {
+  background-color: color-mix(in srgb, #8b5cf6 25%, transparent);
+  border-color: #7c3aed;
+}
+
+/* ========================================================
+   ESTILOS DE IMPRESSÃO (@media print)
+   ======================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 6mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .contentPdfContainer,
+  .contentPdfContainer * {
+    visibility: visible;
+  }
+
+  .contentPdfContainer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .overlay {
+    position: static;
+    background: transparent;
+    padding: 0;
+  }
+
+  .modal {
+    border: none;
+    box-shadow: none;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .modalHeader,
+  .modalFooter {
+    display: none !important;
+  }
+
+  .modalBody {
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+}
+
+/* ========================================================
+   HISTÓRICO DE AUDITORIA (Exibido apenas no modal, fora do PDF/Impressão)
+   ======================================================== */
+.auditContainer {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 1.25rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+.auditHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.auditList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.auditItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+}
+
+.auditItemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.auditBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+
+.auditUserDate {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.auditReason {
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.45;
+}

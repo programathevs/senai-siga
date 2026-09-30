@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { X, FileText, AlertTriangle, ShieldCheck, Loader2, Phone, Mail, Calendar } from "lucide-react";
+import {
+  X,
+  FileText,
+  AlertTriangle,
+  ShieldCheck,
+  Loader2,
+  Phone,
+  Mail,
+  Calendar,
+  Clock,
+  ShieldAlert,
+  BookOpen,
+  Eye,
+} from "lucide-react";
 import { alunoService, type AlunoHistorico } from "../../services/alunoService";
+import type { Ocorrencia } from "../../services/ocorrenciaService";
 import { formatPhoneNumber, formatCpf } from "../../utils/formatters";
+import { OcorrenciaDetalhesModal } from "../Ocorrencias/OcorrenciaDetalhesModal";
 import styles from "./AlunoHistoricoModal.module.css";
 
 interface AlunoHistoricoModalProps {
@@ -17,6 +32,7 @@ export const AlunoHistoricoModal: React.FC<AlunoHistoricoModalProps> = ({
 }) => {
   const [data, setData] = useState<AlunoHistorico | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedFiap, setSelectedFiap] = useState<Ocorrencia | null>(null);
 
   useEffect(() => {
     if (isOpen && alunoId) {
@@ -43,7 +59,7 @@ export const AlunoHistoricoModal: React.FC<AlunoHistoricoModalProps> = ({
               <FileText size={18} />
             </div>
             <div>
-              <h2 className={styles.title}>Ficha & Histórico Disciplinar</h2>
+              <h2 className={styles.title}>Ficha &amp; Histórico Disciplinar</h2>
               <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.8125rem", color: "var(--color-text-secondary)" }}>
                 Acompanhamento individual de ocorrências, faltas e planos de recuperação.
               </p>
@@ -131,7 +147,7 @@ export const AlunoHistoricoModal: React.FC<AlunoHistoricoModalProps> = ({
                   <p className={styles.kpiValue} style={{ color: "#10b981" }}>
                     {data?.estatisticas?.planos_recuperacao_ativos || 0}
                   </p>
-                  <p className={styles.kpiLabel}>Planos de Recuperação</p>
+                  <p className={styles.kpiLabel}>Encaminhadas ao AQV</p>
                 </div>
               </div>
 
@@ -148,8 +164,105 @@ export const AlunoHistoricoModal: React.FC<AlunoHistoricoModalProps> = ({
                     </p>
                   </div>
                 ) : (
-                  <div>
-                    {/* Lista de ocorrências preenchida no módulo de Ocorrências */}
+                  <div className={styles.timelineList}>
+                    {data.ocorrencias.map((oc) => {
+                      const primaryUc = oc.unidades && oc.unidades.length > 0 ? oc.unidades[0] : null;
+                      const isCritical =
+                        oc.tipo === "falta" &&
+                        ((primaryUc?.percentual_atingido || 0) >= 100 ||
+                          (primaryUc?.quantidade_faltas || 0) >= (primaryUc?.limite_faltas_aulas || 999));
+
+                      return (
+                        <div key={oc.id} className={styles.timelineCard}>
+                          <div className={styles.cardHeader}>
+                            <div className={styles.cardHeaderLeft}>
+                              <span className={styles.seqBadge}>
+                                {oc.numero_sequencial || `#${oc.id}`}
+                              </span>
+
+                              {oc.tipo === "falta" && (
+                                <span className={`${styles.tipoBadge} ${styles.tipoFalta}`}>
+                                  <Clock size={11} />
+                                  Falta
+                                </span>
+                              )}
+                              {oc.tipo === "comportamento" && (
+                                <span className={`${styles.tipoBadge} ${styles.tipoComportamento}`}>
+                                  <ShieldAlert size={11} />
+                                  Comportamento
+                                </span>
+                              )}
+                              {oc.tipo === "desempenho" && (
+                                <span className={`${styles.tipoBadge} ${styles.tipoDesempenho}`}>
+                                  <BookOpen size={11} />
+                                  Desempenho
+                                </span>
+                              )}
+                            </div>
+
+                            <span className={styles.dateText}>
+                              {oc.data_ocorrencia
+                                ? new Date(oc.data_ocorrencia + "T00:00:00").toLocaleDateString("pt-BR")
+                                : "—"}
+                            </span>
+                          </div>
+
+                          <div className={styles.cardBody}>
+                            {oc.tipo === "falta" && primaryUc && (
+                              <>
+                                <div className={styles.cardBodyTitle}>
+                                  <span>{primaryUc.unidade_curricular?.nome || "Unidade Curricular"}</span>
+                                  {isCritical && (
+                                    <span className={styles.limitAlertBadge}>Limite Atingido</span>
+                                  )}
+                                </div>
+                                <p className={styles.cardBodyText}>
+                                  <strong>{primaryUc.quantidade_faltas} faltas</strong> registradas (
+                                  {Number(primaryUc.percentual_atingido || 0).toFixed(1)}% do limite permitido).
+                                </p>
+                              </>
+                            )}
+
+                            {oc.tipo === "comportamento" && (
+                              <>
+                                <div className={styles.cardBodyTitle}>
+                                  <span>{oc.providencias_gestao || "Medida Pedagógica"}</span>
+                                </div>
+                                <p className={styles.cardBodyText}>
+                                  {oc.relato_dificuldades || "Sem relato descritivo."}
+                                </p>
+                              </>
+                            )}
+
+                            {oc.tipo === "desempenho" && (
+                              <>
+                                <div className={styles.cardBodyTitle}>
+                                  <span>{primaryUc?.unidade_curricular?.nome || "Acompanhamento Pedagógico"}</span>
+                                </div>
+                                <p className={styles.cardBodyText}>
+                                  {oc.recomendacoes_professor || oc.relato_dificuldades || "Orientações registradas pelo docente."}
+                                </p>
+                              </>
+                            )}
+                          </div>
+
+                          <div className={styles.cardFooter}>
+                            <span>
+                              Registrado por: <strong>{oc.registrado_por_user?.name || "Docente"}</strong>
+                            </span>
+
+                            <button
+                              type="button"
+                              className={styles.viewDocBtn}
+                              onClick={() => setSelectedFiap(oc)}
+                            >
+                              <Eye size={13} />
+                              Visualizar FIAP
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -163,6 +276,14 @@ export const AlunoHistoricoModal: React.FC<AlunoHistoricoModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Modal de Detalhes da FIAP */}
+      <OcorrenciaDetalhesModal
+        isOpen={Boolean(selectedFiap)}
+        onClose={() => setSelectedFiap(null)}
+        ocorrencia={selectedFiap}
+      />
     </div>
   );
 };
+
