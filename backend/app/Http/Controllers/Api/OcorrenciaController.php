@@ -167,29 +167,8 @@ class OcorrenciaController extends Controller
                 'status' => $validated['status'] ?? 'pendente',
             ]);
 
-            // Se houver unidade curricular informada (obrigatório em falta, opcional em desempenho)
-            if (! empty($validated['unidade_curricular_id'])) {
-                $uc = UnidadeCurricular::find($validated['unidade_curricular_id']);
-                $cargaHoraria = $uc ? (int) $uc->carga_horaria : 80;
-                $totalAulas = (int) round($cargaHoraria / 0.75);
-                $limitePercentual = (float) ($validated['limite_percentual'] ?? 25.00);
-                $limiteFaltasAulas = (int) round(($totalAulas * $limitePercentual) / 100);
-
-                $qtdFaltas = (int) ($validated['quantidade_faltas'] ?? 0);
-                $percentualAtingido = $limiteFaltasAulas > 0
-                    ? round(($qtdFaltas / $limiteFaltasAulas) * 100, 1)
-                    : 0;
-
-                OcorrenciaUnidade::create([
-                    'ocorrencia_id' => $ocorrencia->id,
-                    'unidade_curricular_id' => $validated['unidade_curricular_id'],
-                    'total_aulas_dadas' => $validated['total_aulas_dadas'] ?? $qtdFaltas,
-                    'quantidade_faltas' => $qtdFaltas,
-                    'limite_percentual' => $limitePercentual,
-                    'limite_faltas_aulas' => $limiteFaltasAulas,
-                    'percentual_atingido' => $percentualAtingido,
-                ]);
-            }
+            // Processa as unidades curriculares da ocorrência (suporte a N UCs)
+            $this->processarUnidades($ocorrencia, $validated);
 
             // Vincula os instrutores notificantes selecionados
             $instrutorIds = $validated['instrutor_ids'] ?? [];
@@ -204,7 +183,7 @@ class OcorrenciaController extends Controller
                 $ocorrencia->instrutores()->sync(array_unique($instrutorIds));
             }
 
-            return $ocorrencia;
+            return $ocorrencia->fresh();
         });
 
         return response()->json([
@@ -275,39 +254,105 @@ class OcorrenciaController extends Controller
                 'status' => $validated['status'] ?? $ocorrencia->status,
             ]);
 
-            // Atualiza unidade curricular e faltas se aplicável
-            if (! empty($validated['unidade_curricular_id'])) {
-                $uc = UnidadeCurricular::find($validated['unidade_curricular_id']);
-                $cargaHoraria = $uc ? (int) $uc->carga_horaria : 80;
-                $totalAulas = (int) round($cargaHoraria / 0.75);
-                $limitePercentual = (float) ($validated['limite_percentual'] ?? 25.00);
-                $limiteFaltasAulas = (int) round(($totalAulas * $limitePercentual) / 100);
-
-                $qtdFaltas = (int) ($validated['quantidade_faltas'] ?? 0);
-                $percentualAtingido = $limiteFaltasAulas > 0
-                    ? round(($qtdFaltas / $limiteFaltasAulas) * 100, 1)
-                    : 0;
-
-                OcorrenciaUnidade::updateOrCreate(
-                    ['ocorrencia_id' => $ocorrencia->id],
-                    [
-                        'unidade_curricular_id' => $validated['unidade_curricular_id'],
-                        'total_aulas_dadas' => $validated['total_aulas_dadas'] ?? $qtdFaltas,
-                        'quantidade_faltas' => $qtdFaltas,
-                        'limite_percentual' => $limitePercentual,
-                        'limite_faltas_aulas' => $limiteFaltasAulas,
-                        'percentual_atingido' => $percentualAtingido,
-                    ]
-                );
-            }
+            // Processa as unidades curriculares da ocorrência (suporte a N UCs)
+            $this->processarUnidades($ocorrencia, $validated);
 
             // Atualiza instrutores notificantes
             if (isset($validated['instrutor_ids'])) {
                 $ocorrencia->instrutores()->sync($validated['instrutor_ids']);
             }
 
-            return $ocorrencia;
+            return $ocorrencia->fresh();
         });
+
+        return response()->json([
+            'message' => 'Ocorrência atualizada com sucesso.',
+            'data' => $ocorrencia->load([
+                'aluno.turma.curso',
+                'registradoPor',
+                'unidades.unidadeCurricular',
+                'instrutores.user',
+                'edicoes.editadoPor',
+            ]),
+        ]);
+    }
+
+    /**
+     * Sincroniza e calcula os dados das Unidades Curriculares da ocorrência.
+     */
+    private function processarUnidades(Ocorrencia $ocorrencia, array $validated): void
+    {
+        $unidadesData = [];
+
+        if (! empty($validated['unidades']) && is_array($validated['unidades'])) {
+            $unidadesData = $validated['unidades'];
+        } elseif (! empty($validated['unidade_curricular_id'])) {
+            $unidadesData = [
+                [
+                    'unidade_curricular_id' => $validated['unidade_curricular_id'],
+                    'quantidade_faltas' => (int) ($validated['quantidade_faltas'] ?? 0),
+                    'total_aulas_dadas' => $validated['total_aulas_dadas'] ?? null,
+                    'limite_percentual' => $validated['limite_percentual'] ?? 25.00,
+                ],
+            ];
+        }
+
+        if (empty($unidadesData)) {
+            return;
+        }
+
+        // Limpa unidades antigas se estiver atualizando
+        OcorrenciaUnidade::where('ocorrencia_id', $ocorrencia->id)->delete();
+
+        $relatoPartes = [];
+
+        foreach ($unidadesData as $item) {
+            $ucId = $item['unidade_curricular_id'];
+            $uc = UnidadeCurricular::find($ucId);
+            $cargaHoraria = $uc ? (int) $uc->carga_horaria : 80;
+            $totalAulas = (int) round($cargaHoraria / 0.75);
+            $limitePercentual = (float) ($item['limite_percentual'] ?? 25.00);
+            $limiteFaltasAulas = (int) round(($totalAulas * $limitePercentual) / 100);
+
+            $qtdFaltas = (int) ($item['quantidade_faltas'] ?? 0);
+            $percentualAtingido = $limiteFaltasAulas > 0
+                ? round(($qtdFaltas / $limiteFaltasAulas) * 100, 1)
+                : 0;
+
+            OcorrenciaUnidade::create([
+                'ocorrencia_id' => $ocorrencia->id,
+                'unidade_curricular_id' => $ucId,
+                'total_aulas_dadas' => $item['total_aulas_dadas'] ?? $qtdFaltas,
+                'quantidade_faltas' => $qtdFaltas,
+                'limite_percentual' => $limitePercentual,
+                'limite_faltas_aulas' => $limiteFaltasAulas,
+                'percentual_atingido' => $percentualAtingido,
+            ]);
+
+            if ($uc) {
+                $siglaOuNome = $uc->sigla ? $uc->sigla : $uc->nome;
+                $relatoPartes[] = "unidade curricular {$siglaOuNome} – {$cargaHoraria} h/a: possui até a data de hoje {$qtdFaltas} faltas, representando " . number_format($percentualAtingido, 1, '.', '') . "% do limite permitido ({$limiteFaltasAulas} aulas)";
+            }
+        }
+
+        // Se for do tipo 'falta' e relato_dificuldades não tiver sido fornecido manualmente, constrói o relato padrão
+        if ($ocorrencia->tipo === 'falta' && ! empty($relatoPartes) && empty($validated['relato_dificuldades'])) {
+            $textoUnidades = '';
+            $total = count($relatoPartes);
+            if ($total === 1) {
+                $textoUnidades = $relatoPartes[0];
+            } else {
+                $ultimaparte = array_pop($relatoPartes);
+                $textoUnidades = implode('; ', $relatoPartes) . ' e ' . $ultimaparte;
+            }
+
+            $relatoGerado = "O aluno(a) está ciente que as ausências às aulas causam prejuízos para seu aproveitamento e o mesmo apresenta excesso de faltas nas: {$textoUnidades}.";
+
+            $ocorrencia->update([
+                'relato_dificuldades' => $relatoGerado,
+            ]);
+        }
+    }
 
         return response()->json([
             'message' => 'Ocorrência atualizada com sucesso.',

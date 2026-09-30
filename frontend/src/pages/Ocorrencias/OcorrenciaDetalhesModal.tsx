@@ -72,16 +72,26 @@ export function OcorrenciaDetalhesModal({
 
   const formattedSeq = formatSequentialNumber(ocorrencia.numero_sequencial);
 
-  // Cálculos oficiais de faltas e limites
+  const unidades = ocorrencia.unidades && ocorrencia.unidades.length > 0 ? ocorrencia.unidades : [];
+
+  const compCurricularDisplay = unidades.length > 0
+    ? unidades.map((u) => u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC").join(" / ")
+    : (primaryUc?.unidade_curricular?.sigla ? `${primaryUc.unidade_curricular.nome} (${primaryUc.unidade_curricular.sigla})` : primaryUc?.unidade_curricular?.nome || "Componente Curricular");  const quantidadeFaltas = primaryUc?.quantidade_faltas ?? 0;
   const horasTotais = primaryUc?.unidade_curricular?.carga_horaria || 80;
-  // Conversão de horas para número de aulas de 45min (horas / 0.75)
-  const aulasTotais = horasTotais / 0.75;
-  const limiteFaltasAulas = Math.round(aulasTotais * 0.25);
-  const quantidadeFaltas = primaryUc?.quantidade_faltas ?? 0;
-  const porcentagemFaltas =
-    limiteFaltasAulas > 0
-      ? ((quantidadeFaltas / limiteFaltasAulas) * 100).toFixed(1)
-      : "0.0";
+  const limiteFaltasAulas = Math.round((horasTotais / 0.75) * 0.25);
+
+  const faltasDisplay = unidades.length > 0
+    ? unidades.map((u) => `${u.quantidade_faltas} (${u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC"})`).join(" / ")
+    : `${quantidadeFaltas} faltas`;
+
+  const limiteFaltasDisplay = unidades.length > 0
+    ? unidades.map((u) => {
+        const ch = u.unidade_curricular?.carga_horaria || 80;
+        const lim = Math.round((ch / 0.75) * 0.25);
+        const sigla = u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC";
+        return `${lim} aulas (${sigla})`;
+      }).join(" / ")
+    : `${limiteFaltasAulas} aulas`;
 
   const nomeDocente =
     ocorrencia.registrado_por_user?.name ||
@@ -91,9 +101,6 @@ export function OcorrenciaDetalhesModal({
 
   const nomeAluno = aluno?.nome || "Aluno(a)";
   const nomeTurma = aluno?.turma?.nome || "Turma não informada";
-  const siglaUc = primaryUc?.unidade_curricular?.sigla;
-  const nomeUc = primaryUc?.unidade_curricular?.nome || "Componente Curricular";
-  const compCurricularDisplay = siglaUc ? `${nomeUc} (${siglaUc})` : nomeUc;
 
   const dataFormatada = (() => {
     if (!ocorrencia.data_ocorrencia) return new Date().toLocaleDateString("pt-BR");
@@ -108,8 +115,28 @@ export function OcorrenciaDetalhesModal({
     return isNaN(d.getTime()) ? ocorrencia.data_ocorrencia : d.toLocaleDateString("pt-BR");
   })();
 
+  const relatoPartes = unidades.map((u) => {
+    const siglaOuNome = u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC";
+    const ch = Number(u.unidade_curricular?.carga_horaria) || 80;
+    const aulas = Math.round(ch / 0.75);
+    const lim = Math.round(aulas * 0.25);
+    const perc = Number(u.percentual_atingido || (lim > 0 ? (u.quantidade_faltas / lim) * 100 : 0)).toFixed(1);
+    return `unidade curricular ${siglaOuNome} – ${ch} h/a: possui até a data de hoje ${u.quantidade_faltas} faltas, representando ${perc}% do limite permitido (${lim} aulas)`;
+  });
+
+  let textoUnidadesGenerico = "";
+  if (relatoPartes.length === 1) {
+    textoUnidadesGenerico = relatoPartes[0];
+  } else if (relatoPartes.length > 1) {
+    const copy = [...relatoPartes];
+    const ultima = copy.pop();
+    textoUnidadesGenerico = copy.join("; ") + " e " + ultima;
+  }
+
   // Recomendações e textos institucionais padrão
-  const relatoPadrao = `O aluno(a) está ciente que as ausências às aulas causam prejuízos para seu aproveitamento e o mesmo apresenta excesso de faltas na unidade curricular ${compCurricularDisplay} – ${horasTotais} h/a: Limite de 25% h/a possui até a data de hoje ${quantidadeFaltas} faltas ${porcentagemFaltas}% do permitido.`;
+  const relatoPadrao = textoUnidadesGenerico
+    ? `O aluno(a) está ciente que as ausências às aulas causam prejuízos para seu aproveitamento e o mesmo apresenta excesso de faltas nas: ${textoUnidadesGenerico}.`
+    : `O aluno(a) está ciente que as ausências às aulas causam prejuízos para seu aproveitamento e o mesmo apresenta excesso de faltas.`;
 
   const recomendacoesProfessorPadrao =
     "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar.";
@@ -130,7 +157,9 @@ export function OcorrenciaDetalhesModal({
     setIsGeneratingPdf(true);
     try {
       const nomeSanitizado = (aluno?.nome || "Aluno").replace(/\s+/g, "");
-      const siglaComp = siglaUc || nomeUc.substring(0, 10).replace(/\s+/g, "");
+      const primarySigla = primaryUc?.unidade_curricular?.sigla;
+      const primaryNome = primaryUc?.unidade_curricular?.nome || "Componente";
+      const siglaComp = primarySigla || primaryNome.substring(0, 10).replace(/\s+/g, "");
 
       const options = {
         margin: 0.3,
@@ -226,13 +255,13 @@ export function OcorrenciaDetalhesModal({
                   <b>Média da Classe:</b> ------
                 </p>
                 <p className={styles.studentInfoItemLess}>
-                  <b>Faltas do Aluno:</b> {quantidadeFaltas} faltas
+                  <b>Faltas do Aluno:</b> {faltasDisplay}
                 </p>
                 <p className={styles.studentInfoItemDate}>
                   <b>Data:</b> {dataFormatada}
                 </p>
                 <p className={styles.studentInfoItemLimit}>
-                  <b>Limite de Faltas:</b> {limiteFaltasAulas} aulas
+                  <b>Limite de Faltas:</b> {limiteFaltasDisplay}
                 </p>
               </div>
 
