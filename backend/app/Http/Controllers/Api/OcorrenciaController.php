@@ -354,18 +354,6 @@ class OcorrenciaController extends Controller
         }
     }
 
-        return response()->json([
-            'message' => 'Ocorrência atualizada com sucesso.',
-            'data' => $ocorrencia->load([
-                'aluno.turma.curso',
-                'registradoPor',
-                'unidades.unidadeCurricular',
-                'instrutores.user',
-                'edicoes.editadoPor',
-            ]),
-        ]);
-    }
-
     /**
      * Remove o registro da ocorrência do sistema (Soft Delete).
      */
