@@ -98,7 +98,7 @@
   font-family: Arial, Helvetica, sans-serif;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   box-sizing: border-box;
-  padding: 10px;
+  padding: 0;
 }
 
 /* Cabeçalho Oficial */
@@ -275,50 +275,50 @@
 }
 
 .feedbackDifficulty {
-  min-height: 90px;
+  min-height: 160px;
 }
 
 .feedbackRecommendations {
-  min-height: 55px;
+  min-height: 100px;
 }
 
 .feedbackTeamRecommendations {
-  min-height: 85px;
+  min-height: 175px;
 }
 
 .feedbackProvidencias {
-  min-height: 60px;
+  min-height: 115px;
 }
 
 .feedbackObs {
-  min-height: 38px;
+  min-height: 65px;
 }
 
 /* Seção de Assinaturas */
 .feedbackSubscriptionSection {
-  padding: 6px 8px 14px 8px;
+  padding: 6px 8px 24px 8px;
   margin: 0px;
   border: none;
   box-sizing: border-box;
 }
 
 .feedbackSignatures {
-  margin-top: 26px;
+  margin-top: 48px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   text-align: center;
-  row-gap: 26px;
+  row-gap: 40px;
   justify-content: space-between;
   box-sizing: border-box;
 }
 
 .feedbackSignaturesTitle {
-  font-size: 9px;
+  font-size: 9.5px;
   margin: 0;
   border: none;
   border-top: 1px solid #000000;
-  padding-top: 3px;
+  padding-top: 4px;
   color: #000000;
   box-sizing: border-box;
   width: 14%;
@@ -404,7 +404,17 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm 6mm;
+    margin: 6mm;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 
   body * {
@@ -416,40 +426,77 @@
     visibility: visible;
   }
 
+  .overlay {
+    position: static !important;
+    display: block !important;
+    inset: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    transform: none !important;
+    animation: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .modal {
+    position: static !important;
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  .modalHeader,
+  .modalFooter,
+  .auditContainer {
+    display: none !important;
+  }
+
+  .modalBody {
+    position: static !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    transform: none !important;
+  }
+
   .contentPdfContainer {
-    position: absolute;
-    left: 0;
-    top: 0;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     box-shadow: none !important;
     padding: 0 !important;
     margin: 0 !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
-  .overlay {
-    position: static;
-    background: transparent;
-    padding: 0;
-  }
-
-  .modal {
-    border: none;
-    box-shadow: none;
-    width: 100%;
-    max-width: 100%;
-    overflow: visible;
-  }
-
-  .modalHeader,
-  .modalFooter {
-    display: none !important;
-  }
-
-  .modalBody {
-    padding: 0 !important;
-    background: transparent !important;
-    overflow: visible !important;
+  .headerContainer,
+  .infoSection,
+  .feedback,
+  .feedbackSubscriptionSection {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 

@@ -128,18 +128,25 @@ export function OcorrenciaModal({
     setQuantidadeFaltas(4);
     setUnidadesList([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
     setRelatoDificuldades("");
-    setRecomendacoesProfessor("");
-    setRecomendacoesGestao("");
+    setRecomendacoesProfessor(
+      "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar."
+    );
+    setRecomendacoesGestao(
+      "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas."
+    );
     setProvidenciasGestao("");
-    setOutrasObservacoes("");
+    setOutrasObservacoes("----");
     setMotivoEdicao("");
     setErrorMessage("");
   }
 
   function handleAddUcLine() {
+    const jaSelecionadas = new Set(unidadesList.map((u) => String(u.unidade_curricular_id)));
+    const proximaUc = unidadesCurricularesFiltradas.find((uc) => !jaSelecionadas.has(String(uc.id)));
+
     setUnidadesList((prev) => [
       ...prev,
-      { unidade_curricular_id: "", quantidade_faltas: 4 },
+      { unidade_curricular_id: proximaUc ? String(proximaUc.id) : "", quantidade_faltas: 4 },
     ]);
   }
 
@@ -200,11 +207,57 @@ export function OcorrenciaModal({
     return filtradas.length > 0 ? filtradas : unidadesCurriculares;
   }, [unidadesCurriculares, turmaSelecionada]);
 
-  function handlePreencherPadraoSenai() {
+  // Seleciona a primeira UC automaticamente quando a turma é selecionada
+  useEffect(() => {
+    if (!isEditing && selectedTurmaId && unidadesCurricularesFiltradas.length > 0) {
+      setUnidadesList((prev) => {
+        if (prev.length === 1 && !prev[0].unidade_curricular_id) {
+          return [{ unidade_curricular_id: String(unidadesCurricularesFiltradas[0].id), quantidade_faltas: 4 }];
+        }
+        return prev;
+      });
+    }
+  }, [selectedTurmaId, unidadesCurricularesFiltradas, isEditing]);
+
+  // Atualiza automaticamente as providências da gestão com o nome do aluno selecionado
+  useEffect(() => {
+    if (tipo === "falta" && !isEditing) {
+      const nomeAluno = alunoSelecionado?.nome || "o aluno";
+      setProvidenciasGestao(
+        `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`
+      );
+    }
+  }, [alunoSelecionado, tipo, isEditing]);
+
+  // Pré-preenche os textos padrão institucionais de recomendações e observações para FIAP de falta
+  useEffect(() => {
+    if (tipo === "falta" && !isEditing) {
+      if (!recomendacoesProfessor) {
+        setRecomendacoesProfessor(
+          "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar."
+        );
+      }
+      if (!recomendacoesGestao) {
+        setRecomendacoesGestao(
+          "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas."
+        );
+      }
+      if (!outrasObservacoes) {
+        setOutrasObservacoes("----");
+      }
+    }
+  }, [tipo, isEditing, recomendacoesProfessor, recomendacoesGestao, outrasObservacoes]);
+
+  // Atualiza automaticamente o relato de circunstâncias conforme UCs e faltas forem selecionadas/alteradas
+  useEffect(() => {
+    if (tipo !== "falta") return;
+
     const relatoPartes: string[] = [];
     unidadesList.forEach((item) => {
-      const uc = unidadesCurriculares.find((u) => String(u.id) === String(item.unidade_curricular_id));
-      if (uc) {
+      const uc = unidadesCurriculares.find(
+        (u) => String(u.id) === String(item.unidade_curricular_id)
+      );
+      if (uc && Number(item.quantidade_faltas) > 0) {
         const siglaOuNome = uc.sigla ? uc.sigla : uc.nome;
         const ch = Number(uc.carga_horaria) || 80;
         const aulas = Math.round(ch / 0.75);
@@ -216,9 +269,7 @@ export function OcorrenciaModal({
       }
     });
 
-    const nomeAluno = alunoSelecionado?.nome || "o aluno";
-
-    if (tipo === "falta" && relatoPartes.length > 0) {
+    if (relatoPartes.length > 0) {
       let textoUnidades = "";
       if (relatoPartes.length === 1) {
         textoUnidades = relatoPartes[0];
@@ -230,19 +281,10 @@ export function OcorrenciaModal({
       setRelatoDificuldades(
         `O aluno(a) está ciente que as ausências às aulas causam prejuízos para seu aproveitamento e o mesmo apresenta excesso de faltas nas: ${textoUnidades}.`
       );
+    } else if (!isEditing) {
+      setRelatoDificuldades("");
     }
-
-    setRecomendacoesProfessor(
-      "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar."
-    );
-    setRecomendacoesGestao(
-      "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas."
-    );
-    setProvidenciasGestao(
-      `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`
-    );
-    setOutrasObservacoes("----");
-  }
+  }, [unidadesList, unidadesCurriculares, tipo, isEditing]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -527,17 +569,26 @@ export function OcorrenciaModal({
                                 : "Nenhuma UC cadastrada para este semestre"
                               : "Selecione uma turma primeiro"}
                           </option>
-                          {unidadesCurricularesFiltradas.map((uc) => {
-                            const ucAulas = Math.round(uc.carga_horaria / 0.75);
-                            const ucLim = Math.round(ucAulas * 0.25);
-                            const sem = uc.semestre_plano_3 || uc.semestre_plano_4;
-                            const semBadge = sem ? ` (${sem}º Sem)` : "";
-                            return (
-                              <option key={uc.id} value={uc.id}>
-                                {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome}{semBadge} — {uc.carga_horaria}h ({ucAulas} aulas, limite: {ucLim} aulas)
-                              </option>
-                            );
-                          })}
+                          {unidadesCurricularesFiltradas
+                            .filter(
+                              (uc) =>
+                                String(uc.id) === String(item.unidade_curricular_id) ||
+                                !unidadesList.some(
+                                  (other, oIdx) =>
+                                    oIdx !== index && String(other.unidade_curricular_id) === String(uc.id)
+                                )
+                            )
+                            .map((uc) => {
+                              const ucAulas = Math.round(uc.carga_horaria / 0.75);
+                              const ucLim = Math.round(ucAulas * 0.25);
+                              const sem = uc.semestre_plano_3 || uc.semestre_plano_4;
+                              const semBadge = sem ? ` (${sem}º Sem)` : "";
+                              return (
+                                <option key={uc.id} value={uc.id}>
+                                  {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome}{semBadge} — {uc.carga_horaria}h ({ucAulas} aulas, limite: {ucLim} aulas)
+                                </option>
+                              );
+                            })}
                         </select>
                       </div>
 
@@ -610,23 +661,22 @@ export function OcorrenciaModal({
                 );
               })}
 
-              <button
-                type="button"
-                className={styles.addUcBtn}
-                onClick={handleAddUcLine}
-              >
-                <Plus size={16} />
-                Adicionar Outra Matéria / UC na FIAP
-              </button>
+              {unidadesList.length < unidadesCurricularesFiltradas.length && (
+                <button
+                  type="button"
+                  className={styles.addUcBtn}
+                  onClick={handleAddUcLine}
+                >
+                  <Plus size={16} />
+                  Adicionar Outra Matéria / UC na FIAP
+                </button>
+              )}
             </div>
           )}
 
           {/* 4. RELATO DOS FATOS OU DIFICULDADES */}
           <div className={styles.section}>
-            <div
-              className={styles.sectionHeader}
-              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}
-            >
+            <div className={styles.sectionHeader}>
               <span>
                 {tipo === "falta"
                   ? "4. Justificativa & Recomendações"
@@ -634,30 +684,6 @@ export function OcorrenciaModal({
                   ? "3. Relato da Ocorrência Disciplinar"
                   : "3. Diagnóstico de Aproveitamento Pedagógico"}
               </span>
-
-              {tipo === "falta" && (
-                <button
-                  type="button"
-                  onClick={handlePreencherPadraoSenai}
-                  style={{
-                    fontSize: "0.75rem",
-                    padding: "0.25rem 0.65rem",
-                    borderRadius: "var(--radius-sm)",
-                    border: "1px solid var(--color-primary)",
-                    backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
-                    color: "var(--color-primary)",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.35rem",
-                  }}
-                  title="Preencher campos com o modelo institucional padrão da Unidade Sumaré"
-                >
-                  <FileText size={13} />
-                  Preencher Texto Padrão SENAI
-                </button>
-              )}
             </div>
 
             <div className={styles.fieldGroup}>

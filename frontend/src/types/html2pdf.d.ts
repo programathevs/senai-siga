@@ -9,6 +9,9 @@ declare module "html2pdf.js" {
       useCORS?: boolean;
       logging?: boolean;
       letterRendering?: boolean;
+      scrollY?: number;
+      scrollX?: number;
+      windowWidth?: number;
     };
     jsPDF?: {
       unit?: string;

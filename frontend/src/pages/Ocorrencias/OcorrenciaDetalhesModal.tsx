@@ -76,7 +76,8 @@ export function OcorrenciaDetalhesModal({
 
   const compCurricularDisplay = unidades.length > 0
     ? unidades.map((u) => u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC").join(" / ")
-    : (primaryUc?.unidade_curricular?.sigla ? `${primaryUc.unidade_curricular.nome} (${primaryUc.unidade_curricular.sigla})` : primaryUc?.unidade_curricular?.nome || "Componente Curricular");  const quantidadeFaltas = primaryUc?.quantidade_faltas ?? 0;
+    : (primaryUc?.unidade_curricular?.sigla ? `${primaryUc.unidade_curricular.nome} (${primaryUc.unidade_curricular.sigla})` : primaryUc?.unidade_curricular?.nome || "Componente Curricular");
+  const quantidadeFaltas = primaryUc?.quantidade_faltas ?? 0;
   const horasTotais = primaryUc?.unidade_curricular?.carga_horaria || 80;
   const limiteFaltasAulas = Math.round((horasTotais / 0.75) * 0.25);
 
@@ -86,11 +87,11 @@ export function OcorrenciaDetalhesModal({
 
   const limiteFaltasDisplay = unidades.length > 0
     ? unidades.map((u) => {
-        const ch = u.unidade_curricular?.carga_horaria || 80;
-        const lim = Math.round((ch / 0.75) * 0.25);
-        const sigla = u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC";
-        return `${lim} aulas (${sigla})`;
-      }).join(" / ")
+      const ch = u.unidade_curricular?.carga_horaria || 80;
+      const lim = Math.round((ch / 0.75) * 0.25);
+      const sigla = u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC";
+      return `${lim} aulas (${sigla})`;
+    }).join(" / ")
     : `${limiteFaltasAulas} aulas`;
 
   const nomeDocente =
@@ -162,15 +163,18 @@ export function OcorrenciaDetalhesModal({
       const siglaComp = primarySigla || primaryNome.substring(0, 10).replace(/\s+/g, "");
 
       const options = {
-        margin: 0.3,
+        margin: [6, 6, 6, 6] as [number, number, number, number],
         filename: `FIAP_${nomeSanitizado}_${siglaComp}.pdf`,
         image: { type: "jpeg" as const, quality: 0.98 },
         html2canvas: {
-          scale: 2,
+          scale: 2.5,
           useCORS: true,
           logging: false,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: 800,
         },
-        jsPDF: { unit: "in", format: "a4", orientation: "portrait" as const },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
       };
 
       await html2pdf().set(options).from(element).save();
