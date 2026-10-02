@@ -387,3 +387,57 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Multi-UC List Controls */
+.ucRowCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  margin-bottom: 0.75rem;
+}
+
+.addUcBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  border: 1px dashed var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 0.25rem;
+}
+
+.addUcBtn:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.removeUcBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background-color: transparent;
+  color: var(--color-danger);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  margin-top: 1.35rem;
+}
+
+.removeUcBtn:hover {
+  background-color: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  border-color: var(--color-danger);
+}
+

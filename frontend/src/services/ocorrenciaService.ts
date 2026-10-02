@@ -66,6 +66,8 @@ export interface Ocorrencia {
   data_ocorrencia: string;
   status: OcorrenciaStatus;
   pdf_path?: string | null;
+  unidade_curricular_id?: number | null;
+  unidade_curricular?: UnidadeCurricular | null;
   unidades?: OcorrenciaUnidade[];
   instrutores?: Instrutor[];
   edicoes?: OcorrenciaEdicao[];
@@ -102,6 +104,11 @@ export interface CreateOcorrenciaPayload {
   quantidade_faltas?: number;
   total_aulas_dadas?: number;
   limite_percentual?: number;
+  unidades?: Array<{
+    unidade_curricular_id: number;
+    quantidade_faltas: number;
+    limite_percentual?: number;
+  }>;
   instrutor_ids?: number[];
   relato_dificuldades?: string;
   recomendacoes_professor?: string;

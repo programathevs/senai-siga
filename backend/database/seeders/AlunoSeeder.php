@@ -114,10 +114,6 @@ class AlunoSeeder extends Seeder
             ['matricula' => '26168576', 'nome' => 'Vitor Gazola Ramos', 'status' => 'ativo'],
             ['matricula' => '26168465', 'nome' => 'Yago Kauan de Souza Nogueira', 'status' => 'ativo'],
             ['matricula' => '26168480', 'nome' => 'Yuri Oruam Camargo Neves', 'status' => 'ativo'],
-            // Alunos com matrícula cancelada no diário (inativos)
-            ['matricula' => '26168307', 'nome' => 'Ana Luiza Gonçalves Zuppello', 'status' => 'inativo'],
-            ['matricula' => '26168640', 'nome' => 'Christian Caputi', 'status' => 'inativo'],
-            ['matricula' => '26168496', 'nome' => 'Enzo Felipe Novaes', 'status' => 'inativo'],
         ];
 
         if ($turmaI1HNA) {
@@ -150,8 +146,6 @@ class AlunoSeeder extends Seeder
             ['matricula' => '25162305', 'nome' => 'Maria Eduarda de Souza Bigati', 'status' => 'ativo'],
             ['matricula' => '25162295', 'nome' => 'Matheus de Santana Faria', 'status' => 'ativo'],
             ['matricula' => '25162287', 'nome' => 'Rafael Augusto Barros', 'status' => 'ativo'],
-            // Aluno evadido no diário (inativo)
-            ['matricula' => '25162269', 'nome' => 'Vivian Carazzatto Aleixo', 'status' => 'inativo'],
         ];
 
         if ($turmaM4H) {

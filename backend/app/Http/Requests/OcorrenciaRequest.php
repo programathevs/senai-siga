@@ -18,6 +18,8 @@ class OcorrenciaRequest extends FormRequest
             'aluno_id' => ['required', 'exists:alunos,id'],
             'tipo' => ['required', Rule::in(['falta', 'comportamento', 'desempenho'])],
             'data_ocorrencia' => ['required', 'date'],
+            'unidade_curricular_id' => ['nullable', 'exists:unidades_curriculares,id'],
+            'quantidade_faltas' => ['nullable', 'integer', 'min:0'],
             'instrutor_ids' => ['nullable', 'array'],
             'instrutor_ids.*' => ['exists:instrutores,id'],
             'relato_dificuldades' => ['nullable', 'string'],
@@ -27,24 +29,25 @@ class OcorrenciaRequest extends FormRequest
             'outras_observacoes' => ['nullable', 'string'],
             'status' => ['nullable', Rule::in(['pendente', 'pdf_gerado', 'enviado_aqv', 'impresso', 'assinado'])],
             'motivo_edicao' => ['nullable', 'string', 'max:1000'],
+            'unidades' => ['nullable', 'array'],
+            'unidades.*.unidade_curricular_id' => ['required_with:unidades', 'exists:unidades_curriculares,id'],
+            'unidades.*.quantidade_faltas' => ['nullable', 'integer', 'min:0'],
+            'unidades.*.total_aulas_dadas' => ['nullable', 'integer', 'min:0'],
+            'unidades.*.limite_percentual' => ['nullable', 'numeric', 'min:1', 'max:100'],
         ];
 
-        // Se for tipo FALTA, exige dados da unidade curricular e cálculo de faltas
+        // Se for tipo FALTA, exige dados das unidades curriculares ou formato legado
         if ($this->input('tipo') === 'falta') {
-            $rules['unidade_curricular_id'] = ['required', 'exists:unidades_curriculares,id'];
-            $rules['quantidade_faltas'] = ['required', 'integer', 'min:1'];
+            if (! $this->has('unidades') || empty($this->input('unidades'))) {
+                $rules['unidade_curricular_id'] = ['required', 'exists:unidades_curriculares,id'];
+                $rules['quantidade_faltas'] = ['required', 'integer', 'min:1'];
+            }
             $rules['total_aulas_dadas'] = ['nullable', 'integer', 'min:0'];
             $rules['limite_percentual'] = ['nullable', 'numeric', 'min:1', 'max:100'];
         }
 
-        // Se for tipo DESEMPENHO, unidade curricular é recomendada
-        if ($this->input('tipo') === 'desempenho') {
-            $rules['unidade_curricular_id'] = ['nullable', 'exists:unidades_curriculares,id'];
-            $rules['relato_dificuldades'] = ['required', 'string', 'min:5'];
-        }
-
-        // Se for tipo COMPORTAMENTO, relato é obrigatório
-        if ($this->input('tipo') === 'comportamento') {
+        // Se for tipo DESEMPENHO ou COMPORTAMENTO, relato é obrigatório
+        if ($this->input('tipo') === 'desempenho' || $this->input('tipo') === 'comportamento') {
             $rules['relato_dificuldades'] = ['required', 'string', 'min:5'];
         }
 

@@ -4,11 +4,11 @@ import {
   Clock,
   ShieldAlert,
   BookOpen,
-  AlertTriangle,
-  CheckCircle2,
   AlertCircle,
   Loader2,
   FileText,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import {
   ocorrenciaService,
@@ -19,6 +19,11 @@ import { turmaService, type Turma } from "../../services/turmaService";
 import { alunoService, type Aluno } from "../../services/alunoService";
 import { cursoService, type Curso } from "../../services/cursoService";
 import styles from "./OcorrenciaModal.module.css";
+
+export interface UcItem {
+  unidade_curricular_id: string;
+  quantidade_faltas: number;
+}
 
 interface OcorrenciaModalProps {
   isOpen: boolean;
@@ -47,6 +52,11 @@ export function OcorrenciaModal({
   );
   const [selectedUcId, setSelectedUcId] = useState<string>("");
   const [quantidadeFaltas, setQuantidadeFaltas] = useState<number>(4);
+
+  // Lista dinâmica de UCs para FIAP de falta
+  const [unidadesList, setUnidadesList] = useState<UcItem[]>([
+    { unidade_curricular_id: "", quantidade_faltas: 4 },
+  ]);
 
   const [relatoDificuldades, setRelatoDificuldades] = useState("");
   const [recomendacoesProfessor, setRecomendacoesProfessor] = useState("");
@@ -89,12 +99,23 @@ export function OcorrenciaModal({
         setSelectedTurmaId(String(ocorrenciaToEdit.aluno.turma_id));
       }
 
-      if (ocorrenciaToEdit.unidades && ocorrenciaToEdit.unidades.length > 0) {
+      if (ocorrenciaToEdit.unidade_curricular_id) {
+        setSelectedUcId(String(ocorrenciaToEdit.unidade_curricular_id));
+      } else if (ocorrenciaToEdit.unidades && ocorrenciaToEdit.unidades.length > 0) {
+        setUnidadesList(
+          ocorrenciaToEdit.unidades.map((u) => ({
+            unidade_curricular_id: String(u.unidade_curricular_id || ""),
+            quantidade_faltas: u.quantidade_faltas || 4,
+          }))
+        );
         const primaryUc = ocorrenciaToEdit.unidades[0];
         if (primaryUc.unidade_curricular_id) {
           setSelectedUcId(String(primaryUc.unidade_curricular_id));
         }
         setQuantidadeFaltas(primaryUc.quantidade_faltas);
+      } else {
+        setSelectedUcId("");
+        setUnidadesList([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
       }
     } else {
       resetForm();
@@ -108,13 +129,40 @@ export function OcorrenciaModal({
     setDataOcorrencia(new Date().toISOString().split("T")[0]);
     setSelectedUcId("");
     setQuantidadeFaltas(4);
+    setUnidadesList([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
     setRelatoDificuldades("");
-    setRecomendacoesProfessor("");
-    setRecomendacoesGestao("");
+    setRecomendacoesProfessor(
+      "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar."
+    );
+    setRecomendacoesGestao(
+      "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas."
+    );
     setProvidenciasGestao("");
-    setOutrasObservacoes("");
+    setOutrasObservacoes("----");
     setMotivoEdicao("");
     setErrorMessage("");
+  }
+
+  function handleAddUcLine() {
+    const jaSelecionadas = new Set(unidadesList.map((u) => String(u.unidade_curricular_id)));
+    const proximaUc = unidadesCurricularesFiltradas.find((uc) => !jaSelecionadas.has(String(uc.id)));
+
+    setUnidadesList((prev) => [
+      ...prev,
+      { unidade_curricular_id: proximaUc ? String(proximaUc.id) : "", quantidade_faltas: 4 },
+    ]);
+  }
+
+  function handleRemoveUcLine(index: number) {
+    if (unidadesList.length > 1) {
+      setUnidadesList((prev) => prev.filter((_, i) => i !== index));
+    }
+  }
+
+  function handleUpdateUcLine(index: number, field: keyof UcItem, value: any) {
+    setUnidadesList((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
   }
 
   // Filtra alunos pertencentes à turma selecionada
@@ -153,7 +201,6 @@ export function OcorrenciaModal({
     const semAtual = Number(turmaSelecionada.semestre_atual);
 
     const filtradas = unidadesCurriculares.filter((uc) => {
-      // Se a UC não especifica nenhum semestre (ambos nulos), ela é mantida
       if (uc.semestre_plano_3 == null && uc.semestre_plano_4 == null) {
         return true;
       }
@@ -163,78 +210,114 @@ export function OcorrenciaModal({
     return filtradas.length > 0 ? filtradas : unidadesCurriculares;
   }, [unidadesCurriculares, turmaSelecionada]);
 
-  // Obtém a UC selecionada e sua carga horária
-  const ucSelecionada = useMemo(() => {
-    return unidadesCurriculares.find((u) => String(u.id) === String(selectedUcId));
-  }, [unidadesCurriculares, selectedUcId]);
-
-  const cargaHorariaTotal = ucSelecionada ? Number(ucSelecionada.carga_horaria) : 80;
-  const aulasTotais = Math.round(cargaHorariaTotal / 0.75);
-  const limiteFaltasAulas = Math.round(aulasTotais * 0.25);
-  const percentualDoPermitido =
-    limiteFaltasAulas > 0
-      ? Number(((quantidadeFaltas / limiteFaltasAulas) * 100).toFixed(1))
-      : 0;
-
-  // Atualização automática dos campos ao selecionar a UC, Aluno ou Faltas
+  // Seleciona a primeira UC automaticamente quando a turma é selecionada
   useEffect(() => {
-    if (!isEditing && tipo === "falta" && ucSelecionada) {
-      const nomeUc = ucSelecionada.sigla
-        ? `${ucSelecionada.nome} (${ucSelecionada.sigla})`
-        : ucSelecionada.nome;
-      const ch = Number(ucSelecionada.carga_horaria) || 80;
-      const aulas = Math.round(ch / 0.75);
-      const lim = Math.round(aulas * 0.25);
-      const perc = lim > 0 ? ((quantidadeFaltas / lim) * 100).toFixed(1) : "0.0";
+    if (!isEditing && selectedTurmaId && unidadesCurricularesFiltradas.length > 0) {
+      setUnidadesList((prev) => {
+        if (prev.length === 1 && !prev[0].unidade_curricular_id) {
+          return [{ unidade_curricular_id: String(unidadesCurricularesFiltradas[0].id), quantidade_faltas: 4 }];
+        }
+        return prev;
+      });
+    }
+  }, [selectedTurmaId, unidadesCurricularesFiltradas, isEditing]);
 
-      setRelatoDificuldades(
-        `O aluno(a) está ciente que as ausências às aulas causam prejuízos para seu aproveitamento e o mesmo apresenta excesso de faltas na unidade curricular ${nomeUc} – ${ch} h/a: Limite de 25% h/a possui até a data de hoje ${quantidadeFaltas} faltas ${perc}% do permitido.`
-      );
+  // Atualiza automaticamente as providências da gestão com o nome do aluno selecionado
+  useEffect(() => {
+    if (!isEditing) {
+      const nomeAluno = alunoSelecionado?.nome || "o aluno";
+      if (tipo === "falta") {
+        setProvidenciasGestao(
+          `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`
+        );
+      } else if (tipo === "comportamento") {
+        setProvidenciasGestao(
+          `Ciência do estudante e de seus responsáveis quanto às normas regimentais e de segurança do SENAI. Acompanhamento pela equipe pedagógica/AQV para garantir a adequação comportamental de ${nomeAluno}.`
+        );
+      } else if (tipo === "desempenho") {
+        setProvidenciasGestao(
+          `Acompanhamento pedagógico individualizado junto a ${nomeAluno}, com oferta de suporte/recuperação paralela e alinhamento junto aos responsáveis sobre seu desempenho acadêmico.`
+        );
+      }
+    }
+  }, [alunoSelecionado, tipo, isEditing]);
 
-      if (!recomendacoesProfessor) {
+  // Pré-preenche os textos padrão institucionais de recomendações e observações para cada tipo de FIAP
+  useEffect(() => {
+    if (!isEditing) {
+      if (tipo === "falta") {
         setRecomendacoesProfessor(
           "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar."
         );
-      }
-      if (!recomendacoesGestao) {
         setRecomendacoesGestao(
           "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas."
         );
+      } else if (tipo === "comportamento") {
+        setRecomendacoesProfessor(
+          "Recomenda-se ao estudante atentar-se às normas regimentais do SENAI, cumprir os horários de aula e utilizar todos os EPIs/equipamentos obrigatórios, mantendo a postura adequada e respeitosa em sala e laboratórios."
+        );
+        setRecomendacoesGestao(
+          "O estudante deverá cumprir integralmente o regimento escolar do SENAI. Reitera-se a importância do respeito mútuo, uso correto dos ambientes de prática e foco nas atividades pedagógicas propostas."
+        );
+        if (!relatoDificuldades) {
+          setRelatoDificuldades(
+            "O estudante foi orientado em relação ao cumprimento das normas regimentais e de convivência escolar em sala de aula/laboratório, comprometendo-se a adotar uma atitude adequada ao ambiente profissional."
+          );
+        }
+      } else if (tipo === "desempenho") {
+        setRecomendacoesProfessor(
+          "Recomenda-se revisão sistemática dos conteúdos pedagógicos, realização tempestiva de tarefas/trabalhos pendentes e participação ativa nos momentos de dúvida e recuperação paralela oferecidos pelo docente."
+        );
+        setRecomendacoesGestao(
+          "A coordenação pedagógica ofertará suporte de apoio de aprendizagem e acompanhará a evolução acadêmica do estudante. Reforçamos que a média mínima para aprovação no SENAI é de 50 pontos com 75% de frequência."
+        );
+        if (!relatoDificuldades) {
+          setRelatoDificuldades(
+            "O estudante apresenta rendimento insatisfatório na Unidade Curricular, com dificuldades técnicas pontuais e entregas pendentes, necessitando de plano de recuperação pedagógica."
+          );
+        }
       }
-      const nomeAluno = alunoSelecionado?.nome || "o aluno";
-      setProvidenciasGestao(
-        `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`
-      );
-      if (!outrasObservacoes) {
-        setOutrasObservacoes("----");
-      }
+      setOutrasObservacoes("----");
     }
-  }, [selectedUcId, quantidadeFaltas, selectedAlunoId, tipo, isEditing, ucSelecionada, alunoSelecionado]);
+  }, [tipo, isEditing]);
 
-  function handlePreencherPadraoSenai() {
-    const nomeUc = ucSelecionada
-      ? ucSelecionada.sigla
-        ? `${ucSelecionada.nome} (${ucSelecionada.sigla})`
-        : ucSelecionada.nome
-      : "Componente Curricular";
-    const nomeAluno = alunoSelecionado?.nome || "o aluno";
+  // Atualiza automaticamente o relato de circunstâncias conforme UCs e faltas forem selecionadas/alteradas
+  useEffect(() => {
+    if (tipo !== "falta") return;
 
-    if (tipo === "falta") {
+    const relatoPartes: string[] = [];
+    unidadesList.forEach((item) => {
+      const uc = unidadesCurriculares.find(
+        (u) => String(u.id) === String(item.unidade_curricular_id)
+      );
+      if (uc && Number(item.quantidade_faltas) > 0) {
+        const siglaOuNome = uc.sigla ? uc.sigla : uc.nome;
+        const ch = Number(uc.carga_horaria) || 80;
+        const aulas = Math.round(ch / 0.75);
+        const lim = Math.round(aulas * 0.25);
+        const perc = lim > 0 ? ((item.quantidade_faltas / lim) * 100).toFixed(1) : "0.0";
+        relatoPartes.push(
+          `unidade curricular ${siglaOuNome} – ${ch} h/a: possui até a data de hoje ${item.quantidade_faltas} faltas, representando ${perc}% do limite permitido (${lim} aulas)`
+        );
+      }
+    });
+
+    if (relatoPartes.length > 0) {
+      let textoUnidades = "";
+      if (relatoPartes.length === 1) {
+        textoUnidades = relatoPartes[0];
+      } else {
+        const copy = [...relatoPartes];
+        const ultima = copy.pop();
+        textoUnidades = copy.join("; ") + " e " + ultima;
+      }
       setRelatoDificuldades(
-        `O aluno(a) está ciente que as ausências às aulas causam prejuízos para seu aproveitamento e o mesmo apresenta excesso de faltas na unidade curricular ${nomeUc} – ${cargaHorariaTotal} h/a: Limite de 25% h/a possui até a data de hoje ${quantidadeFaltas} faltas ${percentualDoPermitido}% do permitido.`
+        `O aluno(a) está ciente que as ausências às aulas causam prejuízos para seu aproveitamento e o mesmo apresenta excesso de faltas nas: ${textoUnidades}.`
       );
+    } else if (!isEditing) {
+      setRelatoDificuldades("");
     }
-    setRecomendacoesProfessor(
-      "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar."
-    );
-    setRecomendacoesGestao(
-      "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas."
-    );
-    setProvidenciasGestao(
-      `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`
-    );
-    setOutrasObservacoes("----");
-  }
+  }, [unidadesList, unidadesCurriculares, tipo, isEditing]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -245,8 +328,15 @@ export function OcorrenciaModal({
       return;
     }
 
-    if (tipo === "falta" && !selectedUcId) {
-      setErrorMessage("Para FIAPs de falta, selecione a Unidade Curricular correspondente.");
+    const validUnidades = unidadesList
+      .filter((u) => Boolean(u.unidade_curricular_id))
+      .map((u) => ({
+        unidade_curricular_id: Number(u.unidade_curricular_id),
+        quantidade_faltas: Number(u.quantidade_faltas),
+      }));
+
+    if (tipo === "falta" && validUnidades.length === 0) {
+      setErrorMessage("Para FIAPs de falta, selecione ao menos uma Unidade Curricular.");
       return;
     }
 
@@ -258,12 +348,16 @@ export function OcorrenciaModal({
     setIsSubmitting(true);
 
     try {
+      const selectedUcNum = selectedUcId ? Number(selectedUcId) : undefined;
       const payload = {
         aluno_id: Number(selectedAlunoId),
         tipo,
         data_ocorrencia: dataOcorrencia,
-        unidade_curricular_id: selectedUcId ? Number(selectedUcId) : undefined,
-        quantidade_faltas: tipo === "falta" ? Number(quantidadeFaltas) : undefined,
+        unidades: tipo === "falta"
+          ? validUnidades
+          : (selectedUcNum ? [{ unidade_curricular_id: selectedUcNum, quantidade_faltas: 0 }] : undefined),
+        unidade_curricular_id: validUnidades.length > 0 ? validUnidades[0].unidade_curricular_id : selectedUcNum,
+        quantidade_faltas: validUnidades.length > 0 ? validUnidades[0].quantidade_faltas : (tipo === "falta" ? Number(quantidadeFaltas) : 0),
         limite_percentual: 25.0,
         relato_dificuldades: relatoDificuldades.trim() || undefined,
         recomendacoes_professor: recomendacoesProfessor.trim() || undefined,
@@ -442,134 +536,183 @@ export function OcorrenciaModal({
                 />
               </div>
 
-              {/* Unidade Curricular */}
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>
-                  Unidade Curricular (UC)
-                  {tipo === "falta" && <span className={styles.required}>*</span>}
-                </label>
-
-                <select
-                  className={styles.select}
-                  value={selectedUcId}
-                  onChange={(e) => setSelectedUcId(e.target.value)}
-                  disabled={!selectedTurmaId}
-                  required={tipo === "falta"}
-                >
-                  <option value="">
-                    {selectedTurmaId
-                      ? unidadesCurricularesFiltradas.length > 0
-                        ? "Selecione a unidade curricular..."
-                        : "Nenhuma UC cadastrada para este semestre"
-                      : "Selecione uma turma primeiro"}
-                  </option>
-                  {unidadesCurricularesFiltradas.map((uc) => {
-                    const aulas = Math.round(uc.carga_horaria / 0.75);
-                    const limite = Math.round(aulas * 0.25);
-                    const sem = uc.semestre_plano_3 || uc.semestre_plano_4;
-                    const semBadge = sem ? ` (${sem}º Sem)` : "";
-                    return (
+              {/* Unidade Curricular para Desempenho e Comportamento */}
+              {(tipo === "desempenho" || tipo === "comportamento") && (
+                <div className={styles.fieldGroup}>
+                  <label className={styles.label}>Unidade Curricular (Opcional)</label>
+                  <select
+                    className={styles.select}
+                    value={selectedUcId}
+                    onChange={(e) => setSelectedUcId(e.target.value)}
+                    disabled={!selectedTurmaId}
+                  >
+                    <option value="">
+                      {selectedTurmaId
+                        ? unidadesCurricularesFiltradas.length > 0
+                          ? "Selecione a unidade curricular (opcional)..."
+                          : "Nenhuma UC cadastrada para este semestre"
+                        : "Selecione uma turma primeiro"}
+                    </option>
+                    {unidadesCurricularesFiltradas.map((uc) => (
                       <option key={uc.id} value={uc.id}>
-                        {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome}{semBadge} — {uc.carga_horaria}h ({aulas} aulas, limite: {limite} aulas)
+                        {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome}
                       </option>
-                    );
-                  })}
-                </select>
-              </div>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* 3. CALCULADORA DE INFREQUÊNCIA (Se for tipo FALTA) */}
+          {/* 3. CALCULADORA DE INFREQUÊNCIA & UNIDADES CURRICULARES (Se for tipo FALTA) */}
           {tipo === "falta" && (
             <div className={styles.section}>
               <div className={styles.sectionHeader}>
-                <span>3. Cálculo de Infrequência e Faltas (Teto de 25%)</span>
+                <span>3. Unidades Curriculares &amp; Infrequência (Teto 25%)</span>
               </div>
 
-              <div className={styles.calculadoraFaltasCard}>
-                <div className={styles.formGrid}>
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>Faltas Acumuladas (Horas/Aulas)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      className={styles.input}
-                      value={quantidadeFaltas}
-                      onChange={(e) => setQuantidadeFaltas(Math.max(1, Number(e.target.value)))}
-                      required
-                    />
-                  </div>
-                </div>
+              {unidadesList.map((item, index) => {
+                const ucItemObj = unidadesCurriculares.find(
+                  (u) => String(u.id) === String(item.unidade_curricular_id)
+                );
+                const ch = ucItemObj ? Number(ucItemObj.carga_horaria) : 80;
+                const aulas = Math.round(ch / 0.75);
+                const lim = Math.round(aulas * 0.25);
+                const perc = lim > 0 ? Number(((item.quantidade_faltas / lim) * 100).toFixed(1)) : 0;
 
-                <div className={styles.calcStatsRow}>
-                  <div className={styles.calcStatItem}>
-                    <span className={styles.calcStatLabel}>Carga da UC</span>
-                    <span className={styles.calcStatValue}>
-                      {cargaHorariaTotal}h ({aulasTotais} aulas)
-                    </span>
-                  </div>
-                  <div className={styles.calcStatItem}>
-                    <span className={styles.calcStatLabel}>Limite de Faltas (25%)</span>
-                    <span className={styles.calcStatValue}>{limiteFaltasAulas} aulas</span>
-                  </div>
-                  <div className={styles.calcStatItem}>
-                    <span className={styles.calcStatLabel}>Faltas Registradas</span>
-                    <span className={styles.calcStatValue}>{quantidadeFaltas} faltas</span>
-                  </div>
-                  <div className={styles.calcStatItem}>
-                    <span className={styles.calcStatLabel}>% do Limite Permitido</span>
-                    <span
-                      className={styles.calcStatValue}
-                      style={{
-                        color:
-                          percentualDoPermitido >= 100
-                            ? "var(--color-danger)"
-                            : percentualDoPermitido >= 80
-                            ? "var(--color-warning)"
-                            : "var(--color-success)",
-                      }}
-                    >
-                      {percentualDoPermitido}%
-                    </span>
-                  </div>
-                </div>
+                return (
+                  <div key={index} className={styles.calculadoraFaltasCard}>
+                    <div className={styles.formGrid}>
+                      {/* Dropdown da UC */}
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.label}>
+                          Unidade Curricular #{index + 1}
+                          <span className={styles.required}>*</span>
+                        </label>
+                        <select
+                          className={styles.select}
+                          value={item.unidade_curricular_id}
+                          onChange={(e) =>
+                            handleUpdateUcLine(index, "unidade_curricular_id", e.target.value)
+                          }
+                          disabled={!selectedTurmaId}
+                          required
+                        >
+                          <option value="">
+                            {selectedTurmaId
+                              ? unidadesCurricularesFiltradas.length > 0
+                                ? "Selecione a unidade curricular..."
+                                : "Nenhuma UC cadastrada para este semestre"
+                              : "Selecione uma turma primeiro"}
+                          </option>
+                          {unidadesCurricularesFiltradas
+                            .filter(
+                              (uc) =>
+                                String(uc.id) === String(item.unidade_curricular_id) ||
+                                !unidadesList.some(
+                                  (other, oIdx) =>
+                                    oIdx !== index && String(other.unidade_curricular_id) === String(uc.id)
+                                )
+                            )
+                            .map((uc) => {
+                              const ucAulas = Math.round(uc.carga_horaria / 0.75);
+                              const ucLim = Math.round(ucAulas * 0.25);
+                              const sem = uc.semestre_plano_3 || uc.semestre_plano_4;
+                              const semBadge = sem ? ` (${sem}º Sem)` : "";
+                              return (
+                                <option key={uc.id} value={uc.id}>
+                                  {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome}{semBadge} — {uc.carga_horaria}h ({ucAulas} aulas, limite: {ucLim} aulas)
+                                </option>
+                              );
+                            })}
+                        </select>
+                      </div>
 
-                {percentualDoPermitido >= 100 ? (
-                  <div className={`${styles.alertaLimiteFaltas} ${styles.alertaCritico}`}>
-                    <AlertTriangle size={18} />
-                    <span>
-                      Atenção: O estudante atingiu ou ultrapassou 100% do limite institucional de
-                      faltas ({limiteFaltasAulas} aulas / 25% da UC). Abertura de processo pedagógico
-                      necessária.
-                    </span>
+                      {/* Quantidade de Faltas */}
+                      <div className={styles.fieldGroup} style={{ display: "flex", gap: "0.5rem", alignItems: "flex-end" }}>
+                        <div style={{ flex: 1 }}>
+                          <label className={styles.label}>
+                            Faltas (Horas/Aulas) <span className={styles.required}>*</span>
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            className={styles.input}
+                            value={item.quantidade_faltas}
+                            onChange={(e) =>
+                              handleUpdateUcLine(index, "quantidade_faltas", Math.max(1, Number(e.target.value)))
+                            }
+                            required
+                          />
+                        </div>
+
+                        {unidadesList.length > 1 && (
+                          <button
+                            type="button"
+                            className={styles.removeUcBtn}
+                            onClick={() => handleRemoveUcLine(index)}
+                            title="Remover matéria"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {ucItemObj && (
+                      <div className={styles.calcStatsRow}>
+                        <div className={styles.calcStatItem}>
+                          <span className={styles.calcStatLabel}>Carga da UC</span>
+                          <span className={styles.calcStatValue}>
+                            {ch}h ({aulas} aulas)
+                          </span>
+                        </div>
+                        <div className={styles.calcStatItem}>
+                          <span className={styles.calcStatLabel}>Limite (25%)</span>
+                          <span className={styles.calcStatValue}>{lim} aulas</span>
+                        </div>
+                        <div className={styles.calcStatItem}>
+                          <span className={styles.calcStatLabel}>Faltas Registradas</span>
+                          <span className={styles.calcStatValue}>{item.quantidade_faltas} faltas</span>
+                        </div>
+                        <div className={styles.calcStatItem}>
+                          <span className={styles.calcStatLabel}>% do Limite</span>
+                          <span
+                            className={styles.calcStatValue}
+                            style={{
+                              color:
+                                perc >= 100
+                                  ? "var(--color-danger)"
+                                  : perc >= 80
+                                  ? "var(--color-warning)"
+                                  : "var(--color-success)",
+                            }}
+                          >
+                            {perc}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ) : percentualDoPermitido >= 80 ? (
-                  <div className={`${styles.alertaLimiteFaltas} ${styles.alertaAtencao}`}>
-                    <AlertCircle size={18} />
-                    <span>
-                      Alerta Preventivo: O aluno atingiu {percentualDoPermitido}% do limite de faltas (
-                      {quantidadeFaltas} de {limiteFaltasAulas} aulas permitidas).
-                    </span>
-                  </div>
-                ) : (
-                  <div className={`${styles.alertaLimiteFaltas} ${styles.alertaOk}`}>
-                    <CheckCircle2 size={18} />
-                    <span>
-                      Infrequência dentro do limite regulamentar permitido ({quantidadeFaltas} de{" "}
-                      {limiteFaltasAulas} aulas).
-                    </span>
-                  </div>
-                )}
-              </div>
+                );
+              })}
+
+              {unidadesList.length < unidadesCurricularesFiltradas.length && (
+                <button
+                  type="button"
+                  className={styles.addUcBtn}
+                  onClick={handleAddUcLine}
+                >
+                  <Plus size={16} />
+                  Adicionar Outra Matéria / UC na FIAP
+                </button>
+              )}
             </div>
           )}
 
           {/* 4. RELATO DOS FATOS OU DIFICULDADES */}
           <div className={styles.section}>
-            <div
-              className={styles.sectionHeader}
-              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}
-            >
+            <div className={styles.sectionHeader}>
               <span>
                 {tipo === "falta"
                   ? "4. Justificativa & Recomendações"
@@ -577,30 +720,6 @@ export function OcorrenciaModal({
                   ? "3. Relato da Ocorrência Disciplinar"
                   : "3. Diagnóstico de Aproveitamento Pedagógico"}
               </span>
-
-              {tipo === "falta" && (
-                <button
-                  type="button"
-                  onClick={handlePreencherPadraoSenai}
-                  style={{
-                    fontSize: "0.75rem",
-                    padding: "0.25rem 0.65rem",
-                    borderRadius: "var(--radius-sm)",
-                    border: "1px solid var(--color-primary)",
-                    backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
-                    color: "var(--color-primary)",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.35rem",
-                  }}
-                  title="Preencher campos com o modelo institucional padrão da Unidade Sumaré"
-                >
-                  <FileText size={13} />
-                  Preencher Texto Padrão SENAI
-                </button>
-              )}
             </div>
 
             <div className={styles.fieldGroup}>
