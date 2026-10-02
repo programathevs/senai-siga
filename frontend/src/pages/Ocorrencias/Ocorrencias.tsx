@@ -25,6 +25,8 @@ import { turmaService, type Turma } from "../../services/turmaService";
 import { useAuth } from "../../contexts/AuthContext";
 import { OcorrenciaModal } from "./OcorrenciaModal";
 import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
+import { ConfirmAqvModal } from "./ConfirmAqvModal";
+import { showAvatarToast } from "../../utils/toast";
 import styles from "./Ocorrencias.module.css";
 
 function formatDate(dateStr?: string | null) {
@@ -56,6 +58,7 @@ export function Ocorrencias() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingOcorrencia, setEditingOcorrencia] = useState<Ocorrencia | null>(null);
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
+  const [ocorrenciaAqvPending, setOcorrenciaAqvPending] = useState<Ocorrencia | null>(null);
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -163,19 +166,34 @@ export function Ocorrencias() {
     }
   }
 
-  async function handleEncaminharAqv(id: number) {
-    if (window.confirm("Deseja encaminhar este caso para o acompanhamento do AQV?")) {
-      try {
-        await ocorrenciaService.encaminharAqv(id);
-        alert("Ocorrência encaminhada com sucesso ao setor de AQV!");
-        loadOcorrencias();
-        if (selectedDetalhes?.id === id) {
-          const updated = await ocorrenciaService.getOcorrencia(id);
-          setSelectedDetalhes(updated);
-        }
-      } catch (err: any) {
-        alert(err.response?.data?.message || "Erro ao encaminhar para o AQV.");
+  function handleEncaminharAqv(ocOrId: Ocorrencia | number) {
+    const targetOc =
+      typeof ocOrId === "number"
+        ? ocorrencias.find((o) => o.id === ocOrId) || selectedDetalhes
+        : ocOrId;
+
+    if (targetOc) {
+      setOcorrenciaAqvPending(targetOc);
+    }
+  }
+
+  async function handleConfirmEncaminharAqv() {
+    if (!ocorrenciaAqvPending) return;
+    const oc = ocorrenciaAqvPending;
+
+    try {
+      await ocorrenciaService.encaminharAqv(oc.id);
+      showAvatarToast(
+        `FIAP "${oc.numero_sequencial}" encaminhada com sucesso!`
+      );
+      loadOcorrencias();
+      if (selectedDetalhes?.id === oc.id) {
+        const updated = await ocorrenciaService.getOcorrencia(oc.id);
+        setSelectedDetalhes(updated);
       }
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Erro ao encaminhar para o AQV.");
+      throw err;
     }
   }
 
@@ -367,8 +385,8 @@ export function Ocorrencias() {
                     typeof oc.registrado_por === "object" && oc.registrado_por !== null
                       ? (oc.registrado_por as any).id
                       : (oc as any).registrado_por_user?.id ??
-                        (oc as any).registrado_por_id ??
-                        oc.registrado_por;
+                      (oc as any).registrado_por_id ??
+                      oc.registrado_por;
 
                   const isOwner = Boolean(
                     user?.id && creatorId && Number(creatorId) === Number(user.id)
@@ -440,15 +458,37 @@ export function Ocorrencias() {
                         <div className={styles.resumoCell}>
                           {oc.tipo === "falta" && primaryUc && (
                             <>
-                              <div className={styles.resumoPrimary}>
-                                <span className={styles.ucNomeSpan}>
-                                  {primaryUc.unidade_curricular?.nome || "Unidade Curricular"}
-                                </span>
-                              </div>
-                              <span className={styles.resumoSecondary}>
-                                {primaryUc.quantidade_faltas} faltas registradas (
-                                {Number(primaryUc.percentual_atingido || 0).toFixed(1)}% do limite permitido)
-                              </span>
+                              {oc.unidades && oc.unidades.length > 1 ? (
+                                <>
+                                  <div className={styles.resumoPrimary}>
+                                    <span className={styles.ucNomeSpan}>
+                                      {oc.unidades
+                                        .map(
+                                          (u) =>
+                                            u.unidade_curricular?.sigla ||
+                                            u.unidade_curricular?.nome ||
+                                            "UC"
+                                        )
+                                        .join(" / ")}
+                                    </span>
+                                  </div>
+                                  <span className={styles.resumoSecondary}>
+                                    FIAP com múltiplas unidades
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <div className={styles.resumoPrimary}>
+                                    <span className={styles.ucNomeSpan}>
+                                      {primaryUc.unidade_curricular?.nome || "Unidade Curricular"}
+                                    </span>
+                                  </div>
+                                  <span className={styles.resumoSecondary}>
+                                    {primaryUc.quantidade_faltas} faltas registradas (
+                                    {Number(primaryUc.percentual_atingido || 0).toFixed(1)}% do limite permitido)
+                                  </span>
+                                </>
+                              )}
                             </>
                           )}
 
@@ -456,11 +496,15 @@ export function Ocorrencias() {
                             <>
                               <div className={styles.resumoPrimary}>
                                 <span className={styles.ucNomeSpan}>
-                                  {oc.providencias_gestao || "Medida Pedagógica"}
+                                  {primaryUc?.unidade_curricular?.nome
+                                    ? (primaryUc.unidade_curricular.sigla ? `[${primaryUc.unidade_curricular.sigla}] ${primaryUc.unidade_curricular.nome}` : primaryUc.unidade_curricular.nome)
+                                    : (oc.unidade_curricular?.nome
+                                      ? (oc.unidade_curricular.sigla ? `[${oc.unidade_curricular.sigla}] ${oc.unidade_curricular.nome}` : oc.unidade_curricular.nome)
+                                      : "Convivência / Regimento Escolar")}
                                 </span>
                               </div>
-                              <span className={styles.resumoSecondary} title={oc.relato_dificuldades || ""}>
-                                {oc.relato_dificuldades || "Sem relato descritivo"}
+                              <span className={styles.resumoSecondary} title={oc.providencias_gestao || oc.relato_dificuldades || ""}>
+                                {oc.providencias_gestao || oc.relato_dificuldades || "Ocorrência disciplinar registrada"}
                               </span>
                             </>
                           )}
@@ -548,7 +592,7 @@ export function Ocorrencias() {
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.aqvBtn}`}
-                              onClick={() => handleEncaminharAqv(oc.id)}
+                              onClick={() => handleEncaminharAqv(oc)}
                               title="Encaminhar para o AQV"
                             >
                               <Send size={15} />
@@ -616,10 +660,18 @@ export function Ocorrencias() {
             typeof selectedDetalhes.registrado_por === "object" && selectedDetalhes.registrado_por !== null
               ? (selectedDetalhes.registrado_por as any).id
               : (selectedDetalhes as any).registrado_por_user?.id ??
-                (selectedDetalhes as any).registrado_por_id ??
-                selectedDetalhes.registrado_por;
+              (selectedDetalhes as any).registrado_por_id ??
+              selectedDetalhes.registrado_por;
           return user.role === "instrutor" && Number(cId) === Number(user.id);
         })()}
+      />
+
+      {/* Modal de Confirmação para Envio ao AQV */}
+      <ConfirmAqvModal
+        isOpen={Boolean(ocorrenciaAqvPending)}
+        onClose={() => setOcorrenciaAqvPending(null)}
+        onConfirm={handleConfirmEncaminharAqv}
+        ocorrencia={ocorrenciaAqvPending}
       />
     </div>
   );

@@ -1,4 +1,5 @@
-import { Building2, Search, Menu } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Building2, Search, Menu, CheckCircle2, X } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
@@ -11,11 +12,44 @@ function getInitials(name?: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+interface ToastData {
+  title: string;
+  message: string;
+}
+
 export function Header() {
   const { user } = useAuth();
   const { isCollapsed, toggleMobile } = useSidebar();
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const initials = getInitials(user?.name);
+
+  useEffect(() => {
+    function handleAvatarToast(e: Event) {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.message) {
+        setToast({
+          title: detail.title || "Sucesso!",
+          message: detail.message,
+        });
+
+        if (toastTimeoutRef.current) {
+          clearTimeout(toastTimeoutRef.current);
+        }
+
+        toastTimeoutRef.current = setTimeout(() => {
+          setToast(null);
+        }, 5000);
+      }
+    }
+
+    window.addEventListener("show-avatar-toast", handleAvatarToast);
+    return () => {
+      window.removeEventListener("show-avatar-toast", handleAvatarToast);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <header
@@ -64,9 +98,32 @@ export function Header() {
         {/* Alternador de Tema Sol ⟲ Lua */}
         <ThemeToggle />
 
-        {/* Avatar Mini */}
-        <div className={styles.userAvatarMini} title={user?.name || "Usuário"}>
-          <span>{initials}</span>
+        {/* Avatar Mini e Toast Flutuante */}
+        <div className={styles.avatarWrapper}>
+          <div className={styles.userAvatarMini} title={user?.name || "Usuário"}>
+            <span>{initials}</span>
+          </div>
+
+          {toast && (
+            <div className={styles.avatarToast} role="alert">
+              <div className={styles.toastArrow} />
+              <div className={styles.toastIconWrapper}>
+                <CheckCircle2 size={18} className={styles.toastIcon} />
+              </div>
+              <div className={styles.toastBody}>
+                <span className={styles.toastTitle}>{toast.title}</span>
+                <span className={styles.toastMessage}>{toast.message}</span>
+              </div>
+              <button
+                type="button"
+                className={styles.toastCloseBtn}
+                onClick={() => setToast(null)}
+                aria-label="Fechar notificação"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

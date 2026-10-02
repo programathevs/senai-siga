@@ -66,6 +66,8 @@ export interface Ocorrencia {
   data_ocorrencia: string;
   status: OcorrenciaStatus;
   pdf_path?: string | null;
+  unidade_curricular_id?: number | null;
+  unidade_curricular?: UnidadeCurricular | null;
   unidades?: OcorrenciaUnidade[];
   instrutores?: Instrutor[];
   edicoes?: OcorrenciaEdicao[];

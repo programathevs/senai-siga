@@ -215,7 +215,7 @@
   margin: 0px;
   font-size: 12px;
   display: grid;
-  grid-template-columns: 315px 1fr;
+  grid-template-columns: 340px 1fr;
   column-gap: 16px;
   row-gap: 5px;
   border: none;
@@ -386,7 +386,7 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 6mm;
+    margin: 0;
   }
 
   html,
@@ -466,8 +466,9 @@
     width: 100% !important;
     max-width: 100% !important;
     box-shadow: none !important;
-    padding: 0 !important;
+    padding: 6mm !important;
     margin: 0 !important;
+    box-sizing: border-box !important;
     page-break-after: avoid !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;

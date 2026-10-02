@@ -99,7 +99,9 @@ export function OcorrenciaModal({
         setSelectedTurmaId(String(ocorrenciaToEdit.aluno.turma_id));
       }
 
-      if (ocorrenciaToEdit.unidades && ocorrenciaToEdit.unidades.length > 0) {
+      if (ocorrenciaToEdit.unidade_curricular_id) {
+        setSelectedUcId(String(ocorrenciaToEdit.unidade_curricular_id));
+      } else if (ocorrenciaToEdit.unidades && ocorrenciaToEdit.unidades.length > 0) {
         setUnidadesList(
           ocorrenciaToEdit.unidades.map((u) => ({
             unidade_curricular_id: String(u.unidade_curricular_id || ""),
@@ -112,6 +114,7 @@ export function OcorrenciaModal({
         }
         setQuantidadeFaltas(primaryUc.quantidade_faltas);
       } else {
+        setSelectedUcId("");
         setUnidadesList([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
       }
     } else {
@@ -221,32 +224,62 @@ export function OcorrenciaModal({
 
   // Atualiza automaticamente as providências da gestão com o nome do aluno selecionado
   useEffect(() => {
-    if (tipo === "falta" && !isEditing) {
+    if (!isEditing) {
       const nomeAluno = alunoSelecionado?.nome || "o aluno";
-      setProvidenciasGestao(
-        `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`
-      );
+      if (tipo === "falta") {
+        setProvidenciasGestao(
+          `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`
+        );
+      } else if (tipo === "comportamento") {
+        setProvidenciasGestao(
+          `Ciência do estudante e de seus responsáveis quanto às normas regimentais e de segurança do SENAI. Acompanhamento pela equipe pedagógica/AQV para garantir a adequação comportamental de ${nomeAluno}.`
+        );
+      } else if (tipo === "desempenho") {
+        setProvidenciasGestao(
+          `Acompanhamento pedagógico individualizado junto a ${nomeAluno}, com oferta de suporte/recuperação paralela e alinhamento junto aos responsáveis sobre seu desempenho acadêmico.`
+        );
+      }
     }
   }, [alunoSelecionado, tipo, isEditing]);
 
-  // Pré-preenche os textos padrão institucionais de recomendações e observações para FIAP de falta
+  // Pré-preenche os textos padrão institucionais de recomendações e observações para cada tipo de FIAP
   useEffect(() => {
-    if (tipo === "falta" && !isEditing) {
-      if (!recomendacoesProfessor) {
+    if (!isEditing) {
+      if (tipo === "falta") {
         setRecomendacoesProfessor(
           "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar."
         );
-      }
-      if (!recomendacoesGestao) {
         setRecomendacoesGestao(
           "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas."
         );
+      } else if (tipo === "comportamento") {
+        setRecomendacoesProfessor(
+          "Recomenda-se ao estudante atentar-se às normas regimentais do SENAI, cumprir os horários de aula e utilizar todos os EPIs/equipamentos obrigatórios, mantendo a postura adequada e respeitosa em sala e laboratórios."
+        );
+        setRecomendacoesGestao(
+          "O estudante deverá cumprir integralmente o regimento escolar do SENAI. Reitera-se a importância do respeito mútuo, uso correto dos ambientes de prática e foco nas atividades pedagógicas propostas."
+        );
+        if (!relatoDificuldades) {
+          setRelatoDificuldades(
+            "O estudante foi orientado em relação ao cumprimento das normas regimentais e de convivência escolar em sala de aula/laboratório, comprometendo-se a adotar uma atitude adequada ao ambiente profissional."
+          );
+        }
+      } else if (tipo === "desempenho") {
+        setRecomendacoesProfessor(
+          "Recomenda-se revisão sistemática dos conteúdos pedagógicos, realização tempestiva de tarefas/trabalhos pendentes e participação ativa nos momentos de dúvida e recuperação paralela oferecidos pelo docente."
+        );
+        setRecomendacoesGestao(
+          "A coordenação pedagógica ofertará suporte de apoio de aprendizagem e acompanhará a evolução acadêmica do estudante. Reforçamos que a média mínima para aprovação no SENAI é de 50 pontos com 75% de frequência."
+        );
+        if (!relatoDificuldades) {
+          setRelatoDificuldades(
+            "O estudante apresenta rendimento insatisfatório na Unidade Curricular, com dificuldades técnicas pontuais e entregas pendentes, necessitando de plano de recuperação pedagógica."
+          );
+        }
       }
-      if (!outrasObservacoes) {
-        setOutrasObservacoes("----");
-      }
+      setOutrasObservacoes("----");
     }
-  }, [tipo, isEditing, recomendacoesProfessor, recomendacoesGestao, outrasObservacoes]);
+  }, [tipo, isEditing]);
 
   // Atualiza automaticamente o relato de circunstâncias conforme UCs e faltas forem selecionadas/alteradas
   useEffect(() => {
@@ -315,13 +348,16 @@ export function OcorrenciaModal({
     setIsSubmitting(true);
 
     try {
+      const selectedUcNum = selectedUcId ? Number(selectedUcId) : undefined;
       const payload = {
         aluno_id: Number(selectedAlunoId),
         tipo,
         data_ocorrencia: dataOcorrencia,
-        unidades: tipo === "falta" ? validUnidades : undefined,
-        unidade_curricular_id: validUnidades.length > 0 ? validUnidades[0].unidade_curricular_id : (selectedUcId ? Number(selectedUcId) : undefined),
-        quantidade_faltas: validUnidades.length > 0 ? validUnidades[0].quantidade_faltas : (tipo === "falta" ? Number(quantidadeFaltas) : undefined),
+        unidades: tipo === "falta"
+          ? validUnidades
+          : (selectedUcNum ? [{ unidade_curricular_id: selectedUcNum, quantidade_faltas: 0 }] : undefined),
+        unidade_curricular_id: validUnidades.length > 0 ? validUnidades[0].unidade_curricular_id : selectedUcNum,
+        quantidade_faltas: validUnidades.length > 0 ? validUnidades[0].quantidade_faltas : (tipo === "falta" ? Number(quantidadeFaltas) : 0),
         limite_percentual: 25.0,
         relato_dificuldades: relatoDificuldades.trim() || undefined,
         recomendacoes_professor: recomendacoesProfessor.trim() || undefined,
@@ -500,10 +536,10 @@ export function OcorrenciaModal({
                 />
               </div>
 
-              {/* Unidade Curricular para Desempenho */}
-              {tipo === "desempenho" && (
+              {/* Unidade Curricular para Desempenho e Comportamento */}
+              {(tipo === "desempenho" || tipo === "comportamento") && (
                 <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Unidade Curricular (UC)</label>
+                  <label className={styles.label}>Unidade Curricular (Opcional)</label>
                   <select
                     className={styles.select}
                     value={selectedUcId}
@@ -513,7 +549,7 @@ export function OcorrenciaModal({
                     <option value="">
                       {selectedTurmaId
                         ? unidadesCurricularesFiltradas.length > 0
-                          ? "Selecione a unidade curricular..."
+                          ? "Selecione a unidade curricular (opcional)..."
                           : "Nenhuma UC cadastrada para este semestre"
                         : "Selecione uma turma primeiro"}
                     </option>

@@ -18,6 +18,8 @@ class OcorrenciaRequest extends FormRequest
             'aluno_id' => ['required', 'exists:alunos,id'],
             'tipo' => ['required', Rule::in(['falta', 'comportamento', 'desempenho'])],
             'data_ocorrencia' => ['required', 'date'],
+            'unidade_curricular_id' => ['nullable', 'exists:unidades_curriculares,id'],
+            'quantidade_faltas' => ['nullable', 'integer', 'min:0'],
             'instrutor_ids' => ['nullable', 'array'],
             'instrutor_ids.*' => ['exists:instrutores,id'],
             'relato_dificuldades' => ['nullable', 'string'],
@@ -29,7 +31,7 @@ class OcorrenciaRequest extends FormRequest
             'motivo_edicao' => ['nullable', 'string', 'max:1000'],
             'unidades' => ['nullable', 'array'],
             'unidades.*.unidade_curricular_id' => ['required_with:unidades', 'exists:unidades_curriculares,id'],
-            'unidades.*.quantidade_faltas' => ['required_with:unidades', 'integer', 'min:1'],
+            'unidades.*.quantidade_faltas' => ['nullable', 'integer', 'min:0'],
             'unidades.*.total_aulas_dadas' => ['nullable', 'integer', 'min:0'],
             'unidades.*.limite_percentual' => ['nullable', 'numeric', 'min:1', 'max:100'],
         ];
@@ -44,14 +46,8 @@ class OcorrenciaRequest extends FormRequest
             $rules['limite_percentual'] = ['nullable', 'numeric', 'min:1', 'max:100'];
         }
 
-        // Se for tipo DESEMPENHO, unidade curricular é recomendada
-        if ($this->input('tipo') === 'desempenho') {
-            $rules['unidade_curricular_id'] = ['nullable', 'exists:unidades_curriculares,id'];
-            $rules['relato_dificuldades'] = ['required', 'string', 'min:5'];
-        }
-
-        // Se for tipo COMPORTAMENTO, relato é obrigatório
-        if ($this->input('tipo') === 'comportamento') {
+        // Se for tipo DESEMPENHO ou COMPORTAMENTO, relato é obrigatório
+        if ($this->input('tipo') === 'desempenho' || $this->input('tipo') === 'comportamento') {
             $rules['relato_dificuldades'] = ['required', 'string', 'min:5'];
         }
 

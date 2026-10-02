@@ -73,19 +73,30 @@ export function OcorrenciaDetalhesModal({
   const formattedSeq = formatSequentialNumber(ocorrencia.numero_sequencial);
 
   const unidades = ocorrencia.unidades && ocorrencia.unidades.length > 0 ? ocorrencia.unidades : [];
-
-  const compCurricularDisplay = unidades.length > 0
-    ? unidades.map((u) => u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC").join(" / ")
-    : (primaryUc?.unidade_curricular?.sigla ? `${primaryUc.unidade_curricular.nome} (${primaryUc.unidade_curricular.sigla})` : primaryUc?.unidade_curricular?.nome || "Componente Curricular");
   const quantidadeFaltas = primaryUc?.quantidade_faltas ?? 0;
   const horasTotais = primaryUc?.unidade_curricular?.carga_horaria || 80;
   const limiteFaltasAulas = Math.round((horasTotais / 0.75) * 0.25);
 
-  const faltasDisplay = unidades.length > 0
+  const compCurricularDisplay = (() => {
+    if (unidades.length > 0) {
+      return unidades.map((u) => u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC").join(" / ");
+    }
+    const ucObj = primaryUc?.unidade_curricular || (ocorrencia as any).unidade_curricular;
+    if (ucObj?.nome) {
+      return ucObj.sigla ? `${ucObj.nome} (${ucObj.sigla})` : ucObj.nome;
+    }
+    return ocorrencia.tipo === "comportamento" ? "Convivência / Regimento Escolar" : "Componente Curricular";
+  })();
+
+  const faltasDisplay = ocorrencia.tipo === "comportamento"
+    ? "----"
+    : unidades.length > 0
     ? unidades.map((u) => `${u.quantidade_faltas} (${u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC"})`).join(" / ")
     : `${quantidadeFaltas} faltas`;
 
-  const limiteFaltasDisplay = unidades.length > 0
+  const limiteFaltasDisplay = ocorrencia.tipo === "comportamento"
+    ? "----"
+    : unidades.length > 0
     ? unidades.map((u) => {
       const ch = u.unidade_curricular?.carga_horaria || 80;
       const lim = Math.round((ch / 0.75) * 0.25);
@@ -148,7 +159,12 @@ export function OcorrenciaDetalhesModal({
   const providenciasGestaoPadrao = `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`;
 
   function handlePrint() {
+    const originalTitle = document.title;
+    document.title = "";
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   }
 
   async function handleDownloadPdf() {

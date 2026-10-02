@@ -171,6 +171,12 @@
   border: 2px solid var(--color-background);
 }
 
+.avatarWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .userAvatarMini {
   width: 2.125rem;
   height: 2.125rem;
@@ -184,6 +190,106 @@
   font-weight: 700;
   user-select: none;
   box-shadow: 0 2px 6px color-mix(in srgb, var(--color-primary) 25%, transparent);
+  cursor: pointer;
+}
+
+/* Toast Flutuante posicionado logo abaixo do Avatar */
+.avatarToast {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  min-width: 280px;
+  max-width: 380px;
+  background-color: var(--color-surface);
+  border: 1px solid color-mix(in srgb, #10b981 40%, transparent);
+  border-left: 4px solid #10b981;
+  border-radius: var(--radius, 8px);
+  padding: 0.85rem 1rem;
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.22), 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  z-index: 1000;
+  animation: slideDownToast 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toastArrow {
+  position: absolute;
+  top: -6px;
+  right: 12px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--color-surface);
+  border-left: 1px solid color-mix(in srgb, #10b981 40%, transparent);
+  border-top: 1px solid color-mix(in srgb, #10b981 40%, transparent);
+  transform: rotate(45deg);
+}
+
+.toastIconWrapper {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, #10b981 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toastIcon {
+  color: #10b981;
+}
+
+.toastBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.toastTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.25;
+}
+
+.toastMessage {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.toastCloseBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  margin-left: 0.25rem;
+}
+
+.toastCloseBtn:hover {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+@keyframes slideDownToast {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Responsividade Mobile e Tablet */
