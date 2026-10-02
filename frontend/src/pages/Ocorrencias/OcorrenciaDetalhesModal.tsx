@@ -90,9 +90,9 @@ export function OcorrenciaDetalhesModal({
       const ch = u.unidade_curricular?.carga_horaria || 80;
       const lim = Math.round((ch / 0.75) * 0.25);
       const sigla = u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC";
-      return `${lim} aulas (${sigla})`;
+      return `${lim} (${sigla})`;
     }).join(" / ")
-    : `${limiteFaltasAulas} aulas`;
+    : `${limiteFaltasAulas}`;
 
   const nomeDocente =
     ocorrencia.registrado_por_user?.name ||
@@ -227,9 +227,11 @@ export function OcorrenciaDetalhesModal({
                   <p className={`${styles.headerDetailsItem} ${styles.headerSequential}`}>
                     Nº Sequencial: {formattedSeq}
                   </p>
-                  <p className={`${styles.headerDetailsItem} ${styles.headerVersion}`}>
-                    VERSÃO <br /> V. {String(ocorrencia.versao || 1).padStart(2, "0")}
-                  </p>
+                  <div className={`${styles.headerDetailsItem} ${styles.headerVersion}`}>
+                    <span>VERSÃO</span>
+                    <span>V. {String(ocorrencia.versao || 1).padStart(2, "0")}</span>
+                    <span className={styles.headerDate}>{dataFormatada}</span>
+                  </div>
                 </div>
               </div>
             </section>
@@ -237,34 +239,35 @@ export function OcorrenciaDetalhesModal({
             {/* Informações do Estudante e Dados Disciplinares */}
             <section className={styles.infoSection}>
               <div className={styles.studentInfoRow}>
+                {/* Linha 1 */}
                 <p className={styles.studentInfoItem}>
                   <b>Nome do Aluno:</b> {nomeAluno}
                 </p>
                 <p className={styles.studentInfoItem}>
                   <b>Turma:</b> {nomeTurma}
                 </p>
-                <p className={styles.studentInfoItemDoc}>
+
+                {/* Linha 2 */}
+                <p className={styles.studentInfoItem}>
                   <b>Docente:</b> {nomeDocente}
                 </p>
-                <p className={styles.studentInfoItemVist}>
-                  <b>Visto:</b>
-                </p>
-                <p className={styles.studentInfoItemCompC}>
+                <p className={styles.studentInfoItem}>
                   <b>Comp.Currc:</b> {compCurricularDisplay}
                 </p>
-                <p className={styles.studentInfoItemLess}>
-                  <b>Nota do Aluno:</b> ------
+
+                {/* Linha 3 */}
+                <p className={styles.studentInfoItem}>
+                  <b>Nota do Aluno:</b>
                 </p>
-                <p className={styles.studentInfoItemLess}>
-                  <b>Média da Classe:</b> ------
+                <p className={styles.studentInfoItem}>
+                  <b>Visto:</b>
                 </p>
-                <p className={styles.studentInfoItemLess}>
+
+                {/* Linha 4 */}
+                <p className={styles.studentInfoItem}>
                   <b>Faltas do Aluno:</b> {faltasDisplay}
                 </p>
-                <p className={styles.studentInfoItemDate}>
-                  <b>Data:</b> {dataFormatada}
-                </p>
-                <p className={styles.studentInfoItemLimit}>
+                <p className={styles.studentInfoItem}>
                   <b>Limite de Faltas:</b> {limiteFaltasDisplay}
                 </p>
               </div>
