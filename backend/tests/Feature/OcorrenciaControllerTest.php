@@ -6,7 +6,6 @@ use App\Enums\UserRole;
 use App\Models\Aluno;
 use App\Models\Curso;
 use App\Models\Ocorrencia;
-use App\Models\Turma;
 use App\Models\UnidadeCurricular;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,9 +19,21 @@ class OcorrenciaControllerTest extends TestCase
     {
         $instrutorUser = User::factory()->create(['role' => UserRole::INSTRUTOR]);
         $aluno = Aluno::factory()->create();
+        $curso = Curso::factory()->create();
 
-        $uc1 = UnidadeCurricular::factory()->create(['carga_horaria' => 80]);
-        $uc2 = UnidadeCurricular::factory()->create(['carga_horaria' => 40]);
+        $uc1 = UnidadeCurricular::create([
+            'curso_id' => $curso->id,
+            'nome' => 'Programação Back-End I',
+            'sigla' => 'PBE1',
+            'carga_horaria' => 80,
+        ]);
+
+        $uc2 = UnidadeCurricular::create([
+            'curso_id' => $curso->id,
+            'nome' => 'Banco de Dados',
+            'sigla' => 'BCD',
+            'carga_horaria' => 40,
+        ]);
 
         $payload = [
             'aluno_id' => $aluno->id,
@@ -55,7 +66,14 @@ class OcorrenciaControllerTest extends TestCase
     {
         $instrutorUser = User::factory()->create(['role' => UserRole::INSTRUTOR]);
         $aluno = Aluno::factory()->create();
-        $uc = UnidadeCurricular::factory()->create();
+        $curso = Curso::factory()->create();
+
+        $uc = UnidadeCurricular::create([
+            'curso_id' => $curso->id,
+            'nome' => 'Linguagem de Marcação',
+            'sigla' => 'LIMA',
+            'carga_horaria' => 40,
+        ]);
 
         $payload = [
             'aluno_id' => $aluno->id,
@@ -100,7 +118,18 @@ class OcorrenciaControllerTest extends TestCase
     public function test_user_can_encaminhar_fiap_to_aqv(): void
     {
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
-        $ocorrencia = Ocorrencia::factory()->create(['status' => 'pendente']);
+        $aluno = Aluno::factory()->create();
+
+        $ocorrencia = Ocorrencia::create([
+            'aluno_id' => $aluno->id,
+            'registrado_por' => $admin->id,
+            'numero_sequencial' => 'FIAP-2026-9999',
+            'versao' => 1,
+            'tipo' => 'falta',
+            'data_ocorrencia' => '2026-10-02',
+            'status' => 'pendente',
+            'relato_dificuldades' => 'Relato de teste para AQV',
+        ]);
 
         $response = $this->actingAs($admin)->postJson("/api/ocorrencias/{$ocorrencia->id}/encaminhar-aqv");
 
