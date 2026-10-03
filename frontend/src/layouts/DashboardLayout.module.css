@@ -57,3 +57,23 @@
     display: block;
   }
 }
+
+/* Regras de Impressão (@media print) */
+@media print {
+  .layoutWrapper {
+    min-height: auto !important;
+    background: transparent !important;
+    display: block !important;
+  }
+
+  .mainContent {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    background: transparent !important;
+  }
+
+  .backdrop {
+    display: none !important;
+  }
+}

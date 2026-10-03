@@ -399,12 +399,12 @@
     overflow: visible !important;
   }
 
-  body * {
+  body:has(.contentPdfContainer) * {
     visibility: hidden;
   }
 
-  .contentPdfContainer,
-  .contentPdfContainer * {
+  body:has(.contentPdfContainer) .contentPdfContainer,
+  body:has(.contentPdfContainer) .contentPdfContainer * {
     visibility: visible;
   }
 
