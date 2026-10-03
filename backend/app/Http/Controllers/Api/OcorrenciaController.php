@@ -130,13 +130,37 @@ class OcorrenciaController extends Controller
             'total_pendente' => (clone $statsBaseQuery)->where('status', 'pendente')->count(),
         ];
 
-        $ocorrencias = $query->orderBy('data_ocorrencia', 'desc')
-            ->orderBy('id', 'desc')
-            ->get();
+        $query->orderBy('data_ocorrencia', 'desc')
+            ->orderBy('id', 'desc');
+
+        if ($request->boolean('all')) {
+            $ocorrencias = $query->get();
+            return response()->json([
+                'data' => $ocorrencias,
+                'meta' => [
+                    'total' => $ocorrencias->count(),
+                    'all' => true,
+                    'estatisticas' => $stats,
+                ],
+            ]);
+        }
+
+        $perPage = (int) $request->input('per_page', 10);
+        if (! in_array($perPage, [5, 10, 20, 30, 40, 50])) {
+            $perPage = 10;
+        }
+
+        $paginated = $query->paginate($perPage);
 
         return response()->json([
-            'data' => $ocorrencias,
+            'data' => $paginated->items(),
             'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'from' => $paginated->firstItem(),
+                'to' => $paginated->lastItem(),
                 'estatisticas' => $stats,
             ],
         ]);

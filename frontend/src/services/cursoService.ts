@@ -1,4 +1,5 @@
 import { api } from "./api";
+import type { PaginatedResponse } from "../types/pagination";
 
 export interface UnidadeCurricular {
   id?: number;
@@ -26,11 +27,19 @@ export interface CursoPayload {
 }
 
 export const cursoService = {
-  async getCursos(search?: string): Promise<Curso[]> {
-    const response = await api.get<{ data: Curso[] }>("/api/cursos", {
-      params: search ? { search } : undefined,
+  async getCursos(
+    params?: {
+      search?: string;
+      page?: number;
+      per_page?: number;
+      all?: boolean;
+    } | string
+  ): Promise<PaginatedResponse<Curso>> {
+    const queryParams = typeof params === "string" ? { search: params } : params;
+    const response = await api.get<PaginatedResponse<Curso>>("/api/cursos", {
+      params: queryParams,
     });
-    return response.data.data;
+    return response.data;
   },
 
   async getCurso(id: number): Promise<Curso> {

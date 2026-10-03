@@ -1,6 +1,7 @@
 import { api } from "./api";
 import type { Turma } from "./turmaService";
 import type { Ocorrencia } from "./ocorrenciaService";
+import type { PaginatedResponse } from "../types/pagination";
 
 export interface Aluno {
   id: number;
@@ -43,9 +44,12 @@ export const alunoService = {
     search?: string;
     turma_id?: number | string;
     status?: string;
-  }): Promise<Aluno[]> {
-    const response = await api.get<{ data: Aluno[] }>("/api/alunos", { params });
-    return response.data.data;
+    page?: number;
+    per_page?: number;
+    all?: boolean;
+  }): Promise<PaginatedResponse<Aluno>> {
+    const response = await api.get<PaginatedResponse<Aluno>>("/api/alunos", { params });
+    return response.data;
   },
 
   async getAluno(id: number): Promise<Aluno> {

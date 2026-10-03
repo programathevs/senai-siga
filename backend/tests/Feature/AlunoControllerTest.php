@@ -119,4 +119,30 @@ class AlunoControllerTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.aluno.nome', 'Aluno Historico');
     }
+
+    public function test_alunos_can_be_paginated_with_custom_per_page(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        Aluno::factory()->count(15)->create();
+
+        $response = $this->actingAs($admin)->getJson('/api/alunos?per_page=5&page=2');
+        $response->assertOk()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.last_page', 3)
+            ->assertJsonPath('meta.per_page', 5)
+            ->assertJsonPath('meta.total', 15);
+    }
+
+    public function test_alunos_can_be_retrieved_all_with_all_flag(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        Aluno::factory()->count(15)->create();
+
+        $response = $this->actingAs($admin)->getJson('/api/alunos?all=true');
+        $response->assertOk()
+            ->assertJsonCount(15, 'data')
+            ->assertJsonPath('meta.all', true)
+            ->assertJsonPath('meta.total', 15);
+    }
 }

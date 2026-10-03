@@ -36,8 +36,8 @@ export const TurmaModal: React.FC<TurmaModalProps> = ({
       if (cursosProp && cursosProp.length > 0) {
         setCursos(cursosProp);
       }
-      cursoService.getCursos().then(setCursos).catch(() => {});
-      instrutorService.getInstrutores().then(setInstrutores).catch(() => setInstrutores([]));
+      cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => {});
+      instrutorService.getInstrutores({ all: true }).then((res) => setInstrutores(res.data)).catch(() => setInstrutores([]));
 
       if (turmaToEdit) {
         setCursoId(turmaToEdit.curso_id);

@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, Users, School, Calendar, BookOpen, Loader2 } from "lucide-react";
 import { turmaService, type Turma } from "../../services/turmaService";
 import { cursoService, type Curso } from "../../services/cursoService";
+import { Pagination } from "../../components/Pagination/Pagination";
+import type { PaginationMeta } from "../../types/pagination";
 import { useAuth } from "../../contexts/AuthContext";
 import { TurmaModal } from "./TurmaModal";
 import { TurmaAlunosModal } from "./TurmaAlunosModal";
@@ -16,6 +18,11 @@ export function Turmas() {
   const [selectedTurno, setSelectedTurno] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
+  // Paginação
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+
   // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTurma, setEditingTurma] = useState<Turma | null>(null);
@@ -26,31 +33,43 @@ export function Turmas() {
 
   const isAdmin = user?.role === "admin";
 
-  async function loadTurmas() {
+  async function loadTurmas(targetPage = page, targetPerPage = perPage) {
     try {
       setIsLoading(true);
-      const data = await turmaService.getTurmas({
+      const res = await turmaService.getTurmas({
         search: search.trim() || undefined,
         curso_id: selectedCursoId ? Number(selectedCursoId) : undefined,
         turno: selectedTurno || undefined,
+        page: targetPage,
+        per_page: targetPerPage,
       });
-      setTurmas(data);
+      setTurmas(res.data);
+      setMeta(res.meta || null);
     } catch {
       setTurmas([]);
+      setMeta(null);
     } finally {
       setIsLoading(false);
     }
   }
 
   useEffect(() => {
-    cursoService.getCursos().then(setCursos).catch(() => setCursos([]));
+    cursoService
+      .getCursos({ all: true })
+      .then((res) => setCursos(res.data))
+      .catch(() => setCursos([]));
   }, []);
+
+  // Reseta página para 1 quando filtros mudarem
+  useEffect(() => {
+    setPage(1);
+  }, [search, selectedCursoId, selectedTurno]);
 
   useEffect(() => {
     // Carregamento imediato no primeiro render
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadTurmas();
+      loadTurmas(page, perPage);
       return;
     }
 
@@ -60,24 +79,24 @@ export function Turmas() {
 
     if (isSearchChange) {
       const timer = setTimeout(() => {
-        loadTurmas();
+        loadTurmas(page, perPage);
       }, 300);
       return () => clearTimeout(timer);
     }
 
-    // Para seleções de dropdown (curso ou turno), dispara imediatamente
-    loadTurmas();
-  }, [search, selectedCursoId, selectedTurno]);
+    // Para seleções de dropdown (curso ou turno) ou paginação, dispara imediatamente
+    loadTurmas(page, perPage);
+  }, [page, perPage, search, selectedCursoId, selectedTurno]);
 
   function handleOpenCreateModal() {
     setEditingTurma(null);
-    cursoService.getCursos().then(setCursos).catch(() => {});
+    cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => {});
     setIsModalOpen(true);
   }
 
   function handleOpenEditModal(turma: Turma) {
     setEditingTurma(turma);
-    cursoService.getCursos().then(setCursos).catch(() => {});
+    cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => {});
     setIsModalOpen(true);
   }
 
@@ -89,7 +108,7 @@ export function Turmas() {
     ) {
       try {
         await turmaService.deleteTurma(turma.id);
-        loadTurmas();
+        loadTurmas(page, perPage);
       } catch (err: any) {
         alert(err.response?.data?.message || "Não foi possível remover a turma.");
       }
@@ -254,11 +273,28 @@ export function Turmas() {
         </div>
       )}
 
+      {!isLoading && turmas.length > 0 && meta && (
+        <Pagination
+          currentPage={meta.current_page}
+          lastPage={meta.last_page}
+          total={meta.total}
+          perPage={perPage}
+          from={meta.from}
+          to={meta.to}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          }}
+          isLoading={isLoading}
+        />
+      )}
+
       {/* Modal de Criação / Edição de Turma */}
       <TurmaModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={loadTurmas}
+        onSuccess={() => loadTurmas(page, perPage)}
         turmaToEdit={editingTurma}
         cursos={cursos}
       />
@@ -268,7 +304,7 @@ export function Turmas() {
         isOpen={selectedTurmaIdParaAlunos !== null}
         onClose={() => setSelectedTurmaIdParaAlunos(null)}
         turmaId={selectedTurmaIdParaAlunos}
-        onUpdated={loadTurmas}
+        onUpdated={() => loadTurmas(page, perPage)}
       />
     </div>
   );

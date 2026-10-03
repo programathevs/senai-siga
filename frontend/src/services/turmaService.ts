@@ -1,6 +1,7 @@
 import { api } from "./api";
 import type { Curso } from "./cursoService";
 import type { Instrutor } from "./instrutorService";
+import type { PaginatedResponse } from "../types/pagination";
 
 export interface Turma {
   id: number;
@@ -36,9 +37,16 @@ export interface TurmaPayload {
 }
 
 export const turmaService = {
-  async getTurmas(params?: { search?: string; curso_id?: number; turno?: string }): Promise<Turma[]> {
-    const response = await api.get<{ data: Turma[] }>("/api/turmas", { params });
-    return response.data.data;
+  async getTurmas(params?: {
+    search?: string;
+    curso_id?: number;
+    turno?: string;
+    page?: number;
+    per_page?: number;
+    all?: boolean;
+  }): Promise<PaginatedResponse<Turma>> {
+    const response = await api.get<PaginatedResponse<Turma>>("/api/turmas", { params });
+    return response.data;
   },
 
   async getTurma(id: number): Promise<Turma> {

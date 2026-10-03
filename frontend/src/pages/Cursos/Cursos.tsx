@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, GraduationCap, Loader2 } from "lucide-react";
 import { cursoService, type Curso } from "../../services/cursoService";
+import { Pagination } from "../../components/Pagination/Pagination";
+import type { PaginationMeta } from "../../types/pagination";
 import { useAuth } from "../../contexts/AuthContext";
 import { CursoModal } from "./CursoModal";
 import styles from "./Cursos.module.css";
@@ -10,6 +12,12 @@ export function Cursos() {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Paginação
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCurso, setEditingCurso] = useState<Curso | null>(null);
 
@@ -17,32 +25,43 @@ export function Cursos() {
 
   const isAdmin = user?.role === "admin";
 
-  async function loadCursos() {
+  async function loadCursos(targetPage = page, targetPerPage = perPage) {
     try {
       setIsLoading(true);
-      const data = await cursoService.getCursos(search);
-      setCursos(data);
+      const res = await cursoService.getCursos({
+        search: search.trim() || undefined,
+        page: targetPage,
+        per_page: targetPerPage,
+      });
+      setCursos(res.data);
+      setMeta(res.meta || null);
     } catch {
       setCursos([]);
+      setMeta(null);
     } finally {
       setIsLoading(false);
     }
   }
 
+  // Reseta página para 1 quando busca mudar
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   useEffect(() => {
     // Carregamento imediato no primeiro render
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadCursos();
+      loadCursos(page, perPage);
       return;
     }
 
     const timer = setTimeout(() => {
-      loadCursos();
+      loadCursos(page, perPage);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [page, perPage, search]);
 
   function handleOpenCreateModal() {
     setEditingCurso(null);
@@ -62,7 +81,7 @@ export function Cursos() {
     ) {
       try {
         await cursoService.deleteCurso(curso.id);
-        loadCursos();
+        loadCursos(page, perPage);
       } catch (err: any) {
         alert(
           err.response?.data?.message ||
@@ -190,12 +209,29 @@ export function Cursos() {
         )}
       </div>
 
+      {!isLoading && cursos.length > 0 && meta && (
+        <Pagination
+          currentPage={meta.current_page}
+          lastPage={meta.last_page}
+          total={meta.total}
+          perPage={perPage}
+          from={meta.from}
+          to={meta.to}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          }}
+          isLoading={isLoading}
+        />
+      )}
+
       {/* Modal de Criação / Edição */}
       <CursoModal
         isOpen={isModalOpen}
         curso={editingCurso}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={loadCursos}
+        onSuccess={() => loadCursos(page, perPage)}
       />
     </div>
   );
