@@ -183,8 +183,24 @@ export function Relatorios() {
     setDataFim("");
   }
 
+  useEffect(() => {
+    function handleAfterPrint() {
+      window.focus();
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      document.body.focus?.();
+    }
+
+    window.addEventListener("afterprint", handleAfterPrint);
+    return () => window.removeEventListener("afterprint", handleAfterPrint);
+  }, []);
+
   function handlePrint() {
-    window.print();
+    setTimeout(() => {
+      window.print();
+      window.focus();
+    }, 150);
   }
 
   async function handleExportPdf() {
@@ -603,15 +619,17 @@ export function Relatorios() {
                           </span>
                         </td>
 
-                        <td className={styles.td} style={{ textAlign: "right" }}>
-                          <button
-                            type="button"
-                            className={styles.actionBtn}
-                            title="Visualizar FIAP"
-                            onClick={() => setSelectedDetalhes(oc)}
-                          >
-                            <Eye size={16} />
-                          </button>
+                        <td className={styles.td}>
+                          <div className={styles.actionsCell}>
+                            <button
+                              type="button"
+                              className={styles.actionBtn}
+                              title="Visualizar FIAP oficial e Imprimir"
+                              onClick={() => setSelectedDetalhes(oc)}
+                            >
+                              <Eye size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

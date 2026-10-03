@@ -29,6 +29,7 @@
 /* Fundo escurecido semi-transparente para o menu mobile aberto */
 .backdrop {
   display: none;
+  pointer-events: none;
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.45);
@@ -55,6 +56,7 @@
 
   .backdropActive {
     display: block;
+    pointer-events: auto;
   }
 }
 

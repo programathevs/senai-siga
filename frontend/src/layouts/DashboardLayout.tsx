@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet } from "react-router";
 import { SidebarProvider, useSidebar } from "../contexts/SidebarContext";
 import { Header } from "../components/Header/Header";
@@ -6,6 +7,20 @@ import styles from "./DashboardLayout.module.css";
 
 function DashboardLayoutContent() {
   const { isCollapsed, isMobileOpen, closeMobile } = useSidebar();
+
+  useEffect(() => {
+    function handleAfterPrint() {
+      // Restaura o foco na janela e desbloqueia cliques no navegador (corrige bug do Chrome ao cancelar)
+      window.focus();
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      document.body.focus?.();
+    }
+
+    window.addEventListener("afterprint", handleAfterPrint);
+    return () => window.removeEventListener("afterprint", handleAfterPrint);
+  }, []);
 
   return (
     <div className={styles.layoutWrapper}>
