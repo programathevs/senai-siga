@@ -32,7 +32,7 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      turmaService.getTurmas().then(setTurmas).catch(() => setTurmas([]));
+      turmaService.getTurmas({ all: true }).then((res) => setTurmas(res.data)).catch(() => setTurmas([]));
       if (alunoToEdit) {
         setNome(alunoToEdit.nome);
         setMatricula(alunoToEdit.matricula);

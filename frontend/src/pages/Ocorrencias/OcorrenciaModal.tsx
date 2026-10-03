@@ -73,9 +73,9 @@ export function OcorrenciaModal({
   // Carrega turmas e cursos ao abrir o modal
   useEffect(() => {
     if (isOpen) {
-      turmaService.getTurmas().then(setTurmas).catch(() => setTurmas([]));
-      alunoService.getAlunos().then(setAlunos).catch(() => setAlunos([]));
-      cursoService.getCursos().then(setCursos).catch(() => setCursos([]));
+      turmaService.getTurmas({ all: true }).then((res) => setTurmas(res.data)).catch(() => setTurmas([]));
+      alunoService.getAlunos({ all: true }).then((res) => setAlunos(res.data)).catch(() => setAlunos([]));
+      cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => setCursos([]));
     }
   }, [isOpen]);
 

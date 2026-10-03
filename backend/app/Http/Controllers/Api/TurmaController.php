@@ -46,12 +46,37 @@ class TurmaController extends Controller
             $query->where('turno', $request->input('turno'));
         }
 
-        $turmas = $query->orderBy('ano_letivo', 'desc')
-            ->orderBy('nome', 'asc')
-            ->get();
+        $query->orderBy('ano_letivo', 'desc')
+            ->orderBy('nome', 'asc');
+
+        if ($request->boolean('all')) {
+            $turmas = $query->get();
+            return response()->json([
+                'data' => $turmas,
+                'meta' => [
+                    'total' => $turmas->count(),
+                    'all' => true,
+                ],
+            ]);
+        }
+
+        $perPage = (int) $request->input('per_page', 10);
+        if (! in_array($perPage, [5, 10, 20, 30, 40, 50])) {
+            $perPage = 10;
+        }
+
+        $paginated = $query->paginate($perPage);
 
         return response()->json([
-            'data' => $turmas,
+            'data' => $paginated->items(),
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'from' => $paginated->firstItem(),
+                'to' => $paginated->lastItem(),
+            ],
         ]);
     }
 

@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, UserCheck, Loader2 } from "lucide-react";
 import { instrutorService, type Instrutor } from "../../services/instrutorService";
+import { Pagination } from "../../components/Pagination/Pagination";
+import type { PaginationMeta } from "../../types/pagination";
 import { formatPhoneNumber } from "../../utils/formatters";
 import { InstrutorModal } from "./InstrutorModal";
 import styles from "./Instrutores.module.css";
@@ -9,37 +11,54 @@ export function Instrutores() {
   const [instrutores, setInstrutores] = useState<Instrutor[]>([]);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Paginação
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingInstrutor, setEditingInstrutor] = useState<Instrutor | null>(null);
 
   const isFirstRender = useRef(true);
 
-  async function loadInstrutores() {
+  async function loadInstrutores(targetPage = page, targetPerPage = perPage) {
     try {
       setIsLoading(true);
-      const data = await instrutorService.getInstrutores(search);
-      setInstrutores(data);
+      const res = await instrutorService.getInstrutores({
+        search: search.trim() || undefined,
+        page: targetPage,
+        per_page: targetPerPage,
+      });
+      setInstrutores(res.data);
+      setMeta(res.meta || null);
     } catch {
       setInstrutores([]);
+      setMeta(null);
     } finally {
       setIsLoading(false);
     }
   }
 
+  // Reseta página para 1 quando busca mudar
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   useEffect(() => {
     // Carregamento imediato no primeiro render
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadInstrutores();
+      loadInstrutores(page, perPage);
       return;
     }
 
     const timer = setTimeout(() => {
-      loadInstrutores();
+      loadInstrutores(page, perPage);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [page, perPage, search]);
 
   function handleOpenCreateModal() {
     setEditingInstrutor(null);
@@ -60,7 +79,7 @@ export function Instrutores() {
     ) {
       try {
         await instrutorService.deleteInstrutor(instrutor.id);
-        loadInstrutores();
+        loadInstrutores(page, perPage);
       } catch (err: any) {
         alert(
           err.response?.data?.message ||
@@ -180,10 +199,27 @@ export function Instrutores() {
         )}
       </div>
 
+      {!isLoading && instrutores.length > 0 && meta && (
+        <Pagination
+          currentPage={meta.current_page}
+          lastPage={meta.last_page}
+          total={meta.total}
+          perPage={perPage}
+          from={meta.from}
+          to={meta.to}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          }}
+          isLoading={isLoading}
+        />
+      )}
+
       <InstrutorModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={loadInstrutores}
+        onSuccess={() => loadInstrutores(page, perPage)}
         instrutorToEdit={editingInstrutor}
       />
     </div>

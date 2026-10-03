@@ -2,6 +2,7 @@ import { api } from "./api";
 import type { Aluno } from "./alunoService";
 import type { Instrutor } from "./instrutorService";
 import type { UnidadeCurricular } from "./cursoService";
+import type { PaginationMeta } from "../types/pagination";
 
 export type OcorrenciaTipo = "falta" | "comportamento" | "desempenho";
 
@@ -94,6 +95,9 @@ export interface OcorrenciaFiltros {
   curso_id?: number | string;
   data_inicio?: string;
   data_fim?: string;
+  page?: number;
+  per_page?: number;
+  all?: boolean;
 }
 
 export interface CreateOcorrenciaPayload {
@@ -121,10 +125,10 @@ export interface CreateOcorrenciaPayload {
 export const ocorrenciaService = {
   async getOcorrencias(
     filtros?: OcorrenciaFiltros
-  ): Promise<{ data: Ocorrencia[]; meta?: { estatisticas: OcorrenciaEstatisticas } }> {
+  ): Promise<{ data: Ocorrencia[]; meta?: PaginationMeta & { estatisticas?: OcorrenciaEstatisticas } }> {
     const response = await api.get<{
       data: Ocorrencia[];
-      meta?: { estatisticas: OcorrenciaEstatisticas };
+      meta?: PaginationMeta & { estatisticas?: OcorrenciaEstatisticas };
     }>("/api/ocorrencias", {
       params: filtros,
     });

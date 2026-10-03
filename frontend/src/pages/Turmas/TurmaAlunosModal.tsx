@@ -41,9 +41,9 @@ export const TurmaAlunosModal: React.FC<TurmaAlunosModalProps> = ({
 
   async function loadCandidatos() {
     try {
-      const data = await alunoService.getAlunos();
+      const res = await alunoService.getAlunos({ all: true });
       // Permite enturmar qualquer aluno que não esteja já nesta turma
-      const disponiveis = data.filter((a) => a.turma_id !== turmaId);
+      const disponiveis = (res.data || []).filter((a) => a.turma_id !== turmaId);
       setCandidatosAlunos(disponiveis);
     } catch {
       setCandidatosAlunos([]);

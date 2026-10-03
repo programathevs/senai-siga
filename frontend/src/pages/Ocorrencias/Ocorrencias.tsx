@@ -22,6 +22,8 @@ import {
   type OcorrenciaEstatisticas,
 } from "../../services/ocorrenciaService";
 import { turmaService, type Turma } from "../../services/turmaService";
+import { Pagination } from "../../components/Pagination/Pagination";
+import type { PaginationMeta } from "../../types/pagination";
 import { useAuth } from "../../contexts/AuthContext";
 import { OcorrenciaModal } from "./OcorrenciaModal";
 import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
@@ -47,6 +49,11 @@ export function Ocorrencias() {
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [estatisticas, setEstatisticas] = useState<OcorrenciaEstatisticas | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Paginação
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
 
   // Filtros
   const [search, setSearch] = useState("");
@@ -76,7 +83,7 @@ export function Ocorrencias() {
     return false;
   }
 
-  async function loadOcorrencias() {
+  async function loadOcorrencias(targetPage = page, targetPerPage = perPage) {
     try {
       setIsLoading(true);
       const res = await ocorrenciaService.getOcorrencias({
@@ -84,27 +91,39 @@ export function Ocorrencias() {
         turma_id: selectedTurmaId || undefined,
         tipo: selectedTipo || undefined,
         status: selectedStatus || undefined,
+        page: targetPage,
+        per_page: targetPerPage,
       });
 
       setOcorrencias(res.data);
+      setMeta(res.meta || null);
       if (res.meta?.estatisticas) {
         setEstatisticas(res.meta.estatisticas);
       }
     } catch {
       setOcorrencias([]);
+      setMeta(null);
     } finally {
       setIsLoading(false);
     }
   }
 
   useEffect(() => {
-    turmaService.getTurmas().then(setTurmas).catch(() => setTurmas([]));
+    turmaService
+      .getTurmas({ all: true })
+      .then((res) => setTurmas(res.data))
+      .catch(() => setTurmas([]));
   }, []);
+
+  // Reseta página para 1 quando filtros mudarem
+  useEffect(() => {
+    setPage(1);
+  }, [search, selectedTurmaId, selectedTipo, selectedStatus]);
 
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadOcorrencias();
+      loadOcorrencias(page, perPage);
       return;
     }
 
@@ -113,13 +132,13 @@ export function Ocorrencias() {
 
     if (isSearchChange) {
       const timer = setTimeout(() => {
-        loadOcorrencias();
+        loadOcorrencias(page, perPage);
       }, 300);
       return () => clearTimeout(timer);
     }
 
-    loadOcorrencias();
-  }, [search, selectedTurmaId, selectedTipo, selectedStatus]);
+    loadOcorrencias(page, perPage);
+  }, [page, perPage, search, selectedTurmaId, selectedTipo, selectedStatus]);
 
   function handleOpenCreate() {
     setEditingOcorrencia(null);
@@ -143,7 +162,7 @@ export function Ocorrencias() {
     ) {
       try {
         await ocorrenciaService.deleteOcorrencia(oc.id);
-        loadOcorrencias();
+        loadOcorrencias(page, perPage);
       } catch (err: any) {
         alert(err.response?.data?.message || "Não foi possível remover a ocorrência.");
       }
@@ -159,7 +178,7 @@ export function Ocorrencias() {
       try {
         await ocorrenciaService.restaurarOcorrencia(oc.id);
         alert(`FIAP "${oc.numero_sequencial}" restaurada com sucesso!`);
-        loadOcorrencias();
+        loadOcorrencias(page, perPage);
       } catch (err: any) {
         alert(err.response?.data?.message || "Erro ao restaurar ocorrência.");
       }
@@ -186,7 +205,7 @@ export function Ocorrencias() {
       showAvatarToast(
         `FIAP "${oc.numero_sequencial}" encaminhada com sucesso!`
       );
-      loadOcorrencias();
+      loadOcorrencias(page, perPage);
       if (selectedDetalhes?.id === oc.id) {
         const updated = await ocorrenciaService.getOcorrencia(oc.id);
         setSelectedDetalhes(updated);
@@ -630,6 +649,23 @@ export function Ocorrencias() {
             </table>
           </div>
         )}
+
+        {!isLoading && ocorrencias.length > 0 && meta && (
+          <Pagination
+            currentPage={meta.current_page}
+            lastPage={meta.last_page}
+            total={meta.total}
+            perPage={perPage}
+            from={meta.from}
+            to={meta.to}
+            onPageChange={(newPage) => setPage(newPage)}
+            onPerPageChange={(newPerPage) => {
+              setPerPage(newPerPage);
+              setPage(1);
+            }}
+            isLoading={isLoading}
+          />
+        )}
       </div>
 
       {/* Modal de Criação / Edição de Ocorrência */}
@@ -638,7 +674,7 @@ export function Ocorrencias() {
         onClose={() => setIsFormModalOpen(false)}
         onSuccess={() => {
           setIsFormModalOpen(false);
-          loadOcorrencias();
+          loadOcorrencias(page, perPage);
         }}
         ocorrenciaToEdit={editingOcorrencia}
       />

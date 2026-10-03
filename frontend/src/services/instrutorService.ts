@@ -1,5 +1,6 @@
 import { api } from "./api";
 import type { User } from "../contexts/AuthContext";
+import type { PaginatedResponse } from "../types/pagination";
 
 export interface Instrutor {
   id: number;
@@ -17,11 +18,19 @@ export interface InstrutorPayload {
 }
 
 export const instrutorService = {
-  async getInstrutores(search?: string): Promise<Instrutor[]> {
-    const response = await api.get<{ data: Instrutor[] }>("/api/instrutores", {
-      params: search ? { search } : undefined,
+  async getInstrutores(
+    params?: {
+      search?: string;
+      page?: number;
+      per_page?: number;
+      all?: boolean;
+    } | string
+  ): Promise<PaginatedResponse<Instrutor>> {
+    const queryParams = typeof params === "string" ? { search: params } : params;
+    const response = await api.get<PaginatedResponse<Instrutor>>("/api/instrutores", {
+      params: queryParams,
     });
-    return response.data.data;
+    return response.data;
   },
 
   async getInstrutor(id: number): Promise<Instrutor> {

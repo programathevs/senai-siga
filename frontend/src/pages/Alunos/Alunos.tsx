@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, FileText, Users, Loader2 } from "lucide-react";
 import { alunoService, type Aluno } from "../../services/alunoService";
 import { turmaService, type Turma } from "../../services/turmaService";
+import { Pagination } from "../../components/Pagination/Pagination";
+import type { PaginationMeta } from "../../types/pagination";
 import { useAuth } from "../../contexts/AuthContext";
 import { formatPhoneNumber } from "../../utils/formatters";
 import { AlunoModal } from "./AlunoModal";
@@ -17,6 +19,11 @@ export function Alunos() {
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
+  // Paginação
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+
   // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAluno, setEditingAluno] = useState<Aluno | null>(null);
@@ -27,31 +34,43 @@ export function Alunos() {
 
   const isAdmin = user?.role === "admin";
 
-  async function loadAlunos() {
+  async function loadAlunos(targetPage = page, targetPerPage = perPage) {
     try {
       setIsLoading(true);
-      const data = await alunoService.getAlunos({
+      const res = await alunoService.getAlunos({
         search: search.trim() || undefined,
         turma_id: selectedTurmaId || undefined,
         status: selectedStatus || undefined,
+        page: targetPage,
+        per_page: targetPerPage,
       });
-      setAlunos(data);
+      setAlunos(res.data);
+      setMeta(res.meta || null);
     } catch {
       setAlunos([]);
+      setMeta(null);
     } finally {
       setIsLoading(false);
     }
   }
 
   useEffect(() => {
-    turmaService.getTurmas().then(setTurmas).catch(() => setTurmas([]));
+    turmaService
+      .getTurmas({ all: true })
+      .then((res) => setTurmas(res.data))
+      .catch(() => setTurmas([]));
   }, []);
+
+  // Reseta página para 1 quando filtros de pesquisa/seleção mudarem
+  useEffect(() => {
+    setPage(1);
+  }, [search, selectedTurmaId, selectedStatus]);
 
   useEffect(() => {
     // Carregamento imediato no primeiro render
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadAlunos();
+      loadAlunos(page, perPage);
       return;
     }
 
@@ -61,14 +80,14 @@ export function Alunos() {
 
     if (isSearchChange) {
       const timer = setTimeout(() => {
-        loadAlunos();
+        loadAlunos(page, perPage);
       }, 300);
       return () => clearTimeout(timer);
     }
 
-    // Para seleções de dropdown (turma ou status), dispara imediatamente
-    loadAlunos();
-  }, [search, selectedTurmaId, selectedStatus]);
+    // Para seleções de dropdown (turma ou status) ou paginação, dispara imediatamente
+    loadAlunos(page, perPage);
+  }, [page, perPage, search, selectedTurmaId, selectedStatus]);
 
   function handleOpenCreateModal() {
     setEditingAluno(null);
@@ -84,7 +103,7 @@ export function Alunos() {
     if (window.confirm(`Tem certeza de que deseja remover o cadastro do aluno "${aluno.nome}"?`)) {
       try {
         await alunoService.deleteAluno(aluno.id);
-        loadAlunos();
+        loadAlunos(page, perPage);
       } catch (err: any) {
         alert(err.response?.data?.message || "Não foi possível remover o aluno.");
       }
@@ -254,11 +273,28 @@ export function Alunos() {
         )}
       </div>
 
+      {!isLoading && alunos.length > 0 && meta && (
+        <Pagination
+          currentPage={meta.current_page}
+          lastPage={meta.last_page}
+          total={meta.total}
+          perPage={perPage}
+          from={meta.from}
+          to={meta.to}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          }}
+          isLoading={isLoading}
+        />
+      )}
+
       {/* Modal de Criação / Edição de Aluno */}
       <AlunoModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={loadAlunos}
+        onSuccess={() => loadAlunos(page, perPage)}
         alunoToEdit={editingAluno}
       />
 
