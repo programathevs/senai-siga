@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   Printer,
@@ -33,6 +33,31 @@ export function OcorrenciaDetalhesModal({
 }: OcorrenciaDetalhesModalProps) {
   const { user } = useAuth();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+
+    function handleAfterPrint() {
+      window.focus();
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      document.body.focus?.();
+    }
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("afterprint", handleAfterPrint);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("afterprint", handleAfterPrint);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen || !ocorrencia) return null;
 
@@ -161,10 +186,13 @@ export function OcorrenciaDetalhesModal({
   function handlePrint() {
     const originalTitle = document.title;
     document.title = "";
-    window.print();
     setTimeout(() => {
-      document.title = originalTitle;
-    }, 1000);
+      window.print();
+      window.focus();
+      setTimeout(() => {
+        document.title = originalTitle;
+      }, 500);
+    }, 150);
   }
 
   async function handleDownloadPdf() {

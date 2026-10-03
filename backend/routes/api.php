@@ -43,6 +43,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/instrutores', [\App\Http\Controllers\Api\InstrutorController::class, 'index'])->name('instrutores.index');
         Route::get('/instrutores/{instrutor}', [\App\Http\Controllers\Api\InstrutorController::class, 'show'])->name('instrutores.show');
+
+        // --- DASHBOARD STATS ---
+        Route::get('/dashboard/stats', [\App\Http\Controllers\Api\DashboardController::class, 'stats'])->name('dashboard.stats');
+
+        // --- RELATÓRIOS PEDAGÓGICOS ---
+        Route::get('/relatorios/ocorrencias', [\App\Http\Controllers\Api\RelatorioController::class, 'ocorrencias'])->name('relatorios.ocorrencias');
+        Route::get('/relatorios/resumo-turmas', [\App\Http\Controllers\Api\RelatorioController::class, 'resumoTurmas'])->name('relatorios.resumo-turmas');
     });
 
     // --- MODIFICAÇÃO (Criar, Editar, Deletar): Apenas Admin ---

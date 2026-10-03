@@ -65,6 +65,11 @@ class Ocorrencia extends Model
         return $this->belongsTo(User::class, 'registrado_por');
     }
 
+    public function registradoPorUser(): BelongsTo
+    {
+        return $this->registradoPor();
+    }
+
     /**
      * Unidades curriculares associadas à ocorrência (especialmente tipo falta/desempenho).
      */

@@ -14,6 +14,7 @@ import { Instrutores } from "../pages/Instrutores/Instrutores";
 import { Turmas } from "../pages/Turmas/Turmas";
 import { Alunos } from "../pages/Alunos/Alunos";
 import { Ocorrencias } from "../pages/Ocorrencias/Ocorrencias";
+import { Relatorios } from "../pages/Relatorios/Relatorios";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
@@ -57,6 +58,10 @@ export const router = createBrowserRouter([
               {
                 path: "/ocorrencias",
                 element: <Ocorrencias />,
+              },
+              {
+                path: "/relatorios",
+                element: <Relatorios />,
               },
             ],
           },

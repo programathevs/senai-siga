@@ -29,6 +29,7 @@
 /* Fundo escurecido semi-transparente para o menu mobile aberto */
 .backdrop {
   display: none;
+  pointer-events: none;
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.45);
@@ -55,5 +56,26 @@
 
   .backdropActive {
     display: block;
+    pointer-events: auto;
+  }
+}
+
+/* Regras de Impressão (@media print) */
+@media print {
+  .layoutWrapper {
+    min-height: auto !important;
+    background: transparent !important;
+    display: block !important;
+  }
+
+  .mainContent {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    background: transparent !important;
+  }
+
+  .backdrop {
+    display: none !important;
   }
 }
