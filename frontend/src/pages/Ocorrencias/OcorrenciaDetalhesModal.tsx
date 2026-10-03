@@ -34,6 +34,31 @@ export function OcorrenciaDetalhesModal({
   const { user } = useAuth();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+
+    function handleAfterPrint() {
+      window.focus();
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      document.body.focus?.();
+    }
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("afterprint", handleAfterPrint);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("afterprint", handleAfterPrint);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen || !ocorrencia) return null;
 
   const canSendAqv = (() => {
@@ -157,29 +182,6 @@ export function OcorrenciaDetalhesModal({
     "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas.";
 
   const providenciasGestaoPadrao = `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`;
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    }
-
-    function handleAfterPrint() {
-      window.focus();
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-      document.body.focus?.();
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("afterprint", handleAfterPrint);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("afterprint", handleAfterPrint);
-    };
-  }, [onClose]);
 
   function handlePrint() {
     const originalTitle = document.title;
