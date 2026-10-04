@@ -9,11 +9,14 @@ use App\Models\Ocorrencia;
 use App\Models\OcorrenciaEdicao;
 use App\Models\OcorrenciaUnidade;
 use App\Models\UnidadeCurricular;
+use App\Models\User;
+use App\Notifications\OcorrenciaEncaminhadaAqvNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OcorrenciaController extends Controller
 {
@@ -446,8 +449,19 @@ class OcorrenciaController extends Controller
             ['ocorrencia_id' => $ocorrencia->id],
             [
                 'enviado_em' => now(),
+                'status_atendimento' => 'pendente',
             ]
         );
+
+        // Notifica por e-mail os usuários da equipe AQV
+        try {
+            $aqvUsers = User::where('role', 'aqv')->get();
+            foreach ($aqvUsers as $aqvUser) {
+                $aqvUser->notify(new OcorrenciaEncaminhadaAqvNotification($ocorrencia));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Erro ao notificar equipe AQV: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => "Ocorrência {$ocorrencia->numero_sequencial} encaminhada para a equipe AQV com sucesso.",

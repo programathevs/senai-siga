@@ -93,4 +93,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'destroy'])->name('ocorrencias.destroy');
         Route::post('/ocorrencias/{ocorrencia}/encaminhar-aqv', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharAqv'])->name('ocorrencias.encaminhar-aqv');
     });
+
+    // --- MÓDULO AQV (Apoio e Qualidade de Vida / Coordenação Pedagógica) ---
+    Route::middleware('role:admin,aqv')->group(function () {
+        Route::get('/aqv/encaminhamentos', [\App\Http\Controllers\Api\AqvController::class, 'index'])->name('aqv.encaminhamentos.index');
+        Route::get('/aqv/stats', [\App\Http\Controllers\Api\AqvController::class, 'stats'])->name('aqv.stats');
+        Route::post('/aqv/encaminhamentos/{ocorrencia}/atendimento', [\App\Http\Controllers\Api\AqvController::class, 'salvarAtendimento'])->name('aqv.encaminhamentos.atendimento');
+        Route::post('/aqv/encaminhamentos/{ocorrencia}/confirmar-assinatura', [\App\Http\Controllers\Api\AqvController::class, 'confirmarAssinatura'])->name('aqv.encaminhamentos.confirmar-assinatura');
+    });
 });

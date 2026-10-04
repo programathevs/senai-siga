@@ -15,6 +15,7 @@ import { Turmas } from "../pages/Turmas/Turmas";
 import { Alunos } from "../pages/Alunos/Alunos";
 import { Ocorrencias } from "../pages/Ocorrencias/Ocorrencias";
 import { Relatorios } from "../pages/Relatorios/Relatorios";
+import { EncaminhamentosAqv } from "../pages/EncaminhamentosAqv/EncaminhamentosAqv";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
@@ -62,6 +63,15 @@ export const router = createBrowserRouter([
               {
                 path: "/relatorios",
                 element: <Relatorios />,
+              },
+            ],
+          },
+          {
+            element: <RoleRoute allowedRoles={["admin", "aqv"]} />,
+            children: [
+              {
+                path: "/encaminhamentos-aqv",
+                element: <EncaminhamentosAqv />,
               },
             ],
           },
