@@ -16,13 +16,17 @@ class AqvRecebimento extends Model
         'ocorrencia_id',
         'recebido_por',
         'justificativa_aluno',
+        'parecer_aqv',
+        'data_atendimento',
         'enviado_em',
         'confirmado_em',
+        'status_atendimento',
     ];
 
     protected $casts = [
         'enviado_em' => 'datetime',
         'confirmado_em' => 'datetime',
+        'data_atendimento' => 'datetime',
     ];
 
     public function ocorrencia(): BelongsTo

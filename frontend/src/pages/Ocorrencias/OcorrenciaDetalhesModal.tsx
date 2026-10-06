@@ -62,7 +62,7 @@ export function OcorrenciaDetalhesModal({
   if (!isOpen || !ocorrencia) return null;
 
   const canSendAqv = (() => {
-    if (ocorrencia.status === "enviado_aqv" || !user) return false;
+    if (ocorrencia.status === "enviado_aqv" || ocorrencia.status === "assinado" || !user) return false;
     if (user.role === "admin") return true;
     if (user.role === "instrutor") {
       const regId = typeof ocorrencia.registrado_por === "number" ? ocorrencia.registrado_por : ocorrencia.registrado_por?.id;
@@ -182,6 +182,41 @@ export function OcorrenciaDetalhesModal({
     "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas.";
 
   const providenciasGestaoPadrao = `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`;
+
+  // Verificação de maioridade do aluno (18 anos ou mais na data do registro/ocorrência)
+  const isMaiorDeIdade = (() => {
+    if (aluno && typeof (aluno as any).is_maior_de_idade === "boolean") {
+      return (aluno as any).is_maior_de_idade;
+    }
+
+    if (!aluno?.data_nascimento) {
+      // Se não houver data de nascimento informada, assume menor de idade para exigir assinatura do responsável
+      return false;
+    }
+
+    const clean = aluno.data_nascimento.includes("T")
+      ? aluno.data_nascimento.split("T")[0]
+      : aluno.data_nascimento.split(" ")[0];
+    const parts = clean.split("-");
+    if (parts.length === 3) {
+      const anoNasc = parseInt(parts[0], 10);
+      const mesNasc = parseInt(parts[1], 10) - 1;
+      const diaNasc = parseInt(parts[2], 10);
+
+      const dataRef = ocorrencia.data_ocorrencia
+        ? new Date(ocorrencia.data_ocorrencia.split("T")[0] + "T12:00:00")
+        : new Date();
+
+      let idade = dataRef.getFullYear() - anoNasc;
+      const m = dataRef.getMonth() - mesNasc;
+      if (m < 0 || (m === 0 && dataRef.getDate() < diaNasc)) {
+        idade--;
+      }
+      return idade >= 18;
+    }
+
+    return false;
+  })();
 
   function handlePrint() {
     const originalTitle = document.title;
@@ -370,19 +405,19 @@ export function OcorrenciaDetalhesModal({
                 </p>
               </div>
 
-              {/* 6. Visto do Aluno e Assinaturas Físicas */}
+              {/* 6. Visto do Aluno ou Responsável e Assinaturas Físicas */}
               <div className={`${styles.feedback} ${styles.feedbackSubscriptionSection}`}>
                 <p className={styles.feedbackTitle}>
-                  <b>Visto do Aluno:</b>
+                  <b>{isMaiorDeIdade ? "Visto do Aluno:" : "Visto do Responsável:"}</b>
                 </p>
                 <div className={styles.feedbackSignatures}>
                   <p className={`${styles.feedbackSignaturesTitle} ${styles.signatureWide}`}>
-                    Nome do Aluno(a) ou Responsável do Menor
+                    {isMaiorDeIdade ? "Nome do Aluno(a)" : "Nome do Responsável"}
                   </p>
                   <p className={styles.feedbackSignaturesTitle}>RG</p>
                   <p className={styles.feedbackSignaturesTitle}>Data</p>
                   <p className={`${styles.feedbackSignaturesTitle} ${styles.signatureWide}`}>
-                    Ass. do Aluno(a) ou Responsável do Menor
+                    {isMaiorDeIdade ? "Assinatura do Aluno" : "Assinatura do Responsável"}
                   </p>
                   <p className={`${styles.feedbackSignaturesTitle} ${styles.signatureWide}`}>
                     Ass. do Coordenador

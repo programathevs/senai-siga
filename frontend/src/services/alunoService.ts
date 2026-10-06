@@ -10,6 +10,7 @@ export interface Aluno {
   matricula: string;
   cpf: string | null;
   data_nascimento: string | null;
+  is_maior_de_idade?: boolean;
   email: string | null;
   telefone: string | null;
   status: "ativo" | "inativo" | "transferido";

@@ -9,11 +9,14 @@ use App\Models\Ocorrencia;
 use App\Models\OcorrenciaEdicao;
 use App\Models\OcorrenciaUnidade;
 use App\Models\UnidadeCurricular;
+use App\Models\User;
+use App\Notifications\OcorrenciaEncaminhadaAqvNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OcorrenciaController extends Controller
 {
@@ -265,6 +268,8 @@ class OcorrenciaController extends Controller
                 'motivo' => $validated['motivo_edicao'] ?? 'Atualização dos dados da ocorrência.',
             ]);
 
+            $eraAssinado = $ocorrencia->status === 'assinado';
+
             $ocorrencia->update([
                 'aluno_id' => $validated['aluno_id'],
                 'versao' => $novaVersao,
@@ -275,8 +280,16 @@ class OcorrenciaController extends Controller
                 'providencias_gestao' => $validated['providencias_gestao'] ?? null,
                 'outras_observacoes' => $validated['outras_observacoes'] ?? null,
                 'data_ocorrencia' => $validated['data_ocorrencia'],
-                'status' => $validated['status'] ?? $ocorrencia->status,
+                'status' => $eraAssinado ? 'pendente' : ($validated['status'] ?? $ocorrencia->status),
             ]);
+
+            // Se era assinada, invalida a assinatura física anterior e reabre atendimento no AQV
+            if ($eraAssinado && $ocorrencia->aqvRecebimento) {
+                $ocorrencia->aqvRecebimento->update([
+                    'status_atendimento' => 'pendente',
+                    'confirmado_em' => null,
+                ]);
+            }
 
             // Processa as unidades curriculares da ocorrência (suporte a N UCs)
             $this->processarUnidades($ocorrencia, $validated);
@@ -446,8 +459,19 @@ class OcorrenciaController extends Controller
             ['ocorrencia_id' => $ocorrencia->id],
             [
                 'enviado_em' => now(),
+                'status_atendimento' => 'pendente',
             ]
         );
+
+        // Notifica por e-mail os usuários da equipe AQV
+        try {
+            $aqvUsers = User::where('role', 'aqv')->get();
+            foreach ($aqvUsers as $aqvUser) {
+                $aqvUser->notify(new OcorrenciaEncaminhadaAqvNotification($ocorrencia));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Erro ao notificar equipe AQV: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => "Ocorrência {$ocorrencia->numero_sequencial} encaminhada para a equipe AQV com sucesso.",

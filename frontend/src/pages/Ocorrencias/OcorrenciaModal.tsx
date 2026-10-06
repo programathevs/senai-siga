@@ -567,8 +567,22 @@ export function OcorrenciaModal({
           {/* 3. CALCULADORA DE INFREQUÊNCIA & UNIDADES CURRICULARES (Se for tipo FALTA) */}
           {tipo === "falta" && (
             <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <span>3. Unidades Curriculares &amp; Infrequência (Teto 25%)</span>
+              <div className={styles.sectionHeaderBetween}>
+                <span className={styles.sectionHeaderTitle}>
+                  3. Unidades Curriculares &amp; Infrequência (Teto 25%)
+                </span>
+
+                {unidadesList.length < unidadesCurricularesFiltradas.length && (
+                  <button
+                    type="button"
+                    className={styles.headerAddBtn}
+                    onClick={handleAddUcLine}
+                    title="Adicionar mais uma Unidade Curricular nesta FIAP"
+                  >
+                    <Plus size={14} />
+                    <span>Adicionar matéria</span>
+                  </button>
+                )}
               </div>
 
               {unidadesList.map((item, index) => {
@@ -697,16 +711,6 @@ export function OcorrenciaModal({
                 );
               })}
 
-              {unidadesList.length < unidadesCurricularesFiltradas.length && (
-                <button
-                  type="button"
-                  className={styles.addUcBtn}
-                  onClick={handleAddUcLine}
-                >
-                  <Plus size={16} />
-                  Adicionar Outra Matéria / UC na FIAP
-                </button>
-              )}
             </div>
           )}
 
