@@ -105,38 +105,37 @@ class AqvController extends Controller
         $baseQuery = Ocorrencia::query()
             ->where(function ($q) {
                 $q->where('status', 'enviado_aqv')
+                    ->orWhere('status', 'assinado')
                     ->orWhereHas('aqvRecebimento');
             });
 
         $totalEncaminhados = (clone $baseQuery)->count();
 
-        $aguardandoAtendimento = (clone $baseQuery)
-            ->whereHas('aqvRecebimento', function ($aq) {
-                $aq->where(function ($sq) {
-                    $sq->where('status_atendimento', 'pendente')
-                        ->orWhereNull('status_atendimento');
-                })->whereNull('confirmado_em');
+        // Concluídos & Assinados: Ocorrência que está assinada ou atendimento concluído (desde que não esteja pendente/reaberta)
+        $concluidos = (clone $baseQuery)
+            ->where(function ($q) {
+                $q->where('status', 'assinado')
+                    ->orWhere(function ($sq) {
+                        $sq->where('status', '!=', 'pendente')
+                            ->whereHas('aqvRecebimento', function ($aq) {
+                                $aq->where('status_atendimento', 'concluido');
+                            });
+                    });
             })
-            ->where('status', '!=', 'assinado')
             ->count();
 
+        // Em Acolhimento
         $emAtendimento = (clone $baseQuery)
+            ->where('status', '!=', 'assinado')
+            ->where('status', '!=', 'pendente')
             ->whereHas('aqvRecebimento', function ($aq) {
                 $aq->where('status_atendimento', 'em_atendimento')
                     ->whereNull('confirmado_em');
             })
-            ->where('status', '!=', 'assinado')
             ->count();
 
-        $concluidos = (clone $baseQuery)
-            ->where(function ($q) {
-                $q->where('status', 'assinado')
-                    ->orWhereHas('aqvRecebimento', function ($aq) {
-                        $aq->where('status_atendimento', 'concluido')
-                            ->orWhereNotNull('confirmado_em');
-                    });
-            })
-            ->count();
+        // Aguardando Atendimento: Todas as demais na fila que não estão concluídas nem em acolhimento
+        $aguardandoAtendimento = max(0, $totalEncaminhados - $emAtendimento - $concluidos);
 
         return response()->json([
             'total_encaminhados' => $totalEncaminhados,

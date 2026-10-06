@@ -62,7 +62,7 @@ export function OcorrenciaDetalhesModal({
   if (!isOpen || !ocorrencia) return null;
 
   const canSendAqv = (() => {
-    if (ocorrencia.status === "enviado_aqv" || !user) return false;
+    if (ocorrencia.status === "enviado_aqv" || ocorrencia.status === "assinado" || !user) return false;
     if (user.role === "admin") return true;
     if (user.role === "instrutor") {
       const regId = typeof ocorrencia.registrado_por === "number" ? ocorrencia.registrado_por : ocorrencia.registrado_por?.id;

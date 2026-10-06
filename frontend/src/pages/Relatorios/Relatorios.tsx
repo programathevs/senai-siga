@@ -385,7 +385,7 @@ export function Relatorios() {
             </option>
             {turmasList.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.nome} - {t.curso?.nome || "Curso"}
+                {t.nome}
               </option>
             ))}
           </select>

@@ -73,7 +73,7 @@ export function Ocorrencias() {
   const canCreate = user?.role === "instrutor";
 
   function canSendAqv(oc: Ocorrencia): boolean {
-    if (oc.status === "enviado_aqv" || !user) return false;
+    if (oc.status === "enviado_aqv" || oc.status === "assinado" || !user) return false;
     if (user.role === "admin") return true;
     if (user.role === "instrutor") {
       const regId = typeof oc.registrado_por === "number" ? oc.registrado_por : oc.registrado_por?.id;
@@ -333,7 +333,7 @@ export function Ocorrencias() {
           <option value="">Todas as Turmas</option>
           {turmas.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.nome} - {t.curso?.nome}
+              {t.nome}
             </option>
           ))}
         </select>

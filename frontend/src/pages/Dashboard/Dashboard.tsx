@@ -352,7 +352,7 @@ export function Dashboard() {
               </option>
               {stats?.turmas_resumo?.map((turma) => (
                 <option key={turma.id} value={String(turma.id)}>
-                  {turma.nome} ({turma.curso?.nome || "Curso"})
+                  {turma.nome}
                 </option>
               ))}
             </select>

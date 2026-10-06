@@ -268,6 +268,8 @@ class OcorrenciaController extends Controller
                 'motivo' => $validated['motivo_edicao'] ?? 'Atualização dos dados da ocorrência.',
             ]);
 
+            $eraAssinado = $ocorrencia->status === 'assinado';
+
             $ocorrencia->update([
                 'aluno_id' => $validated['aluno_id'],
                 'versao' => $novaVersao,
@@ -278,8 +280,16 @@ class OcorrenciaController extends Controller
                 'providencias_gestao' => $validated['providencias_gestao'] ?? null,
                 'outras_observacoes' => $validated['outras_observacoes'] ?? null,
                 'data_ocorrencia' => $validated['data_ocorrencia'],
-                'status' => $validated['status'] ?? $ocorrencia->status,
+                'status' => $eraAssinado ? 'pendente' : ($validated['status'] ?? $ocorrencia->status),
             ]);
+
+            // Se era assinada, invalida a assinatura física anterior e reabre atendimento no AQV
+            if ($eraAssinado && $ocorrencia->aqvRecebimento) {
+                $ocorrencia->aqvRecebimento->update([
+                    'status_atendimento' => 'pendente',
+                    'confirmado_em' => null,
+                ]);
+            }
 
             // Processa as unidades curriculares da ocorrência (suporte a N UCs)
             $this->processarUnidades($ocorrencia, $validated);

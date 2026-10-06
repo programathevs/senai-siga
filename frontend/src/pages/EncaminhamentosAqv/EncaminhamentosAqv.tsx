@@ -24,6 +24,7 @@ import { Pagination } from "../../components/Pagination/Pagination";
 import { AqvAtendimentoModal } from "./AqvAtendimentoModal";
 import { OcorrenciaDetalhesModal } from "../Ocorrencias/OcorrenciaDetalhesModal";
 import { AlunoHistoricoModal } from "../Alunos/AlunoHistoricoModal";
+import { ConfirmAssinaturaModal } from "./ConfirmAssinaturaModal";
 import styles from "./EncaminhamentosAqv.module.css";
 
 export function EncaminhamentosAqv() {
@@ -58,6 +59,9 @@ export function EncaminhamentosAqv() {
 
   const [historicoModalOpen, setHistoricoModalOpen] = useState(false);
   const [historicoAlunoId, setHistoricoAlunoId] = useState<number | null>(null);
+
+  const [confirmAssinaturaModalOpen, setConfirmAssinaturaModalOpen] = useState(false);
+  const [itemParaAssinar, setItemParaAssinar] = useState<AqvEncaminhamentoItem | null>(null);
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -162,19 +166,20 @@ export function EncaminhamentosAqv() {
     setHistoricoModalOpen(true);
   }
 
-  async function handleConfirmarAssinaturaRapida(item: AqvEncaminhamentoItem) {
-    const confirmou = window.confirm(
-      `Confirmar que a folha física da ocorrência ${item.numero_sequencial} do aluno ${item.aluno?.nome} foi devidamente assinada e colhida?`
-    );
-    if (!confirmou) return;
+  function handleOpenConfirmAssinatura(item: AqvEncaminhamentoItem) {
+    setItemParaAssinar(item);
+    setConfirmAssinaturaModalOpen(true);
+  }
 
+  async function handleConfirmAssinaturaSubmit() {
+    if (!itemParaAssinar) return;
     try {
-      await aqvService.confirmarAssinatura(item.id);
+      await aqvService.confirmarAssinatura(itemParaAssinar.id);
       loadEncaminhamentos(page, perPage);
       loadStats();
     } catch (err) {
       console.error("Erro ao confirmar assinatura:", err);
-      alert("Não foi possível confirmar a assinatura. Tente novamente.");
+      throw err;
     }
   }
 
@@ -342,7 +347,7 @@ export function EncaminhamentosAqv() {
             <option value="">Turma: Todas</option>
             {turmas.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.nome} ({t.curso?.nome || "Curso"})
+                {t.nome}
               </option>
             ))}
           </select>
@@ -447,7 +452,7 @@ export function EncaminhamentosAqv() {
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.actionBtnSuccess}`}
-                              onClick={() => handleConfirmarAssinaturaRapida(item)}
+                              onClick={() => handleOpenConfirmAssinatura(item)}
                               title="Confirmar Assinatura Física da FIAP"
                             >
                               <Check size={16} />
@@ -528,6 +533,19 @@ export function EncaminhamentosAqv() {
             setHistoricoAlunoId(null);
           }}
           alunoId={historicoAlunoId}
+        />
+      )}
+
+      {/* Modal de Confirmação de Assinatura Física */}
+      {confirmAssinaturaModalOpen && itemParaAssinar && (
+        <ConfirmAssinaturaModal
+          isOpen={confirmAssinaturaModalOpen}
+          onClose={() => {
+            setConfirmAssinaturaModalOpen(false);
+            setItemParaAssinar(null);
+          }}
+          onConfirm={handleConfirmAssinaturaSubmit}
+          item={itemParaAssinar}
         />
       )}
     </div>

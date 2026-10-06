@@ -149,7 +149,7 @@ export function Alunos() {
           <option value="sem_turma">Sem turma alocada</option>
           {turmas.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.nome} - {t.curso?.nome}
+              {t.nome}
             </option>
           ))}
         </select>
