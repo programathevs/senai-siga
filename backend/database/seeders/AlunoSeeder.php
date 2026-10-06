@@ -67,13 +67,17 @@ class AlunoSeeder extends Seeder
         ];
 
         if ($turmaI2HN) {
-            foreach ($alunosI2HN as $alunoData) {
+            foreach ($alunosI2HN as $index => $alunoData) {
+                // Alunos de 2º ano: mescla de menores (16-17 anos) e maiores (18+ anos)
+                $dataNascimento = ($index % 4 === 0) ? '2006-04-12' : '2008-06-20';
+
                 Aluno::updateOrCreate(
                     ['matricula' => $alunoData['matricula']],
                     [
                         'turma_id' => $turmaI2HN->id,
                         'nome' => $this->formatarNomeProprio($alunoData['nome']),
                         'email' => $alunoData['matricula'] . '@aluno.senai.br',
+                        'data_nascimento' => $alunoData['data_nascimento'] ?? $dataNascimento,
                         'status' => $alunoData['status'],
                     ]
                 );
@@ -118,12 +122,14 @@ class AlunoSeeder extends Seeder
 
         if ($turmaI1HNA) {
             foreach ($alunosI1HNA as $alunoData) {
+                // Alunos de 1º ano: todos menores de idade (15-16 anos)
                 Aluno::updateOrCreate(
                     ['matricula' => $alunoData['matricula']],
                     [
                         'turma_id' => $turmaI1HNA->id,
                         'nome' => $this->formatarNomeProprio($alunoData['nome']),
                         'email' => $alunoData['matricula'] . '@aluno.senai.br',
+                        'data_nascimento' => $alunoData['data_nascimento'] ?? '2009-08-15',
                         'status' => $alunoData['status'],
                     ]
                 );
@@ -150,12 +156,14 @@ class AlunoSeeder extends Seeder
 
         if ($turmaM4H) {
             foreach ($alunosM4H as $alunoData) {
+                // Alunos de curso técnico noturno / subsequente: adultos (maiores de 18 anos)
                 Aluno::updateOrCreate(
                     ['matricula' => $alunoData['matricula']],
                     [
                         'turma_id' => $turmaM4H->id,
                         'nome' => $this->formatarNomeProprio($alunoData['nome']),
                         'email' => $alunoData['matricula'] . '@aluno.senai.br',
+                        'data_nascimento' => $alunoData['data_nascimento'] ?? '2004-10-18',
                         'status' => $alunoData['status'],
                     ]
                 );

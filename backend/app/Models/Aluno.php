@@ -27,6 +27,22 @@ class Aluno extends Model
         'data_nascimento' => 'date',
     ];
 
+    protected $appends = [
+        'is_maior_de_idade',
+    ];
+
+    /**
+     * Determina se o aluno tem 18 anos ou mais.
+     */
+    public function getIsMaiorDeIdadeAttribute(): bool
+    {
+        if (!$this->data_nascimento) {
+            return false;
+        }
+
+        return $this->data_nascimento->age >= 18;
+    }
+
     /**
      * Turma à qual o aluno está vinculado (opcional).
      */
