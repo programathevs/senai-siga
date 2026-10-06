@@ -24,7 +24,7 @@ class DashboardControllerTest extends TestCase
 
     public function test_admin_can_access_global_dashboard_stats(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $curso = Curso::factory()->create();
         $turma = Turma::factory()->create(['curso_id' => $curso->id]);
         $aluno = Aluno::factory()->create(['turma_id' => $turma->id]);
@@ -91,7 +91,7 @@ class DashboardControllerTest extends TestCase
         ]);
 
         // Ocorrência na outra turma
-        $outroUser = User::factory()->create(['role' => UserRole::ADMIN]);
+        $outroUser = User::factory()->create(['role' => UserRole::GESTOR]);
         Ocorrencia::create([
             'aluno_id' => $alunoOutraTurma->id,
             'registrado_por' => $outroUser->id,

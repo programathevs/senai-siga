@@ -117,7 +117,7 @@ class OcorrenciaControllerTest extends TestCase
 
     public function test_user_can_encaminhar_fiap_to_aqv(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $aluno = Aluno::factory()->create();
 
         $ocorrencia = Ocorrencia::create([

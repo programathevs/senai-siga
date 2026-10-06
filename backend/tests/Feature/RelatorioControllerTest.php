@@ -70,7 +70,7 @@ class RelatorioControllerTest extends TestCase
         $turmaOutra = Turma::factory()->create(['curso_id' => $curso->id]);
         $alunoOutro = Aluno::factory()->create(['turma_id' => $turmaOutra->id]);
 
-        $outroUser = User::factory()->create(['role' => UserRole::ADMIN]);
+        $outroUser = User::factory()->create(['role' => UserRole::GESTOR]);
         Ocorrencia::create([
             'aluno_id' => $alunoOutro->id,
             'registrado_por' => $outroUser->id,
@@ -90,7 +90,7 @@ class RelatorioControllerTest extends TestCase
 
     public function test_resumo_turmas_endpoint(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $curso = Curso::factory()->create();
         $turma = Turma::factory()->create(['curso_id' => $curso->id]);
         $aluno = Aluno::factory()->create(['turma_id' => $turma->id]);

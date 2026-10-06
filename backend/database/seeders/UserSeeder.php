@@ -16,11 +16,11 @@ class UserSeeder extends Seeder
     {
         $users = [
             [
-                'name' => 'Administrador SENAI',
-                'email' => 'admin@senai.br',
+                'name' => 'Gestor SENAI',
+                'email' => 'gestor@senai.br',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
-                'role' => 'admin',
+                'role' => 'gestor',
                 'deve_trocar_senha' => false,
             ],
             [

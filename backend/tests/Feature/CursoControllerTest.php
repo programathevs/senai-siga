@@ -27,7 +27,7 @@ class CursoControllerTest extends TestCase
 
     public function test_only_admin_can_create_a_new_curso(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
 
         $payload = [
             'nome' => 'Técnico em Mecatrônica',
@@ -58,7 +58,7 @@ class CursoControllerTest extends TestCase
 
     public function test_admin_can_update_a_curso(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $curso = Curso::factory()->create(['nome' => 'Técnico Antigo', 'carga_horaria_total' => 800]);
 
         $response = $this->actingAs($admin)->putJson("/api/cursos/{$curso->id}", [
@@ -72,7 +72,7 @@ class CursoControllerTest extends TestCase
 
     public function test_admin_can_delete_a_curso(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $curso = Curso::factory()->create();
 
         $response = $this->actingAs($admin)->deleteJson("/api/cursos/{$curso->id}");

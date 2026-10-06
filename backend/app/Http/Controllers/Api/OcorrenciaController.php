@@ -27,8 +27,8 @@ class OcorrenciaController extends Controller
     {
         $user = $request->user();
 
-        // Admins visualizam inclusive FIAPs excluídas (Soft Delete)
-        $query = $user && $user->hasRole('admin')
+        // Gestores visualizam inclusive FIAPs excluídas (Soft Delete)
+        $query = $user && $user->hasRole('gestor')
             ? Ocorrencia::withTrashed()->with([
                 'aluno.turma.curso',
                 'registradoPor',
@@ -398,7 +398,7 @@ class OcorrenciaController extends Controller
     {
         $user = $request->user();
 
-        if ($user && ! $user->hasRole('admin') && $ocorrencia->registrado_por !== $user->id) {
+        if ($user && ! $user->hasRole('gestor') && $ocorrencia->registrado_por !== $user->id) {
             return response()->json([
                 'message' => 'Você só pode excluir ocorrências que foram registradas por você.',
             ], 403);
@@ -417,9 +417,9 @@ class OcorrenciaController extends Controller
     public function restaurar(Request $request, int $id): JsonResponse
     {
         $user = $request->user();
-        if (! $user->hasRole('admin')) {
+        if (! $user->hasRole('gestor')) {
             return response()->json([
-                'message' => 'Apenas o administrador pode restaurar ocorrências excluídas.',
+                'message' => 'Apenas a gestão pode restaurar ocorrências excluídas.',
             ], 403);
         }
 
@@ -444,10 +444,10 @@ class OcorrenciaController extends Controller
     {
         $user = $request->user();
 
-        // Apenas ADMIN ou o PRÓPRIO criador da FIAP podem encaminhá-la para a AQV
-        if (! $user->hasRole('admin') && $ocorrencia->registrado_por !== $user->id) {
+        // Apenas GESTOR ou o PRÓPRIO criador da FIAP podem encaminhá-la para a AQV
+        if (! $user->hasRole('gestor') && $ocorrencia->registrado_por !== $user->id) {
             return response()->json([
-                'message' => 'Apenas o administrador ou o próprio instrutor que criou a FIAP podem encaminhá-la para a AQV.',
+                'message' => 'Apenas a gestão ou o próprio instrutor que criou a FIAP podem encaminhá-la para a AQV.',
             ], 403);
         }
 
