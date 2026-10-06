@@ -23,7 +23,7 @@ export function Cursos() {
 
   const isFirstRender = useRef(true);
 
-  const isAdmin = user?.role === "admin";
+  const isGestor = user?.role === "gestor";
 
   async function loadCursos(targetPage = page, targetPerPage = perPage) {
     try {
@@ -102,7 +102,7 @@ export function Cursos() {
           </p>
         </div>
 
-        {isAdmin && (
+        {isGestor && (
           <button
             type="button"
             className={styles.addBtn}
@@ -148,7 +148,7 @@ export function Cursos() {
                 <th className={styles.th}>Nome do Curso</th>
                 <th className={styles.th}>Carga Horária Total</th>
                 <th className={styles.th}>Matriz Curricular</th>
-                {isAdmin && <th className={styles.th} style={{ textAlign: "right" }}>Ações</th>}
+                {isGestor && <th className={styles.th} style={{ textAlign: "right" }}>Ações</th>}
               </tr>
             </thead>
             <tbody>
@@ -180,7 +180,7 @@ export function Cursos() {
                       </span>
                     )}
                   </td>
-                  {isAdmin && (
+                  {isGestor && (
                     <td className={styles.td}>
                       <div className={styles.actionsCell}>
                         <button

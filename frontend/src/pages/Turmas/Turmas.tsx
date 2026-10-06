@@ -31,7 +31,7 @@ export function Turmas() {
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
 
-  const isAdmin = user?.role === "admin";
+  const isGestor = user?.role === "gestor";
 
   async function loadTurmas(targetPage = page, targetPerPage = perPage) {
     try {
@@ -125,7 +125,7 @@ export function Turmas() {
           </p>
         </div>
 
-        {isAdmin && (
+        {isGestor && (
           <button type="button" className={styles.addBtn} onClick={handleOpenCreateModal}>
             <Plus size={18} />
             Nova Turma
@@ -247,7 +247,7 @@ export function Turmas() {
                   Ver Alunos ({turma.alunos_count || 0})
                 </button>
 
-                {isAdmin && (
+                {isGestor && (
                   <div className={styles.actionBtnsRight}>
                     <button
                       type="button"
