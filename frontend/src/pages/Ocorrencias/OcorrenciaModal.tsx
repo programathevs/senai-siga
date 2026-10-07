@@ -30,6 +30,7 @@ interface OcorrenciaModalProps {
   onClose: () => void;
   onSuccess: () => void;
   ocorrenciaToEdit?: Ocorrencia | null;
+  onOpenPlanoModal?: (createdOcorrencia: Ocorrencia) => void;
 }
 
 export function OcorrenciaModal({
@@ -370,7 +371,10 @@ export function OcorrenciaModal({
       if (isEditing && ocorrenciaToEdit) {
         await ocorrenciaService.updateOcorrencia(ocorrenciaToEdit.id, payload);
       } else {
-        await ocorrenciaService.createOcorrencia(payload);
+        const created = await ocorrenciaService.createOcorrencia(payload);
+        if (onOpenPlanoModal && (payload.tipo === "falta" || payload.tipo === "desempenho" || (payload.tipo as string) === "aproveitamento")) {
+          onOpenPlanoModal(created);
+        }
       }
 
       onSuccess();
@@ -441,7 +445,14 @@ export function OcorrenciaModal({
                 className={`${styles.tipoCard} ${
                   tipo === "comportamento" ? styles.tipoCardActiveComportamento : ""
                 }`}
-                onClick={() => setTipo("comportamento")}
+                onClick={() => {
+                  setTipo("comportamento");
+                  if (!relatoDificuldades.trim()) {
+                    setRelatoDificuldades(
+                      "O estudante apresentou conduta incompatível com as normas regimentais da instituição."
+                    );
+                  }
+                }}
               >
                 <ShieldAlert size={28} />
                 <span className={styles.tipoCardTitle}>Comportamento</span>
@@ -454,7 +465,14 @@ export function OcorrenciaModal({
                 className={`${styles.tipoCard} ${
                   tipo === "desempenho" ? styles.tipoCardActiveDesempenho : ""
                 }`}
-                onClick={() => setTipo("desempenho")}
+                onClick={() => {
+                  setTipo("desempenho");
+                  if (!relatoDificuldades.trim()) {
+                    setRelatoDificuldades(
+                      "O estudante apresenta rendimento insatisfatório na Unidade Curricular e necessita de acompanhamento via Plano de Recuperação Paralela (PRP)."
+                    );
+                  }
+                }}
               >
                 <BookOpen size={28} />
                 <span className={styles.tipoCardTitle}>Aproveitamento</span>

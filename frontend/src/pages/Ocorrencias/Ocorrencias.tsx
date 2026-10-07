@@ -30,6 +30,8 @@ import { OcorrenciaModal } from "./OcorrenciaModal";
 import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
 import { ConfirmAqvModal } from "./ConfirmAqvModal";
 import { ConfirmAssinaturaModal } from "../EncaminhamentosAqv/ConfirmAssinaturaModal";
+import { PlanoRecuperacaoModal } from "../PlanosRecuperacao/PlanoRecuperacaoModal";
+import { ClipboardCheck } from "lucide-react";
 import { aqvService } from "../../services/aqvService";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./Ocorrencias.module.css";
@@ -69,6 +71,15 @@ export function Ocorrencias() {
   const [editingOcorrencia, setEditingOcorrencia] = useState<Ocorrencia | null>(null);
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
   const [ocorrenciaAqvPending, setOcorrenciaAqvPending] = useState<Ocorrencia | null>(null);
+
+  // Modal de Plano de Recuperação (Ideia 2 & 3)
+  const [isPlanoModalOpen, setIsPlanoModalOpen] = useState(false);
+  const [ocorrenciaParaPlano, setOcorrenciaParaPlano] = useState<Ocorrencia | null>(null);
+
+  function handleOpenPlanoModal(oc: Ocorrencia) {
+    setOcorrenciaParaPlano(oc);
+    setIsPlanoModalOpen(true);
+  }
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -611,6 +622,25 @@ export function Ocorrencias() {
                                 Assinado
                               </span>
                             )}
+                            {oc.has_plano_pendente && (
+                              <div style={{ marginTop: "4px" }}>
+                                <span
+                                  className={styles.statusBadge}
+                                  style={{
+                                    background: "#fef9c3",
+                                    color: "#854d0e",
+                                    border: "1px solid #fde047",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                  }}
+                                  title="Esta FIAP de aproveitamento necessita de um Plano de Recuperação"
+                                >
+                                  <ClipboardCheck size={12} />
+                                  Plano Pendente
+                                </span>
+                              </div>
+                            )}
                           </>
                         )}
                       </td>
@@ -626,6 +656,23 @@ export function Ocorrencias() {
                           >
                             <Eye size={16} />
                           </button>
+
+                          {oc.has_plano_pendente && (
+                            <button
+                              type="button"
+                              className={styles.actionBtn}
+                              style={{
+                                backgroundColor: "color-mix(in srgb, #eab308 15%, transparent)",
+                                color: "#a16207",
+                                borderColor: "color-mix(in srgb, #eab308 35%, transparent)",
+                              }}
+                              onClick={() => handleOpenPlanoModal(oc)}
+                              title="Criar Plano de Recuperação para esta FIAP"
+                            >
+                              <ClipboardCheck size={15} />
+                              <span>Criar Plano</span>
+                            </button>
+                          )}
 
                           {canRestore && (
                             <button
@@ -726,6 +773,18 @@ export function Ocorrencias() {
           loadOcorrencias(page, perPage);
         }}
         ocorrenciaToEdit={editingOcorrencia}
+        onOpenPlanoModal={handleOpenPlanoModal}
+      />
+
+      {/* Modal do Plano de Recuperação (Ideia 2 & 3) */}
+      <PlanoRecuperacaoModal
+        isOpen={isPlanoModalOpen}
+        onClose={() => {
+          setIsPlanoModalOpen(false);
+          setOcorrenciaParaPlano(null);
+        }}
+        onSaveSuccess={() => loadOcorrencias(page, perPage)}
+        ocorrencia={ocorrenciaParaPlano}
       />
 
       {/* Modal de Detalhes da FIAP Oficial */}

@@ -41,12 +41,22 @@ class Ocorrencia extends Model
     ];
 
     protected $appends = [
+        'has_plano_pendente',
         'registrado_por_id',
     ];
 
     public function getRegistradoPorIdAttribute(): int
     {
         return (int) ($this->attributes['registrado_por'] ?? 0);
+    }
+
+    public function getHasPlanoPendenteAttribute(): bool
+    {
+        if ($this->tipo !== 'desempenho' && $this->tipo !== 'aproveitamento') {
+            return false;
+        }
+
+        return $this->planosRecuperacao()->count() === 0;
     }
 
     /**

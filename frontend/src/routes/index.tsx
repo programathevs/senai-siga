@@ -16,6 +16,7 @@ import { Alunos } from "../pages/Alunos/Alunos";
 import { Ocorrencias } from "../pages/Ocorrencias/Ocorrencias";
 import { Relatorios } from "../pages/Relatorios/Relatorios";
 import { EncaminhamentosAqv } from "../pages/EncaminhamentosAqv/EncaminhamentosAqv";
+import { PlanosRecuperacao } from "../pages/PlanosRecuperacao/PlanosRecuperacao";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
@@ -59,6 +60,10 @@ export const router = createBrowserRouter([
               {
                 path: "/ocorrencias",
                 element: <Ocorrencias />,
+              },
+              {
+                path: "/planos-recuperacao",
+                element: <PlanosRecuperacao />,
               },
               {
                 path: "/relatorios",

@@ -16,7 +16,7 @@ class OcorrenciaRequest extends FormRequest
     {
         $rules = [
             'aluno_id' => ['required', 'exists:alunos,id'],
-            'tipo' => ['required', Rule::in(['falta', 'comportamento', 'desempenho'])],
+            'tipo' => ['required', Rule::in(['falta', 'comportamento', 'desempenho', 'aproveitamento'])],
             'data_ocorrencia' => ['required', 'date'],
             'unidade_curricular_id' => ['nullable', 'exists:unidades_curriculares,id'],
             'quantidade_faltas' => ['nullable', 'integer', 'min:0'],
@@ -46,8 +46,8 @@ class OcorrenciaRequest extends FormRequest
             $rules['limite_percentual'] = ['nullable', 'numeric', 'min:1', 'max:100'];
         }
 
-        // Se for tipo DESEMPENHO ou COMPORTAMENTO, relato é obrigatório
-        if ($this->input('tipo') === 'desempenho' || $this->input('tipo') === 'comportamento') {
+        // Se for tipo DESEMPENHO, COMPORTAMENTO ou APROVEITAMENTO, relato é obrigatório
+        if ($this->input('tipo') === 'desempenho' || $this->input('tipo') === 'comportamento' || $this->input('tipo') === 'aproveitamento') {
             $rules['relato_dificuldades'] = ['required', 'string', 'min:5'];
         }
 
