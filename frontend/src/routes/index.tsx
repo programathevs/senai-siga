@@ -54,7 +54,7 @@ export const router = createBrowserRouter([
             element: <Dashboard />,
           },
           {
-            element: <RoleRoute allowedRoles={["admin", "instrutor", "aqv"]} />,
+            element: <RoleRoute allowedRoles={["gestor", "instrutor", "aqv"]} />,
             children: [
               {
                 path: "/ocorrencias",
@@ -67,7 +67,7 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            element: <RoleRoute allowedRoles={["admin", "aqv"]} />,
+            element: <RoleRoute allowedRoles={["gestor", "aqv"]} />,
             children: [
               {
                 path: "/encaminhamentos-aqv",
@@ -76,7 +76,7 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            element: <RoleRoute allowedRoles={["admin"]} />,
+            element: <RoleRoute allowedRoles={["gestor"]} />,
             children: [
               {
                 path: "/cursos",

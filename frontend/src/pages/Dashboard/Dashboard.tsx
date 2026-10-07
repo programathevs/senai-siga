@@ -154,8 +154,8 @@ export function Dashboard() {
             <span className={styles.versionTag}>• SENAI SIGA v2.0</span>
           </div>
           <h1 className={styles.pageTitle}>
-            {user?.role === "admin"
-              ? "Painel da Coordenação & Direção"
+            {user?.role === "gestor"
+              ? "Painel de Gestão Escolar"
               : user?.role === "aqv"
               ? "Painel de Apoio e Qualidade de Vida (AQV)"
               : "Painel do Docente"}
@@ -566,7 +566,7 @@ export function Dashboard() {
           <button
             type="button"
             className={styles.cardFooterLink}
-            onClick={() => navigate(user?.role === "admin" ? "/turmas" : "/ocorrencias")}
+            onClick={() => navigate(user?.role === "gestor" ? "/turmas" : "/ocorrencias")}
             style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             <span>Acompanhar turmas completas</span>

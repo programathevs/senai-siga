@@ -26,7 +26,7 @@ class LoginAuthTest extends TestCase
         $user = User::factory()->create([
             'email' => 'test@senai.br',
             'password' => Hash::make('password123'),
-            'role' => UserRole::ADMIN,
+            'role' => UserRole::GESTOR,
         ]);
 
         $response = $this->withHeaders([
@@ -40,7 +40,7 @@ class LoginAuthTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('data.email', 'test@senai.br');
-        $response->assertJsonPath('data.role', UserRole::ADMIN->value);
+        $response->assertJsonPath('data.role', UserRole::GESTOR->value);
         $this->assertAuthenticatedAs($user, 'web');
     }
 

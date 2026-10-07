@@ -24,7 +24,7 @@ class TurmaControllerTest extends TestCase
             $t->instrutores()->attach($instrutorProfile->id);
         }
 
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $responseAdmin = $this->actingAs($admin)->getJson('/api/turmas');
         $responseAdmin->assertOk()->assertJsonCount(3, 'data');
 
@@ -34,7 +34,7 @@ class TurmaControllerTest extends TestCase
 
     public function test_admin_can_filter_turmas_by_search(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $curso = Curso::factory()->create(['nome' => 'Técnico em Redes']);
 
         Turma::factory()->create(['nome' => 'RED-1AM', 'curso_id' => $curso->id]);
@@ -48,7 +48,7 @@ class TurmaControllerTest extends TestCase
 
     public function test_only_admin_can_create_turma(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
         $curso = Curso::factory()->create();
 
@@ -72,7 +72,7 @@ class TurmaControllerTest extends TestCase
 
     public function test_admin_can_update_turma(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $turma = Turma::factory()->create(['nome' => 'NOME-ANTIGO']);
 
         $response = $this->actingAs($admin)->putJson("/api/turmas/{$turma->id}", [
@@ -90,7 +90,7 @@ class TurmaControllerTest extends TestCase
 
     public function test_admin_can_delete_turma_and_alunos_are_disassociated(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $turma = Turma::factory()->create();
         $aluno = Aluno::factory()->create(['turma_id' => $turma->id]);
 
@@ -103,7 +103,7 @@ class TurmaControllerTest extends TestCase
 
     public function test_admin_can_enturmar_and_desenturmar_alunos(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $turma = Turma::factory()->create();
         $aluno1 = Aluno::factory()->create(['turma_id' => null]);
         $aluno2 = Aluno::factory()->create(['turma_id' => null]);

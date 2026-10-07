@@ -15,7 +15,7 @@ class AlunoControllerTest extends TestCase
 
     public function test_authenticated_users_can_list_alunos(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
 
         Aluno::factory()->count(3)->create();
@@ -29,7 +29,7 @@ class AlunoControllerTest extends TestCase
 
     public function test_admin_can_filter_alunos(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
 
         Aluno::factory()->create(['nome' => 'Lucas Silva', 'matricula' => 'RA111222']);
         Aluno::factory()->create(['nome' => 'Beatriz Santos', 'matricula' => 'RA333444']);
@@ -42,7 +42,7 @@ class AlunoControllerTest extends TestCase
 
     public function test_only_admin_can_create_aluno(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
         $turma = Turma::factory()->create();
 
@@ -67,7 +67,7 @@ class AlunoControllerTest extends TestCase
 
     public function test_admin_can_create_aluno_without_turma(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
 
         $payload = [
             'turma_id' => null,
@@ -84,7 +84,7 @@ class AlunoControllerTest extends TestCase
 
     public function test_admin_can_update_aluno(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $aluno = Aluno::factory()->create(['nome' => 'Nome Antigo', 'matricula' => 'RA123456']);
 
         $response = $this->actingAs($admin)->putJson("/api/alunos/{$aluno->id}", [
@@ -101,7 +101,7 @@ class AlunoControllerTest extends TestCase
 
     public function test_admin_can_delete_aluno(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         $aluno = Aluno::factory()->create();
 
         $response = $this->actingAs($admin)->deleteJson("/api/alunos/{$aluno->id}");
@@ -122,7 +122,7 @@ class AlunoControllerTest extends TestCase
 
     public function test_alunos_can_be_paginated_with_custom_per_page(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         Aluno::factory()->count(15)->create();
 
         $response = $this->actingAs($admin)->getJson('/api/alunos?per_page=5&page=2');
@@ -136,7 +136,7 @@ class AlunoControllerTest extends TestCase
 
     public function test_alunos_can_be_retrieved_all_with_all_flag(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
         Aluno::factory()->count(15)->create();
 
         $response = $this->actingAs($admin)->getJson('/api/alunos?all=true');

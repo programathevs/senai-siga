@@ -29,8 +29,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/first-access/update-password', [FirstAccessController::class, 'updatePassword'])
         ->name('first-access.update-password');
 
-    // --- LEITURA DE CURSOS, TURMAS, ALUNOS E INSTRUTORES (Admin, Instrutor e AQV) ---
-    Route::middleware('role:admin,instrutor,aqv')->group(function () {
+    // --- LEITURA DE CURSOS, TURMAS, ALUNOS E INSTRUTORES (Gestor, Instrutor e AQV) ---
+    Route::middleware('role:gestor,instrutor,aqv')->group(function () {
         Route::get('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'index'])->name('cursos.index');
         Route::get('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'show'])->name('cursos.show');
 
@@ -52,8 +52,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/relatorios/resumo-turmas', [\App\Http\Controllers\Api\RelatorioController::class, 'resumoTurmas'])->name('relatorios.resumo-turmas');
     });
 
-    // --- MODIFICAÇÃO (Criar, Editar, Deletar): Apenas Admin ---
-    Route::middleware('role:admin')->group(function () {
+    // --- MODIFICAÇÃO (Criar, Editar, Deletar): Apenas Gestor ---
+    Route::middleware('role:gestor')->group(function () {
         Route::post('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'store'])->name('cursos.store');
         Route::put('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'update'])->name('cursos.update');
         Route::delete('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'destroy'])->name('cursos.destroy');
@@ -75,27 +75,27 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'update'])->name('alunos.update');
         Route::delete('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'destroy'])->name('alunos.destroy');
 
-        // --- RESTAURAÇÃO DE OCORRÊNCIAS / FIAPS (Apenas Admin) ---
+        // --- RESTAURAÇÃO DE OCORRÊNCIAS / FIAPS (Apenas Gestor) ---
         Route::post('/ocorrencias/{id}/restaurar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'restaurar'])->name('ocorrencias.restaurar');
     });
 
     // --- GESTÃO DE OCORRÊNCIAS / FIAPS ---
-    // Leitura e Edição: Admin, Instrutor e AQV
-    Route::middleware('role:admin,instrutor,aqv')->group(function () {
+    // Leitura e Edição: Gestor, Instrutor e AQV
+    Route::middleware('role:gestor,instrutor,aqv')->group(function () {
         Route::get('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'index'])->name('ocorrencias.index');
         Route::get('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'show'])->name('ocorrencias.show');
         Route::put('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'update'])->name('ocorrencias.update');
     });
 
-    // Modificação / Registro / Encaminhamento / Exclusão: Admin e Instrutor (Docente registra e apaga a própria FIAP)
-    Route::middleware('role:admin,instrutor')->group(function () {
+    // Modificação / Registro / Encaminhamento / Exclusão: Gestor e Instrutor (Docente registra e apaga a própria FIAP)
+    Route::middleware('role:gestor,instrutor')->group(function () {
         Route::post('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'store'])->name('ocorrencias.store');
         Route::delete('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'destroy'])->name('ocorrencias.destroy');
         Route::post('/ocorrencias/{ocorrencia}/encaminhar-aqv', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharAqv'])->name('ocorrencias.encaminhar-aqv');
     });
 
     // --- MÓDULO AQV (Apoio e Qualidade de Vida / Coordenação Pedagógica) ---
-    Route::middleware('role:admin,aqv')->group(function () {
+    Route::middleware('role:gestor,aqv')->group(function () {
         Route::get('/aqv/encaminhamentos', [\App\Http\Controllers\Api\AqvController::class, 'index'])->name('aqv.encaminhamentos.index');
         Route::get('/aqv/stats', [\App\Http\Controllers\Api\AqvController::class, 'stats'])->name('aqv.stats');
         Route::post('/aqv/encaminhamentos/{ocorrencia}/atendimento', [\App\Http\Controllers\Api\AqvController::class, 'salvarAtendimento'])->name('aqv.encaminhamentos.atendimento');

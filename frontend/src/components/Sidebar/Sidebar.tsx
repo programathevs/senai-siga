@@ -44,61 +44,61 @@ export function Sidebar() {
       label: "Dashboard",
       icon: LayoutDashboard,
       end: true,
-      allowedRoles: ["admin", "instrutor", "aqv"],
+      allowedRoles: ["gestor", "instrutor", "aqv"],
     },
     {
       to: "/ocorrencias",
       label: "Ocorrências & Advertências",
       icon: Gavel,
-      allowedRoles: ["admin", "instrutor", "aqv"],
+      allowedRoles: ["gestor", "instrutor", "aqv"],
     },
     {
       to: "/planos-recuperacao",
       label: "Planos de Recuperação",
       icon: ClipboardCheck,
-      allowedRoles: ["admin", "instrutor", "aqv"],
+      allowedRoles: ["gestor", "instrutor", "aqv"],
     },
     {
       to: "/cursos",
       label: "Gestão de Cursos",
       icon: GraduationCap,
-      allowedRoles: ["admin"],
+      allowedRoles: ["gestor"],
     },
     {
       to: "/instrutores",
       label: "Gestão de Instrutores",
       icon: UserCheck,
-      allowedRoles: ["admin"],
+      allowedRoles: ["gestor"],
     },
     {
       to: "/turmas",
       label: "Gestão de Turmas",
       icon: School,
-      allowedRoles: ["admin"],
+      allowedRoles: ["gestor"],
     },
     {
       to: "/alunos",
       label: "Gestão de Alunos",
       icon: Users,
-      allowedRoles: ["admin"],
+      allowedRoles: ["gestor"],
     },
     {
       to: "/encaminhamentos-aqv",
       label: "Encaminhamentos AQV",
       icon: Headphones,
-      allowedRoles: ["admin", "aqv"],
+      allowedRoles: ["gestor", "aqv"],
     },
     {
       to: "/relatorios",
       label: "Relatórios & Histórico",
       icon: BarChart3,
-      allowedRoles: ["admin", "instrutor", "aqv"],
+      allowedRoles: ["gestor", "instrutor", "aqv"],
     },
     {
       to: "/configuracoes",
       label: "Configurações",
       icon: Settings,
-      allowedRoles: ["admin"],
+      allowedRoles: ["gestor"],
     },
   ];
 
@@ -173,7 +173,11 @@ export function Sidebar() {
               {user?.name || "Usuário"}
             </span>
             <span className={styles.profileRole} title={user?.role}>
-              {user?.role ? `Perfil ${user.role.toUpperCase()}` : "Docente"}
+              {user?.role === "gestor"
+                ? "Perfil Gestor"
+                : user?.role === "aqv"
+                ? "Perfil AQV"
+                : "Perfil Docente"}
             </span>
           </div>
 

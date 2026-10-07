@@ -32,7 +32,7 @@ export function Alunos() {
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
 
-  const isAdmin = user?.role === "admin";
+  const isGestor = user?.role === "gestor";
 
   async function loadAlunos(targetPage = page, targetPerPage = perPage) {
     try {
@@ -120,7 +120,7 @@ export function Alunos() {
           </p>
         </div>
 
-        {isAdmin && (
+        {isGestor && (
           <button type="button" className={styles.addBtn} onClick={handleOpenCreateModal}>
             <Plus size={18} />
             Novo Aluno
@@ -243,7 +243,7 @@ export function Alunos() {
                           <FileText size={16} />
                         </button>
 
-                        {isAdmin && (
+                        {isGestor && (
                           <>
                             <button
                               type="button"

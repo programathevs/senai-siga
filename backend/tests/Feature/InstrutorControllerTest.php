@@ -16,7 +16,7 @@ class InstrutorControllerTest extends TestCase
 
     public function test_admin_can_list_instrutores(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
 
         $user1 = User::factory()->create(['name' => 'Carlos Silva', 'email' => 'carlos@senai.br', 'role' => UserRole::INSTRUTOR]);
         Instrutor::create(['user_id' => $user1->id, 'telefone' => '(11) 91111-1111']);
@@ -32,7 +32,7 @@ class InstrutorControllerTest extends TestCase
 
     public function test_admin_can_search_instrutores(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
 
         $user1 = User::factory()->create(['name' => 'Carlos Silva', 'email' => 'carlos@senai.br', 'role' => UserRole::INSTRUTOR]);
         Instrutor::create(['user_id' => $user1->id, 'telefone' => '(11) 99999-1111']);
@@ -51,7 +51,7 @@ class InstrutorControllerTest extends TestCase
     {
         Notification::fake();
 
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
 
         $payload = [
             'nome' => 'Professor Fulano',
@@ -103,7 +103,7 @@ class InstrutorControllerTest extends TestCase
 
     public function test_admin_can_update_an_instrutor(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
 
         $user = User::factory()->create(['name' => 'Nome Antigo', 'email' => 'antigo@senai.br', 'role' => UserRole::INSTRUTOR]);
         $instrutor = Instrutor::create(['user_id' => $user->id, 'telefone' => '111']);
@@ -124,7 +124,7 @@ class InstrutorControllerTest extends TestCase
 
     public function test_admin_can_delete_an_instrutor(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
 
         $user = User::factory()->create(['name' => 'Para Deletar', 'email' => 'deletar@senai.br', 'role' => UserRole::INSTRUTOR]);
         $instrutor = Instrutor::create(['user_id' => $user->id]);

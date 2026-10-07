@@ -57,9 +57,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return ($this->role?->value ?? $this->role) === $roleValue;
     }
 
+    public function isGestor(): bool
+    {
+        return $this->hasRole(UserRole::GESTOR);
+    }
+
     public function isAdmin(): bool
     {
-        return $this->hasRole(UserRole::ADMIN);
+        return $this->isGestor();
     }
 
     public function isInstrutor(): bool

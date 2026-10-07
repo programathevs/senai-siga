@@ -13,6 +13,7 @@ import {
   Loader2,
   Send,
   RotateCcw,
+  Check,
 } from "lucide-react";
 import {
   ocorrenciaService,
@@ -28,6 +29,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { OcorrenciaModal } from "./OcorrenciaModal";
 import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
 import { ConfirmAqvModal } from "./ConfirmAqvModal";
+import { ConfirmAssinaturaModal } from "../EncaminhamentosAqv/ConfirmAssinaturaModal";
+import { aqvService } from "../../services/aqvService";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./Ocorrencias.module.css";
 
@@ -74,13 +77,37 @@ export function Ocorrencias() {
 
   function canSendAqv(oc: Ocorrencia): boolean {
     if (oc.status === "enviado_aqv" || oc.status === "assinado" || !user) return false;
-    if (user.role === "admin") return true;
+    if (user.role === "gestor") return true;
     if (user.role === "instrutor") {
       const regId = typeof oc.registrado_por === "number" ? oc.registrado_por : oc.registrado_por?.id;
       const creatorId = oc.registrado_por_user?.id || oc.registrado_por_id || regId;
       return creatorId === user.id;
     }
     return false;
+  }
+
+  // Modal de Confirmação Rápida de Assinatura Física (Gestor e AQV)
+  const [confirmAssinaturaModalOpen, setConfirmAssinaturaModalOpen] = useState(false);
+  const [itemParaAssinar, setItemParaAssinar] = useState<Ocorrencia | null>(null);
+
+  function handleOpenConfirmAssinatura(oc: Ocorrencia) {
+    setItemParaAssinar(oc);
+    setConfirmAssinaturaModalOpen(true);
+  }
+
+  async function handleConfirmAssinaturaSubmit() {
+    if (!itemParaAssinar) return;
+    try {
+      await aqvService.confirmarAssinatura(itemParaAssinar.id);
+      showAvatarToast(
+        "Assinatura Confirmada",
+        `Assinatura física da FIAP ${itemParaAssinar.numero_sequencial} confirmada com sucesso.`
+      );
+      loadOcorrencias(page, perPage);
+    } catch (err) {
+      console.error("Erro ao confirmar assinatura:", err);
+      throw err;
+    }
   }
 
   async function loadOcorrencias(targetPage = page, targetPerPage = perPage) {
@@ -414,14 +441,19 @@ export function Ocorrencias() {
 
                   const canEdit =
                     !isDeleted &&
-                    (user?.role === "admin" ||
+                    (user?.role === "gestor" ||
                       user?.role === "aqv" ||
                       (user?.role === "instrutor" && isOwner));
 
                   const canDelete =
                     !isDeleted &&
-                    (user?.role === "admin" || (user?.role === "instrutor" && isOwner));
-                  const canRestore = isDeleted && user?.role === "admin";
+                    (user?.role === "gestor" || (user?.role === "instrutor" && isOwner));
+                  const canRestore = isDeleted && user?.role === "gestor";
+
+                  const canSign =
+                    !isDeleted &&
+                    oc.status !== "assinado" &&
+                    (user?.role === "gestor" || user?.role === "aqv");
 
                   return (
                     <tr key={oc.id} className={`${styles.tr} ${isDeleted ? styles.trDeleted : ""}`}>
@@ -618,6 +650,23 @@ export function Ocorrencias() {
                             </button>
                           )}
 
+                          {/* Confirmação de Assinatura Física para Gestão e AQV */}
+                          {canSign && (
+                            <button
+                              type="button"
+                              className={styles.actionBtn}
+                              style={{
+                                backgroundColor: "color-mix(in srgb, #16a34a 12%, transparent)",
+                                color: "#16a34a",
+                                borderColor: "color-mix(in srgb, #16a34a 30%, transparent)",
+                              }}
+                              onClick={() => handleOpenConfirmAssinatura(oc)}
+                              title="Confirmar Assinatura Física da FIAP (Gestão / AQV)"
+                            >
+                              <Check size={16} />
+                            </button>
+                          )}
+
                           {canEdit && (
                             <button
                               type="button"
@@ -691,7 +740,7 @@ export function Ocorrencias() {
         }}
         canEdit={(() => {
           if (!selectedDetalhes || !user) return false;
-          if (user.role === "admin" || user.role === "aqv") return true;
+          if (user.role === "gestor" || user.role === "aqv") return true;
           const cId =
             typeof selectedDetalhes.registrado_por === "object" && selectedDetalhes.registrado_por !== null
               ? (selectedDetalhes.registrado_por as any).id
@@ -709,6 +758,19 @@ export function Ocorrencias() {
         onConfirm={handleConfirmEncaminharAqv}
         ocorrencia={ocorrenciaAqvPending}
       />
+
+      {/* Modal de Confirmação de Assinatura Física */}
+      {confirmAssinaturaModalOpen && itemParaAssinar && (
+        <ConfirmAssinaturaModal
+          isOpen={confirmAssinaturaModalOpen}
+          onClose={() => {
+            setConfirmAssinaturaModalOpen(false);
+            setItemParaAssinar(null);
+          }}
+          onConfirm={handleConfirmAssinaturaSubmit}
+          item={itemParaAssinar as any}
+        />
+      )}
     </div>
   );
 }

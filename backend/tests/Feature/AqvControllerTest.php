@@ -20,7 +20,7 @@ class AqvControllerTest extends TestCase
 
     private function criarEstruturaBase(): array
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $gestor = User::factory()->create(['role' => UserRole::GESTOR]);
         $aqv = User::factory()->create(['role' => UserRole::AQV]);
         $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
 
@@ -44,7 +44,7 @@ class AqvControllerTest extends TestCase
             'status_atendimento' => 'pendente',
         ]);
 
-        return compact('admin', 'aqv', 'instrutor', 'aluno', 'turma', 'ocorrencia');
+        return compact('gestor', 'aqv', 'instrutor', 'aluno', 'turma', 'ocorrencia');
     }
 
     public function test_unauthenticated_user_cannot_access_aqv_endpoints(): void
@@ -61,7 +61,7 @@ class AqvControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_aqv_and_admin_can_list_encaminhamentos(): void
+    public function test_aqv_and_gestor_can_list_encaminhamentos(): void
     {
         $data = $this->criarEstruturaBase();
 
@@ -77,9 +77,9 @@ class AqvControllerTest extends TestCase
             ]);
         $this->assertEquals(1, $responseAqv->json('total'));
 
-        // Usuário Admin
-        $responseAdmin = $this->actingAs($data['admin'])->getJson('/api/aqv/encaminhamentos');
-        $responseAdmin->assertOk();
+        // Usuário Gestor
+        $responseGestor = $this->actingAs($data['gestor'])->getJson('/api/aqv/encaminhamentos');
+        $responseGestor->assertOk();
     }
 
     public function test_aqv_can_view_stats(): void
