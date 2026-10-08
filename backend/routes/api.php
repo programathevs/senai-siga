@@ -75,8 +75,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'update'])->name('alunos.update');
         Route::delete('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'destroy'])->name('alunos.destroy');
 
-        // --- RESTAURAÇÃO DE OCORRÊNCIAS / FIAPS (Apenas Gestor) ---
+        // --- RESTAURAÇÃO DE OCORRÊNCIAS / FIAPS E PLANOS (Apenas Gestor) ---
         Route::post('/ocorrencias/{id}/restaurar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'restaurar'])->name('ocorrencias.restaurar');
+        Route::post('/planos-recuperacao/{id}/restaurar', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'restaurar'])->name('planos-recuperacao.restaurar');
     });
 
     // --- GESTÃO DE OCORRÊNCIAS / FIAPS ---
@@ -85,6 +86,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'index'])->name('ocorrencias.index');
         Route::get('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'show'])->name('ocorrencias.show');
         Route::put('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'update'])->name('ocorrencias.update');
+
+        // Planos de Recuperação (Leitura)
+        Route::get('/planos-recuperacao', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'index'])->name('planos-recuperacao.index');
+        Route::get('/planos-recuperacao/{plano}', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'show'])->name('planos-recuperacao.show');
     });
 
     // Modificação / Registro / Encaminhamento / Exclusão: Gestor e Instrutor (Docente registra e apaga a própria FIAP)
@@ -92,6 +97,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'store'])->name('ocorrencias.store');
         Route::delete('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'destroy'])->name('ocorrencias.destroy');
         Route::post('/ocorrencias/{ocorrencia}/encaminhar-aqv', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharAqv'])->name('ocorrencias.encaminhar-aqv');
+
+        // Planos de Recuperação (Escrita)
+        Route::post('/planos-recuperacao', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'store'])->name('planos-recuperacao.store');
+        Route::put('/planos-recuperacao/{plano}', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'update'])->name('planos-recuperacao.update');
+        Route::delete('/planos-recuperacao/{plano}', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'destroy'])->name('planos-recuperacao.destroy');
     });
 
     // --- MÓDULO AQV (Apoio e Qualidade de Vida / Coordenação Pedagógica) ---

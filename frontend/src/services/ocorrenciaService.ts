@@ -72,6 +72,7 @@ export interface Ocorrencia {
   unidades?: OcorrenciaUnidade[];
   instrutores?: Instrutor[];
   edicoes?: OcorrenciaEdicao[];
+  has_plano_pendente?: boolean;
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;

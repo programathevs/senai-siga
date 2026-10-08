@@ -30,6 +30,8 @@ import { OcorrenciaModal } from "./OcorrenciaModal";
 import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
 import { ConfirmAqvModal } from "./ConfirmAqvModal";
 import { ConfirmAssinaturaModal } from "../EncaminhamentosAqv/ConfirmAssinaturaModal";
+import { PlanoRecuperacaoModal } from "../PlanosRecuperacao/PlanoRecuperacaoModal";
+import { ClipboardCheck } from "lucide-react";
 import { aqvService } from "../../services/aqvService";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./Ocorrencias.module.css";
@@ -69,6 +71,15 @@ export function Ocorrencias() {
   const [editingOcorrencia, setEditingOcorrencia] = useState<Ocorrencia | null>(null);
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
   const [ocorrenciaAqvPending, setOcorrenciaAqvPending] = useState<Ocorrencia | null>(null);
+
+  // Modal de Plano de Recuperação (Ideia 2 & 3)
+  const [isPlanoModalOpen, setIsPlanoModalOpen] = useState(false);
+  const [ocorrenciaParaPlano, setOcorrenciaParaPlano] = useState<Ocorrencia | null>(null);
+
+  function handleOpenPlanoModal(oc: Ocorrencia) {
+    setOcorrenciaParaPlano(oc);
+    setIsPlanoModalOpen(true);
+  }
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -217,6 +228,11 @@ export function Ocorrencias() {
       typeof ocOrId === "number"
         ? ocorrencias.find((o) => o.id === ocOrId) || selectedDetalhes
         : ocOrId;
+
+    if (targetOc?.has_plano_pendente) {
+      alert("Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.");
+      return;
+    }
 
     if (targetOc) {
       setOcorrenciaAqvPending(targetOc);
@@ -611,6 +627,16 @@ export function Ocorrencias() {
                                 Assinado
                               </span>
                             )}
+                            {oc.has_plano_pendente && (
+                              <div style={{ marginTop: "4px" }}>
+                                <span
+                                  className={styles.planoPendenteBadge}
+                                  title="Esta FIAP necessita da elaboração de um Plano de Recuperação"
+                                >
+                                  Plano Pendente
+                                </span>
+                              </div>
+                            )}
                           </>
                         )}
                       </td>
@@ -626,6 +652,17 @@ export function Ocorrencias() {
                           >
                             <Eye size={16} />
                           </button>
+
+                          {oc.has_plano_pendente && (
+                            <button
+                              type="button"
+                              className={`${styles.actionBtn} ${styles.planoBtn}`}
+                              onClick={() => handleOpenPlanoModal(oc)}
+                              title="Criar Plano de Recuperação para esta FIAP"
+                            >
+                              <ClipboardCheck size={15} />
+                            </button>
+                          )}
 
                           {canRestore && (
                             <button
@@ -644,7 +681,17 @@ export function Ocorrencias() {
                               type="button"
                               className={`${styles.actionBtn} ${styles.aqvBtn}`}
                               onClick={() => handleEncaminharAqv(oc)}
-                              title="Encaminhar para o AQV"
+                              disabled={oc.has_plano_pendente}
+                              style={
+                                oc.has_plano_pendente
+                                  ? { opacity: 0.4, cursor: "not-allowed", borderColor: "var(--color-border)" }
+                                  : undefined
+                              }
+                              title={
+                                oc.has_plano_pendente
+                                  ? "Não é possível encaminhar para a AQV enquanto o Plano de Recuperação estiver pendente"
+                                  : "Encaminhar para o AQV"
+                              }
                             >
                               <Send size={15} />
                             </button>
@@ -726,6 +773,18 @@ export function Ocorrencias() {
           loadOcorrencias(page, perPage);
         }}
         ocorrenciaToEdit={editingOcorrencia}
+        onOpenPlanoModal={handleOpenPlanoModal}
+      />
+
+      {/* Modal do Plano de Recuperação (Ideia 2 & 3) */}
+      <PlanoRecuperacaoModal
+        isOpen={isPlanoModalOpen}
+        onClose={() => {
+          setIsPlanoModalOpen(false);
+          setOcorrenciaParaPlano(null);
+        }}
+        onSaveSuccess={() => loadOcorrencias(page, perPage)}
+        ocorrencia={ocorrenciaParaPlano}
       />
 
       {/* Modal de Detalhes da FIAP Oficial */}

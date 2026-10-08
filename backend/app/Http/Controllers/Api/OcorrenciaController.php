@@ -8,6 +8,7 @@ use App\Models\AqvRecebimento;
 use App\Models\Ocorrencia;
 use App\Models\OcorrenciaEdicao;
 use App\Models\OcorrenciaUnidade;
+use App\Models\PlanoRecuperacao;
 use App\Models\UnidadeCurricular;
 use App\Models\User;
 use App\Notifications\OcorrenciaEncaminhadaAqvNotification;
@@ -389,6 +390,28 @@ class OcorrenciaController extends Controller
                 'relato_dificuldades' => $relatoGerado,
             ]);
         }
+
+        // Gerenciamento automático do ciclo de vida dos Planos de Recuperação (Soft Delete / Restore)
+        if ($ocorrencia->tipo === 'falta') {
+            $ocorrencia->refresh();
+            $excedeLimite = $ocorrencia->unidades->contains(function ($unidade) {
+                if ($unidade->limite_faltas_aulas > 0) {
+                    return $unidade->quantidade_faltas > $unidade->limite_faltas_aulas;
+                }
+                return $unidade->percentual_atingido > 100.0;
+            });
+
+            if (!$excedeLimite) {
+                // Faltas dentro do limite (<= 100%): se existirem planos ativos vinculados, colocar em soft delete
+                PlanoRecuperacao::where('ocorrencia_id', $ocorrencia->id)->delete();
+            } else {
+                // Faltas excedem o limite (> 100%): se existirem planos adormecidos (trashed) vinculados, restaurar
+                $planosAdormecidos = PlanoRecuperacao::onlyTrashed()->where('ocorrencia_id', $ocorrencia->id)->get();
+                foreach ($planosAdormecidos as $planoAdormecido) {
+                    $planoAdormecido->restore();
+                }
+            }
+        }
     }
 
     /**
@@ -449,6 +472,12 @@ class OcorrenciaController extends Controller
             return response()->json([
                 'message' => 'Apenas a gestão ou o próprio instrutor que criou a FIAP podem encaminhá-la para a AQV.',
             ], 403);
+        }
+
+        if ($ocorrencia->has_plano_pendente) {
+            return response()->json([
+                'message' => 'Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.',
+            ], 422);
         }
 
         $ocorrencia->update([

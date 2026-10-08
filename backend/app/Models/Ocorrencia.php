@@ -41,12 +41,39 @@ class Ocorrencia extends Model
     ];
 
     protected $appends = [
+        'has_plano_pendente',
         'registrado_por_id',
     ];
 
     public function getRegistradoPorIdAttribute(): int
     {
         return (int) ($this->attributes['registrado_por'] ?? 0);
+    }
+
+    public function getHasPlanoPendenteAttribute(): bool
+    {
+        if ($this->tipo !== 'desempenho' && $this->tipo !== 'aproveitamento' && $this->tipo !== 'falta') {
+            return false;
+        }
+
+        if ($this->planosRecuperacao()->count() > 0) {
+            return false;
+        }
+
+        if ($this->tipo === 'falta') {
+            if ($this->unidades->isEmpty()) {
+                return false;
+            }
+
+            return $this->unidades->contains(function ($unidade) {
+                if ($unidade->limite_faltas_aulas > 0) {
+                    return $unidade->quantidade_faltas > $unidade->limite_faltas_aulas;
+                }
+                return $unidade->percentual_atingido > 100.0;
+            });
+        }
+
+        return true;
     }
 
     /**

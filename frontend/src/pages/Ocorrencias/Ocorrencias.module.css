@@ -306,6 +306,20 @@
   border: 1px solid color-mix(in srgb, #3b82f6 25%, transparent);
 }
 
+.planoPendenteBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: color-mix(in srgb, #6366f1 14%, transparent);
+  color: #4f46e5;
+  border: 1px solid color-mix(in srgb, #6366f1 30%, transparent);
+  white-space: nowrap;
+}
+
 /* Resumo / Detalhes de UC e Alertas */
 .resumoCell {
   display: flex;
@@ -423,6 +437,17 @@
   background-color: color-mix(in srgb, #7c3aed 15%, transparent);
   color: #7c3aed;
   border-color: #7c3aed;
+}
+
+.planoBtn {
+  color: #d97706;
+  border-color: color-mix(in srgb, #d97706 30%, transparent);
+}
+
+.planoBtn:hover {
+  background-color: color-mix(in srgb, #d97706 15%, transparent);
+  border-color: #d97706;
+  color: #b45309;
 }
 
 .emptyState {

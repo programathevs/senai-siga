@@ -15,6 +15,7 @@ import {
   BookOpen,
   BarChart3,
   Shield,
+  ShieldCheck,
   Loader2,
   Users,
 } from "lucide-react";
@@ -157,11 +158,12 @@ export function Dashboard() {
             {user?.role === "gestor"
               ? "Painel de Gestão Escolar"
               : user?.role === "aqv"
-              ? "Painel de Apoio e Qualidade de Vida (AQV)"
-              : "Painel do Docente"}
+                ? "Painel de Apoio e Qualidade de Vida (AQV)"
+                : "Painel do Docente"}
           </h1>
           <p className={styles.pageSubtitle}>
             Bem-vindo de volta, <strong>{user?.name || "Usuário"}</strong>.{" "}
+            <br />
             {user?.role === "instrutor"
               ? "Acompanhe suas turmas lecionadas, o histórico disciplinar dos estudantes e atue precocemente."
               : "Visão consolidada de ocorrências, acompanhamento disciplinar e dados pedagógicos da unidade."}
@@ -169,10 +171,10 @@ export function Dashboard() {
         </div>
 
         <div className={styles.headerActions}>
-          <button type="button" className={styles.secondaryBtn}>
+          <div className={styles.periodBadge}>
             <Calendar size={16} color="var(--color-primary)" />
             <span>{stats?.periodo?.mes_nome || "Mês Vigente"}</span>
-          </button>
+          </div>
 
           <button
             type="button"
@@ -446,14 +448,14 @@ export function Dashboard() {
                               occ.tipo === "falta"
                                 ? "color-mix(in srgb, var(--color-warning) 12%, transparent)"
                                 : occ.tipo === "comportamento"
-                                ? "color-mix(in srgb, var(--color-primary) 10%, transparent)"
-                                : "var(--color-surface)",
+                                  ? "color-mix(in srgb, var(--color-primary) 10%, transparent)"
+                                  : "var(--color-surface)",
                             color:
                               occ.tipo === "falta"
                                 ? "var(--color-warning)"
                                 : occ.tipo === "comportamento"
-                                ? "var(--color-primary)"
-                                : "var(--color-text-primary)",
+                                  ? "var(--color-primary)"
+                                  : "var(--color-text-primary)",
                           }}
                         >
                           {occ.tipo === "falta" && <Clock size={13} />}
@@ -530,7 +532,7 @@ export function Dashboard() {
 
       {/* 5. Seção Inferior: Grid de 3 Blocos de Apoio Pedagógico */}
       <section className={styles.bottomSectionGrid}>
-        {/* Bloco 1: Minhas Turmas em Foco */}
+        {/* Bloco 1: Minhas Turmas Atribuídas */}
         <article className={styles.bottomCard}>
           <div>
             <div className={styles.bottomCardHeader}>
@@ -540,23 +542,23 @@ export function Dashboard() {
               </span>
             </div>
 
-            <div className={styles.bottomCardList} style={{ marginTop: "0.75rem" }}>
+            <div className={styles.turmasList}>
               {stats?.turmas_resumo && stats.turmas_resumo.length > 0 ? (
                 stats.turmas_resumo.slice(0, 3).map((turma) => (
-                  <div key={turma.id} className={styles.mediationItem}>
-                    <div>
-                      <div className={styles.mediationTitle}>{turma.nome}</div>
-                      <div className={styles.mediationTime}>
-                        {turma.curso?.nome || "Curso"} • {turma.turno || "Turno"}
-                      </div>
+                  <div key={turma.id} className={styles.turmaItemCard}>
+                    <div className={styles.turmaHeaderRow}>
+                      <span className={styles.turmaCodigoBadge}>{turma.nome}</span>
+                      <span className={styles.turmaFiapsBadge}>
+                        {turma.alunos_count} alunos <span className={styles.fiapSubtext}>({turma.ocorrencias_count} FIAPs)</span>
+                      </span>
                     </div>
-                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--color-primary)" }}>
-                      {turma.alunos_count} alunos ({turma.ocorrencias_count} FIAPs)
-                    </span>
+                    <div className={styles.turmaSubtext}>
+                      {turma.curso?.nome || "Curso Técnico"} • {turma.turno || "Integral"}
+                    </div>
                   </div>
                 ))
               ) : (
-                <p style={{ fontSize: "0.8125rem", color: "var(--color-text-secondary)" }}>
+                <p className={styles.emptyCardText}>
                   Nenhuma turma vinculada a este perfil.
                 </p>
               )}
@@ -565,9 +567,8 @@ export function Dashboard() {
 
           <button
             type="button"
-            className={styles.cardFooterLink}
+            className={styles.cardFooterBtn}
             onClick={() => navigate(user?.role === "gestor" ? "/turmas" : "/ocorrencias")}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             <span>Acompanhar turmas completas</span>
             <ArrowRight size={14} />
@@ -582,29 +583,24 @@ export function Dashboard() {
               <span className={styles.bottomCardTitle}>Escala de Sanções Regimentais</span>
             </div>
 
-            <ul className={styles.sanctionList} style={{ marginTop: "0.75rem" }}>
-              <li>
-                <span className={styles.sanctionDot} />
-                <span>
-                  <strong>Advertência Verbal:</strong> 1ª ocorrência leve com registro e ciência do estudante.
-                </span>
+            <ul className={styles.sanctionStyledList}>
+              <li className={styles.sanctionItem}>
+                <span className={`${styles.sanctionBadge} ${styles.badgeWarning}`}>Advertência Verbal</span>
+                <span className={styles.sanctionDesc}>1ª ocorrência leve com registro e ciência do estudante.</span>
               </li>
-              <li>
-                <span className={styles.sanctionDot} />
-                <span>
-                  <strong>Advertência Escrita:</strong> Reincidência ou infração média com assinatura dos responsáveis.
-                </span>
+              <li className={styles.sanctionItem}>
+                <span className={`${styles.sanctionBadge} ${styles.badgeDanger}`}>Advertência Escrita</span>
+                <span className={styles.sanctionDesc}>Reincidência ou infração média com assinatura dos responsáveis.</span>
               </li>
-              <li>
-                <span className={styles.sanctionDot} />
-                <span>
-                  <strong>Suspensão de Atividades:</strong> Falta grave de segurança em laboratório ou oficina.
-                </span>
+              <li className={styles.sanctionItem}>
+                <span className={`${styles.sanctionBadge} ${styles.badgeDark}`}>Suspensão de Atividades</span>
+                <span className={styles.sanctionDesc}>Falta grave de segurança em laboratório ou oficina.</span>
               </li>
             </ul>
           </div>
 
-          <div className={styles.cardFooterLink}>
+          <div className={styles.cardFooterTag}>
+            <ShieldCheck size={15} color="var(--color-primary)" />
             <span>Regimento Escolar Oficial SENAI</span>
           </div>
         </article>
@@ -621,7 +617,7 @@ export function Dashboard() {
               <div className={styles.distributionItem}>
                 <div className={styles.distributionHeader}>
                   <span className={styles.distributionLabel}>
-                    <Clock size={13} color="var(--color-warning)" /> Faltas Excessivas
+                    <Clock size={14} color="#d97706" /> Faltas Excessivas
                   </span>
                   <span className={styles.distributionCount}>
                     {distTipo.falta} ({pctFalta}%)
@@ -630,7 +626,7 @@ export function Dashboard() {
                 <div className={styles.progressBarTrack}>
                   <div
                     className={styles.progressBarFill}
-                    style={{ width: `${pctFalta}%`, backgroundColor: "var(--color-warning)" }}
+                    style={{ width: `${pctFalta}%`, backgroundColor: "#d97706" }}
                   />
                 </div>
               </div>
@@ -638,7 +634,7 @@ export function Dashboard() {
               <div className={styles.distributionItem}>
                 <div className={styles.distributionHeader}>
                   <span className={styles.distributionLabel}>
-                    <Shield size={13} color="var(--color-primary)" /> Conduta / Disciplinar
+                    <Shield size={14} color="var(--color-primary)" /> Conduta / Disciplinar
                   </span>
                   <span className={styles.distributionCount}>
                     {distTipo.comportamento} ({pctComportamento}%)
@@ -655,7 +651,7 @@ export function Dashboard() {
               <div className={styles.distributionItem}>
                 <div className={styles.distributionHeader}>
                   <span className={styles.distributionLabel}>
-                    <BookOpen size={13} color="var(--color-text-primary)" /> Aproveitamento / Desempenho
+                    <BookOpen size={14} color="#2563eb" /> Aproveitamento / Desempenho
                   </span>
                   <span className={styles.distributionCount}>
                     {distTipo.desempenho} ({pctDesempenho}%)
@@ -664,7 +660,7 @@ export function Dashboard() {
                 <div className={styles.progressBarTrack}>
                   <div
                     className={styles.progressBarFill}
-                    style={{ width: `${pctDesempenho}%`, backgroundColor: "var(--color-text-primary)" }}
+                    style={{ width: `${pctDesempenho}%`, backgroundColor: "#2563eb" }}
                   />
                 </div>
               </div>
@@ -673,9 +669,8 @@ export function Dashboard() {
 
           <button
             type="button"
-            className={styles.cardFooterLink}
+            className={styles.cardFooterBtn}
             onClick={() => navigate("/relatorios")}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             <span>Ver demonstrativo completo</span>
             <ArrowRight size={14} />
