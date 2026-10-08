@@ -47,6 +47,7 @@ export interface PlanoRecuperacao {
   frequencias?: PlanoFrequencia[];
   created_at?: string;
   updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface PlanoRecuperacaoPayload {
@@ -118,5 +119,12 @@ export const planoRecuperacaoService = {
 
   async delete(id: number): Promise<void> {
     await api.delete(`/api/planos-recuperacao/${id}`);
+  },
+
+  async restaurar(id: number): Promise<PlanoRecuperacao> {
+    const response = await api.post<{ message: string; data: PlanoRecuperacao }>(
+      `/api/planos-recuperacao/${id}/restaurar`
+    );
+    return response.data.data;
   },
 };

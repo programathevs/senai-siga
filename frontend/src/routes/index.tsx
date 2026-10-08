@@ -17,6 +17,7 @@ import { Ocorrencias } from "../pages/Ocorrencias/Ocorrencias";
 import { Relatorios } from "../pages/Relatorios/Relatorios";
 import { EncaminhamentosAqv } from "../pages/EncaminhamentosAqv/EncaminhamentosAqv";
 import { PlanosRecuperacao } from "../pages/PlanosRecuperacao/PlanosRecuperacao";
+import { Configuracoes } from "../pages/Configuracoes/Configuracoes";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
@@ -68,6 +69,10 @@ export const router = createBrowserRouter([
               {
                 path: "/relatorios",
                 element: <Relatorios />,
+              },
+              {
+                path: "/configuracoes",
+                element: <Configuracoes />,
               },
             ],
           },

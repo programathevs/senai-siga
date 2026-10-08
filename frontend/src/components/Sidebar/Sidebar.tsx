@@ -98,7 +98,7 @@ export function Sidebar() {
       to: "/configuracoes",
       label: "Configurações",
       icon: Settings,
-      allowedRoles: ["gestor"],
+      allowedRoles: ["gestor", "instrutor", "aqv"],
     },
   ];
 
@@ -195,3 +195,7 @@ export function Sidebar() {
     </aside>
   );
 }
+
+
+
+

@@ -9,12 +9,12 @@ import {
   Trash2,
   Printer,
   Loader2,
+  RotateCcw,
 } from "lucide-react";
 import {
   planoRecuperacaoService,
   type PlanoRecuperacao,
   type PlanoTipoPrograma,
-  type PlanoStatusProcesso,
 } from "../../services/planoRecuperacaoService";
 import { useAuth } from "../../contexts/AuthContext";
 import { PlanoRecuperacaoModal } from "./PlanoRecuperacaoModal";
@@ -30,7 +30,7 @@ export function PlanosRecuperacao() {
   // Filtros
   const [search, setSearch] = useState("");
   const [selectedTipo, setSelectedTipo] = useState<PlanoTipoPrograma | "">("");
-  const [selectedStatus, setSelectedStatus] = useState<PlanoStatusProcesso | "">("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,6 +89,20 @@ export function PlanosRecuperacao() {
     }
   }
 
+  async function handleRestore(plano: PlanoRecuperacao) {
+    if (!window.confirm(`Deseja restaurar o Plano de Recuperação do estudante "${plano.aluno?.nome || ''}"?`)) {
+      return;
+    }
+
+    try {
+      await planoRecuperacaoService.restaurar(plano.id);
+      showAvatarToast("Plano Restaurado", `O Plano de Recuperação foi restaurado com sucesso!`);
+      loadPlanos();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Erro ao restaurar Plano de Recuperação.");
+    }
+  }
+
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -138,12 +152,15 @@ export function PlanosRecuperacao() {
         <select
           className={styles.selectFilter}
           value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value as PlanoStatusProcesso | "")}
+          onChange={(e) => setSelectedStatus(e.target.value)}
         >
           <option value="">Todos os Status</option>
           <option value="rascunho">Em Elaboração (Rascunho)</option>
           <option value="aguardando_visto">Aguardando Visto</option>
           <option value="concluido">Concluído</option>
+          {user?.role === "gestor" && (
+            <option value="excluidos">Excluídos / Arquivados (Lixeira)</option>
+          )}
         </select>
       </div>
 
@@ -180,8 +197,13 @@ export function PlanosRecuperacao() {
                   const aluno = plano.aluno;
                   const initial = (aluno?.nome || "A").charAt(0).toUpperCase();
 
+                  const isDeleted = Boolean(plano.deleted_at);
+                  const regId = typeof plano.registrado_por === "object" ? plano.registrado_por?.id : plano.registrado_por;
+                  const creatorId = plano.registrado_por_user?.id || regId;
+                  const canDelete = user?.role === "gestor" || (creatorId === user?.id && creatorId !== undefined);
+
                   return (
-                    <tr key={plano.id} className={styles.tr}>
+                    <tr key={plano.id} className={styles.tr} style={isDeleted ? { opacity: 0.7 } : undefined}>
                       {/* FIAP */}
                       <td className={styles.td}>
                         <strong>{plano.ocorrencia?.numero_sequencial || "—"}</strong>
@@ -224,7 +246,12 @@ export function PlanosRecuperacao() {
 
                       {/* Status */}
                       <td className={styles.td}>
-                        {plano.status_processo === "concluido" ? (
+                        {isDeleted ? (
+                          <span className={styles.statusBadge} style={{ background: "color-mix(in srgb, #ef4444 12%, transparent)", color: "#ef4444", border: "1px solid color-mix(in srgb, #ef4444 30%, transparent)" }}>
+                            <Trash2 size={12} />
+                            Excluído (Adormecido)
+                          </span>
+                        ) : plano.status_processo === "concluido" ? (
                           <span className={`${styles.statusBadge} ${styles.statusConcluido}`}>
                             <CheckCircle2 size={12} />
                             Concluído
@@ -268,16 +295,18 @@ export function PlanosRecuperacao() {
                             <Printer size={16} />
                           </button>
 
-                          <button
-                            type="button"
-                            className={`${styles.actionBtn} ${styles.editBtn}`}
-                            onClick={() => handleEdit(plano)}
-                            title="Editar Plano de Recuperação"
-                          >
-                            <Edit2 size={16} />
-                          </button>
+                          {!isDeleted && (
+                            <button
+                              type="button"
+                              className={`${styles.actionBtn} ${styles.editBtn}`}
+                              onClick={() => handleEdit(plano)}
+                              title="Editar Plano de Recuperação"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                          )}
 
-                          {user?.role === "gestor" && (
+                          {!isDeleted && canDelete && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.deleteBtn}`}
@@ -285,6 +314,22 @@ export function PlanosRecuperacao() {
                               title="Excluir Plano de Recuperação"
                             >
                               <Trash2 size={16} />
+                            </button>
+                          )}
+
+                          {isDeleted && user?.role === "gestor" && (
+                            <button
+                              type="button"
+                              className={styles.actionBtn}
+                              style={{
+                                backgroundColor: "color-mix(in srgb, #16a34a 12%, transparent)",
+                                color: "#16a34a",
+                                borderColor: "color-mix(in srgb, #16a34a 30%, transparent)",
+                              }}
+                              onClick={() => handleRestore(plano)}
+                              title="Restaurar Plano de Recuperação Excluído"
+                            >
+                              <RotateCcw size={15} />
                             </button>
                           )}
                         </div>

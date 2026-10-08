@@ -43,8 +43,16 @@ class PlanoRecuperacaoController extends Controller
         }
 
         // Filtro por Conceito / Status
-        if ($status = $request->input('status_processo')) {
-            $query->where('status_processo', $status);
+        if ($status = $request->input('status_processo') ?? $request->input('status')) {
+            if ($status === 'excluidos') {
+                if ($request->user() && $request->user()->hasRole('gestor')) {
+                    $query->onlyTrashed();
+                } else {
+                    return response()->json(['data' => []]);
+                }
+            } else {
+                $query->where('status_processo', $status);
+            }
         }
 
         // Filtro por Aluno
@@ -131,14 +139,44 @@ class PlanoRecuperacaoController extends Controller
     }
 
     /**
-     * Remove um Plano de Recuperação.
+     * Remove um Plano de Recuperação (Soft Delete).
      */
-    public function destroy(PlanoRecuperacao $plano): JsonResponse
+    public function destroy(Request $request, PlanoRecuperacao $plano): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user && !$user->hasRole('gestor') && $plano->registrado_por !== $user->id) {
+            return response()->json([
+                'message' => 'Você só pode excluir Planos de Recuperação que foram registrados por você.',
+            ], 403);
+        }
+
         $plano->delete();
 
         return response()->json([
             'message' => 'Plano de Recuperação removido com sucesso.',
+        ]);
+    }
+
+    /**
+     * Restaura um Plano de Recuperação excluído (Apenas Gestor).
+     */
+    public function restaurar(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user && !$user->hasRole('gestor')) {
+            return response()->json([
+                'message' => 'Apenas a gestão pode restaurar Planos de Recuperação excluídos.',
+            ], 403);
+        }
+
+        $plano = PlanoRecuperacao::withTrashed()->findOrFail($id);
+        $plano->restore();
+
+        return response()->json([
+            'message' => 'Plano de Recuperação restaurado com sucesso.',
+            'data' => $plano->load(['ocorrencia', 'aluno.turma.curso', 'unidadeCurricular', 'registradoPor', 'frequencias']),
         ]);
     }
 }

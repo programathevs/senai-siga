@@ -630,18 +630,9 @@ export function Ocorrencias() {
                             {oc.has_plano_pendente && (
                               <div style={{ marginTop: "4px" }}>
                                 <span
-                                  className={styles.statusBadge}
-                                  style={{
-                                    background: "#fef9c3",
-                                    color: "#854d0e",
-                                    border: "1px solid #fde047",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "4px",
-                                  }}
-                                  title="Esta FIAP de aproveitamento necessita de um Plano de Recuperação"
+                                  className={styles.planoPendenteBadge}
+                                  title="Esta FIAP necessita da elaboração de um Plano de Recuperação"
                                 >
-                                  <ClipboardCheck size={12} />
                                   Plano Pendente
                                 </span>
                               </div>

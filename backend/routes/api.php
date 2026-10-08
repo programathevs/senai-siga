@@ -75,8 +75,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'update'])->name('alunos.update');
         Route::delete('/alunos/{aluno}', [\App\Http\Controllers\Api\AlunoController::class, 'destroy'])->name('alunos.destroy');
 
-        // --- RESTAURAÇÃO DE OCORRÊNCIAS / FIAPS (Apenas Gestor) ---
+        // --- RESTAURAÇÃO DE OCORRÊNCIAS / FIAPS E PLANOS (Apenas Gestor) ---
         Route::post('/ocorrencias/{id}/restaurar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'restaurar'])->name('ocorrencias.restaurar');
+        Route::post('/planos-recuperacao/{id}/restaurar', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'restaurar'])->name('planos-recuperacao.restaurar');
     });
 
     // --- GESTÃO DE OCORRÊNCIAS / FIAPS ---
