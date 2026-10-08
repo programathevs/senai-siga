@@ -22,7 +22,7 @@ class PlanoRecuperacaoControllerTest extends TestCase
             'registrado_por' => $instrutor->id,
             'numero_sequencial' => 'FIAP-2026-0001',
             'versao' => 1,
-            'tipo' => 'aproveitamento',
+            'tipo' => 'desempenho',
             'data_ocorrencia' => now()->toDateString(),
             'status' => 'pendente',
         ]);
