@@ -451,6 +451,12 @@ class OcorrenciaController extends Controller
             ], 403);
         }
 
+        if ($ocorrencia->has_plano_pendente) {
+            return response()->json([
+                'message' => 'Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.',
+            ], 422);
+        }
+
         $ocorrencia->update([
             'status' => 'enviado_aqv',
         ]);

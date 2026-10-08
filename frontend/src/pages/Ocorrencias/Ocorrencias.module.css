@@ -425,6 +425,17 @@
   border-color: #7c3aed;
 }
 
+.planoBtn {
+  color: #d97706;
+  border-color: color-mix(in srgb, #d97706 30%, transparent);
+}
+
+.planoBtn:hover {
+  background-color: color-mix(in srgb, #d97706 15%, transparent);
+  border-color: #d97706;
+  color: #b45309;
+}
+
 .emptyState {
   padding: 3.5rem 1.5rem;
   text-align: center;

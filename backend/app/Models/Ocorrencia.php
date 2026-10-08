@@ -52,11 +52,28 @@ class Ocorrencia extends Model
 
     public function getHasPlanoPendenteAttribute(): bool
     {
-        if ($this->tipo !== 'desempenho' && $this->tipo !== 'aproveitamento') {
+        if ($this->tipo !== 'desempenho' && $this->tipo !== 'aproveitamento' && $this->tipo !== 'falta') {
             return false;
         }
 
-        return $this->planosRecuperacao()->count() === 0;
+        if ($this->planosRecuperacao()->count() > 0) {
+            return false;
+        }
+
+        if ($this->tipo === 'falta') {
+            if ($this->unidades->isEmpty()) {
+                return false;
+            }
+
+            return $this->unidades->contains(function ($unidade) {
+                if ($unidade->limite_faltas_aulas > 0) {
+                    return $unidade->quantidade_faltas > $unidade->limite_faltas_aulas;
+                }
+                return $unidade->percentual_atingido > 100.0;
+            });
+        }
+
+        return true;
     }
 
     /**

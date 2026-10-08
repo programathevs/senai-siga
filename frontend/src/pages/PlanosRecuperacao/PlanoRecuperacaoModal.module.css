@@ -17,9 +17,10 @@
 }
 
 .modal {
-  background: #ffffff;
-  border-radius: var(--radius, 12px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 900px;
   max-height: 90vh;
@@ -36,11 +37,11 @@
 
 .header {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #f8fafc;
+  background-color: var(--color-surface);
 }
 
 .headerTitleGroup {
@@ -53,8 +54,8 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(227, 6, 19, 0.1);
-  color: var(--color-primary, #e30613);
+  background: rgba(227, 6, 19, 0.12);
+  color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,20 +64,20 @@
 .title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .subtitle {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
   margin: 0.25rem 0 0 0;
 }
 
 .closeBtn {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--color-text-secondary);
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 6px;
@@ -87,8 +88,8 @@
 }
 
 .closeBtn:hover {
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
 }
 
 .body {
@@ -97,24 +98,25 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  background-color: var(--color-background);
 }
 
 .section {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 1.25rem;
-  background: #ffffff;
+  background: var(--color-background);
 }
 
 .sectionTitle {
   font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary);
   margin: 0 0 1rem 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 0.5rem;
 }
 
@@ -122,9 +124,10 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
-  background: #f8fafc;
+  background: var(--color-surface);
   padding: 1rem;
   border-radius: 8px;
+  border: 1px solid var(--color-border);
 }
 
 .infoItem {
@@ -136,7 +139,7 @@
 .infoLabel {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -144,7 +147,7 @@
 .infoValue {
   font-size: 0.938rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--color-text-primary);
 }
 
 .formGrid {
@@ -169,11 +172,11 @@
 .label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--color-text-primary);
 }
 
 .required {
-  color: #ef4444;
+  color: var(--color-primary);
 }
 
 .input,
@@ -181,11 +184,11 @@
 .textarea {
   width: 100%;
   padding: 0.625rem 0.875rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.938rem;
-  color: #0f172a;
-  background: #ffffff;
+  color: var(--color-text-primary);
+  background: var(--color-background);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -193,8 +196,8 @@
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: var(--color-primary, #e30613);
-  box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .textarea {
@@ -215,35 +218,36 @@
   align-items: center;
   gap: 0.625rem;
   padding: 0.625rem 0.875rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
   transition: all 0.2s;
+  color: var(--color-text-primary);
 }
 
 .checkboxItem:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: var(--color-border);
 }
 
 .checkboxItemActive {
-  background: #fef2f2;
-  border-color: #fca5a5;
-  color: #b91c1c;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .checkboxInput {
   width: 18px;
   height: 18px;
-  accent-color: var(--color-primary, #e30613);
+  accent-color: var(--color-primary);
   cursor: pointer;
 }
 
 .freqTableContainer {
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
@@ -254,26 +258,29 @@
 }
 
 .freqTable th {
-  background: #f8fafc;
+  background: var(--color-surface);
   padding: 0.75rem 1rem;
   text-align: left;
   font-weight: 600;
-  color: #475569;
-  border-bottom: 1px solid #e2e8f0;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .freqTable td {
   padding: 0.5rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
+  color: var(--color-text-primary);
 }
 
 .tableInput {
   padding: 0.375rem 0.625rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.875rem;
   width: 100%;
+  background: var(--color-background);
+  color: var(--color-text-primary);
 }
 
 .addFreqBtn {
@@ -282,9 +289,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.875rem;
-  background: #f1f5f9;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -293,8 +300,8 @@
 }
 
 .addFreqBtn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
 }
 
 .removeFreqBtn {
@@ -307,13 +314,13 @@
 }
 
 .removeFreqBtn:hover {
-  background: #fef2f2;
+  background: color-mix(in srgb, #ef4444 15%, transparent);
 }
 
 .footer {
   padding: 1.25rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -322,25 +329,25 @@
 
 .cancelBtn {
   padding: 0.625rem 1.25rem;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #475569;
-  border-radius: var(--radius, 8px);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  border-radius: var(--radius);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .cancelBtn:hover {
-  background: #f1f5f9;
+  background: var(--color-surface);
 }
 
 .saveBtn {
   padding: 0.625rem 1.5rem;
   border: none;
-  background: var(--color-primary, #e30613);
+  background: var(--color-primary);
   color: #ffffff;
-  border-radius: var(--radius, 8px);
+  border-radius: var(--radius);
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -350,7 +357,7 @@
 }
 
 .saveBtn:hover {
-  background: #c70510;
+  background: var(--color-primary-hover);
 }
 
 .saveBtn:disabled {
@@ -361,9 +368,9 @@
 .alertBox {
   padding: 0.875rem 1rem;
   border-radius: 8px;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  color: #991b1b;
+  background: color-mix(in srgb, #ef4444 15%, transparent);
+  border: 1px solid color-mix(in srgb, #ef4444 30%, transparent);
+  color: #ef4444;
   font-size: 0.875rem;
   display: flex;
   align-items: center;

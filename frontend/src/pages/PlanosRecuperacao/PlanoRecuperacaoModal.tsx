@@ -21,7 +21,7 @@ import {
   type PlanoStatusProcesso,
   type PlanoFrequencia,
 } from "../../services/planoRecuperacaoService";
-import type { Ocorrencia } from "../../services/ocorrenciaService";
+import { ocorrenciaService, type Ocorrencia } from "../../services/ocorrenciaService";
 import styles from "./PlanoRecuperacaoModal.module.css";
 
 interface PlanoRecuperacaoModalProps {
@@ -62,6 +62,11 @@ export function PlanoRecuperacaoModal({
   // Frequências para compensação de ausências
   const [frequencias, setFrequencias] = useState<PlanoFrequencia[]>([]);
 
+  // Para seleção de FIAP quando o modal for aberto sem ocorrência prévia
+  const [availableOcorrencias, setAvailableOcorrencias] = useState<Ocorrencia[]>([]);
+  const [selectedOcorrenciaId, setSelectedOcorrenciaId] = useState<string>("");
+  const [manualOcorrencia, setManualOcorrencia] = useState<Ocorrencia | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -69,6 +74,13 @@ export function PlanoRecuperacaoModal({
     if (!isOpen) return;
 
     setErrorMsg(null);
+
+    if (!ocorrencia && !planoToEdit) {
+      ocorrenciaService.getOcorrencias({ per_page: 100 }).then((res) => {
+        const eligible = res.data.filter((o) => !o.deleted_at);
+        setAvailableOcorrencias(eligible);
+      }).catch(() => setAvailableOcorrencias([]));
+    }
 
     if (planoToEdit) {
       setTipoPrograma(planoToEdit.tipo_programa || "recuperacao_paralela");
@@ -84,9 +96,21 @@ export function PlanoRecuperacaoModal({
       setFrequencias(planoToEdit.frequencias || []);
     } else if (ocorrencia) {
       // Sugere tipo de acordo com a FIAP
-      const eFalta = ocorrencia.unidades && ocorrencia.unidades.length > 0;
+      const eFalta = ocorrencia.tipo === "falta";
       setTipoPrograma(eFalta ? "compensacao_ausencia" : "recuperacao_paralela");
       setCicloAvaliacao("1º");
+      setConteudoProgramatico("");
+      setPropostasSelecionadas(["exercicios_reforco"]);
+      setPeriodoPrevisto(new Date().toISOString().split("T")[0]);
+      setPeriodoInicio("");
+      setPeriodoFim("");
+      setConceito("");
+      setStatusProcesso("rascunho");
+      setRegistroDesempenho("");
+      setFrequencias([]);
+    } else {
+      setSelectedOcorrenciaId("");
+      setManualOcorrencia(null);
       setConteudoProgramatico("");
       setPropostasSelecionadas(["exercicios_reforco"]);
       setPeriodoPrevisto(new Date().toISOString().split("T")[0]);
@@ -101,7 +125,7 @@ export function PlanoRecuperacaoModal({
 
   if (!isOpen) return null;
 
-  const targetOcorrencia = planoToEdit?.ocorrencia || ocorrencia;
+  const targetOcorrencia = planoToEdit?.ocorrencia || ocorrencia || manualOcorrencia;
   const targetAluno = targetOcorrencia?.aluno;
   const targetTurma = targetAluno?.turma;
   const targetCurso = targetTurma?.curso;
@@ -140,7 +164,7 @@ export function PlanoRecuperacaoModal({
     e.preventDefault();
 
     if (!targetOcorrencia || !targetAluno) {
-      setErrorMsg("Ocorrência (FIAP) ou Aluno de referência inválidos.");
+      setErrorMsg("É obrigatório selecionar uma FIAP atrelada válida para registrar o Plano de Recuperação.");
       return;
     }
 
@@ -222,21 +246,51 @@ export function PlanoRecuperacaoModal({
               Identificação &amp; FIAP Atrelada
             </h3>
 
+            {!ocorrencia && !planoToEdit && (
+              <div className={styles.formGroupFull} style={{ marginBottom: "1rem" }}>
+                <label className={styles.label}>
+                  Selecione a FIAP Atrelada <span className={styles.required}>*</span>
+                </label>
+                <select
+                  className={styles.select}
+                  value={selectedOcorrenciaId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedOcorrenciaId(id);
+                    const found = availableOcorrencias.find((o) => String(o.id) === id) || null;
+                    setManualOcorrencia(found);
+                    if (found) {
+                      const isFalta = found.tipo === "falta";
+                      setTipoPrograma(isFalta ? "compensacao_ausencia" : "recuperacao_paralela");
+                    }
+                  }}
+                  required
+                >
+                  <option value="">Selecione uma FIAP...</option>
+                  {availableOcorrencias.map((oc) => (
+                    <option key={oc.id} value={oc.id}>
+                      {oc.numero_sequencial} - {oc.aluno?.nome} ({oc.tipo === "falta" ? "Falta" : "Aproveitamento"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Atrelado à FIAP</span>
                 <span className={styles.infoValue}>
-                  {targetOcorrencia?.numero_sequencial || "Não informada"}
+                  {targetOcorrencia?.numero_sequencial || "Selecione uma FIAP acima"}
                 </span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Estudante</span>
-                <span className={styles.infoValue}>{targetAluno?.nome || "Carregando..."}</span>
+                <span className={styles.infoValue}>{targetAluno?.nome || "—"}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Curso / Turma</span>
                 <span className={styles.infoValue}>
-                  {targetCurso?.nome ? `${targetCurso.nome} (${targetTurma?.codigo || ''})` : targetTurma?.codigo || "SENAI"}
+                  {targetCurso?.nome ? `${targetCurso.nome} (${targetTurma?.nome || ''})` : targetTurma?.nome || "SENAI"}
                 </span>
               </div>
             </div>
@@ -259,9 +313,20 @@ export function PlanoRecuperacaoModal({
                   value={tipoPrograma}
                   onChange={(e) => setTipoPrograma(e.target.value as PlanoTipoPrograma)}
                 >
-                  <option value="recuperacao_paralela">Recuperação Paralela</option>
-                  <option value="compensacao_ausencia">Compensação de Ausência</option>
-                  <option value="recuperacao_final">Recuperação Final</option>
+                  {targetOcorrencia?.tipo === "falta" ? (
+                    <option value="compensacao_ausencia">Compensação de Ausência</option>
+                  ) : (targetOcorrencia?.tipo as string) === "desempenho" || (targetOcorrencia?.tipo as string) === "aproveitamento" ? (
+                    <>
+                      <option value="recuperacao_paralela">Recuperação Paralela</option>
+                      <option value="recuperacao_final">Recuperação Final</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="recuperacao_paralela">Recuperação Paralela</option>
+                      <option value="compensacao_ausencia">Compensação de Ausência</option>
+                      <option value="recuperacao_final">Recuperação Final</option>
+                    </>
+                  )}
                 </select>
               </div>
 

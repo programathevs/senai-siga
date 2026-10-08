@@ -38,6 +38,7 @@ export function OcorrenciaModal({
   onClose,
   onSuccess,
   ocorrenciaToEdit,
+  onOpenPlanoModal,
 }: OcorrenciaModalProps) {
   // Dados auxiliares para seleção
   const [turmas, setTurmas] = useState<Turma[]>([]);
@@ -372,7 +373,7 @@ export function OcorrenciaModal({
         await ocorrenciaService.updateOcorrencia(ocorrenciaToEdit.id, payload);
       } else {
         const created = await ocorrenciaService.createOcorrencia(payload);
-        if (onOpenPlanoModal && (payload.tipo === "falta" || payload.tipo === "desempenho" || (payload.tipo as string) === "aproveitamento")) {
+        if (onOpenPlanoModal && created.has_plano_pendente) {
           onOpenPlanoModal(created);
         }
       }

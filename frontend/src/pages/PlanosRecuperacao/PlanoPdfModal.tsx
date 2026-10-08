@@ -107,7 +107,7 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
                   <span className={styles.labelBold}>Curso:</span> {curso?.nome || "Técnico em Desenvolvimento de Sistemas"}
                 </td>
                 <td>
-                  <span className={styles.labelBold}>Turma:</span> {turma?.codigo || "I1HN"}
+                  <span className={styles.labelBold}>Turma:</span> {turma?.nome || "I1HN"}
                 </td>
                 <td>
                   <span className={styles.labelBold}>Ciclo de Avaliação:</span>

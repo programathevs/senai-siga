@@ -229,6 +229,11 @@ export function Ocorrencias() {
         ? ocorrencias.find((o) => o.id === ocOrId) || selectedDetalhes
         : ocOrId;
 
+    if (targetOc?.has_plano_pendente) {
+      alert("Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.");
+      return;
+    }
+
     if (targetOc) {
       setOcorrenciaAqvPending(targetOc);
     }
@@ -660,17 +665,11 @@ export function Ocorrencias() {
                           {oc.has_plano_pendente && (
                             <button
                               type="button"
-                              className={styles.actionBtn}
-                              style={{
-                                backgroundColor: "color-mix(in srgb, #eab308 15%, transparent)",
-                                color: "#a16207",
-                                borderColor: "color-mix(in srgb, #eab308 35%, transparent)",
-                              }}
+                              className={`${styles.actionBtn} ${styles.planoBtn}`}
                               onClick={() => handleOpenPlanoModal(oc)}
                               title="Criar Plano de Recuperação para esta FIAP"
                             >
                               <ClipboardCheck size={15} />
-                              <span>Criar Plano</span>
                             </button>
                           )}
 
@@ -691,7 +690,17 @@ export function Ocorrencias() {
                               type="button"
                               className={`${styles.actionBtn} ${styles.aqvBtn}`}
                               onClick={() => handleEncaminharAqv(oc)}
-                              title="Encaminhar para o AQV"
+                              disabled={oc.has_plano_pendente}
+                              style={
+                                oc.has_plano_pendente
+                                  ? { opacity: 0.4, cursor: "not-allowed", borderColor: "var(--color-border)" }
+                                  : undefined
+                              }
+                              title={
+                                oc.has_plano_pendente
+                                  ? "Não é possível encaminhar para a AQV enquanto o Plano de Recuperação estiver pendente"
+                                  : "Encaminhar para o AQV"
+                              }
                             >
                               <Send size={15} />
                             </button>

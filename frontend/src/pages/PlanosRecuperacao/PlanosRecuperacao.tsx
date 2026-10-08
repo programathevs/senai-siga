@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   ClipboardCheck,
-  Plus,
   Search,
   FileText,
   Clock,
   CheckCircle2,
-  AlertCircle,
-  Eye,
   Edit2,
   Trash2,
   Printer,
@@ -108,7 +105,7 @@ export function PlanosRecuperacao() {
 
         {user?.role !== "aqv" && (
           <button type="button" className={styles.createBtn} onClick={handleCreateNew}>
-            <Plus size={18} />
+            <ClipboardCheck size={18} />
             Novo Plano de Recuperação
           </button>
         )}
@@ -197,7 +194,7 @@ export function PlanosRecuperacao() {
                           <div className={styles.alunoInfo}>
                             <span className={styles.alunoNome}>{aluno?.nome || "Estudante"}</span>
                             <span className={styles.alunoSub}>
-                              RA: {aluno?.matricula || "—"} | {aluno?.turma?.codigo || "Sem Turma"}
+                              RA: {aluno?.matricula || "—"} | {aluno?.turma?.nome || "Sem Turma"}
                             </span>
                           </div>
                         </div>
@@ -264,33 +261,30 @@ export function PlanosRecuperacao() {
                         <div className={styles.actionsCell}>
                           <button
                             type="button"
-                            className={styles.actionBtn}
+                            className={`${styles.actionBtn} ${styles.pdfBtn}`}
                             onClick={() => handleViewPdf(plano)}
                             title="Visualizar e Imprimir PDF"
                           >
-                            <Printer size={15} />
-                            <span>PDF</span>
+                            <Printer size={16} />
                           </button>
 
                           <button
                             type="button"
-                            className={styles.actionBtn}
+                            className={`${styles.actionBtn} ${styles.editBtn}`}
                             onClick={() => handleEdit(plano)}
-                            title="Editar Plano"
+                            title="Editar Plano de Recuperação"
                           >
-                            <Edit2 size={15} />
-                            <span>Editar</span>
+                            <Edit2 size={16} />
                           </button>
 
                           {user?.role === "gestor" && (
                             <button
                               type="button"
-                              className={styles.actionBtn}
-                              style={{ color: "#ef4444" }}
+                              className={`${styles.actionBtn} ${styles.deleteBtn}`}
                               onClick={() => handleDelete(plano)}
-                              title="Excluir Plano"
+                              title="Excluir Plano de Recuperação"
                             >
-                              <Trash2 size={15} />
+                              <Trash2 size={16} />
                             </button>
                           )}
                         </div>
