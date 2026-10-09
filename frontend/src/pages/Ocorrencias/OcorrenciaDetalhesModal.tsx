@@ -220,7 +220,10 @@ export function OcorrenciaDetalhesModal({
 
   function handlePrint() {
     const originalTitle = document.title;
-    document.title = "";
+    const nomeSanitizado = (aluno?.nome || "Aluno").replace(/\s+/g, "_");
+    const numFiapSanitizado = formattedSeq.replace(/[\/\s]/g, "_");
+    document.title = `FIAP_${nomeSanitizado}_${numFiapSanitizado}`;
+
     setTimeout(() => {
       window.print();
       window.focus();
@@ -262,6 +265,11 @@ export function OcorrenciaDetalhesModal({
       alert("Não foi possível gerar o PDF. Você pode utilizar a opção Imprimir.");
     } finally {
       setIsGeneratingPdf(false);
+      window.focus();
+      document.body.style.pointerEvents = "";
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
     }
   }
 

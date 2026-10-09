@@ -1,4 +1,6 @@
-import { X, Printer } from "lucide-react";
+import { useState } from "react";
+import { X, Printer, Download, Loader2 } from "lucide-react";
+import html2pdf from "html2pdf.js";
 import type { PlanoRecuperacao } from "../../services/planoRecuperacaoService";
 import styles from "./PlanoPdfModal.module.css";
 
@@ -9,6 +11,8 @@ interface PlanoPdfModalProps {
 }
 
 export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
   if (!isOpen || !plano) return null;
 
   const aluno = plano.aluno;
@@ -22,8 +26,59 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
 
   const propostas = plano.propostas_trabalho || [];
 
+  const nomeAlunoSanitizado = (aluno?.nome || "Aluno").replace(/\s+/g, "_");
+  const numFiapSanitizado = (ocorrencia?.numero_sequencial || `FIAP_${plano.id}`).replace(/[\/\s]/g, "_");
+  const defaultFilename = `Plano_Recuperacao_${nomeAlunoSanitizado}_FIAP_${numFiapSanitizado}`;
+
   function handlePrint() {
-    window.print();
+    const bodyElem = document.getElementById("content-to-pdf-plano");
+    if (bodyElem) {
+      bodyElem.scrollTop = 0;
+    }
+
+    const originalTitle = document.title;
+    document.title = defaultFilename;
+
+    setTimeout(() => {
+      window.print();
+      window.focus();
+      setTimeout(() => {
+        document.title = originalTitle;
+      }, 500);
+    }, 150);
+  }
+
+  async function handleDownloadPdf() {
+    const element = document.getElementById("content-to-pdf-plano");
+    if (!element) return;
+
+    element.scrollTop = 0;
+    setIsGeneratingPdf(true);
+
+    try {
+      const options = {
+        margin: [6, 6, 6, 6] as [number, number, number, number],
+        filename: `${defaultFilename}.pdf`,
+        image: { type: "jpeg" as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+        },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
+      };
+
+      await html2pdf().set(options).from(element).save();
+    } catch (err) {
+      console.error("Erro ao gerar PDF do Plano:", err);
+      handlePrint();
+    } finally {
+      setIsGeneratingPdf(false);
+      window.focus();
+      document.body.style.pointerEvents = "";
+    }
   }
 
   return (
@@ -33,10 +88,26 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
         <div className={styles.topBar}>
           <span className={styles.topTitle}>Visualização de Impressão — Plano de Recuperação</span>
           <div className={styles.topActions}>
+            <button
+              type="button"
+              className={styles.downloadBtn}
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingPdf}
+              title="Baixar arquivo PDF com nome específico do estudante e FIAP"
+            >
+              {isGeneratingPdf ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Download size={16} />
+              )}
+              <span>Baixar PDF</span>
+            </button>
+
             <button type="button" className={styles.printBtn} onClick={handlePrint}>
               <Printer size={16} />
-              Imprimir / Salvar PDF
+              <span>Imprimir</span>
             </button>
+
             <button type="button" className={styles.closeBtn} onClick={onClose}>
               <X size={20} />
             </button>
@@ -44,7 +115,7 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
         </div>
 
         {/* Document Body (Layout Fiel SENAI Sumaré) */}
-        <div className={styles.documentBody}>
+        <div className={styles.documentBody} id="content-to-pdf-plano">
           {/* Header */}
           <table className={styles.headerTable}>
             <tbody>
@@ -81,7 +152,7 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
                     {plano.tipo_programa === "recuperacao_final" ? "☒" : "☐"} Recuperação Final
                   </span>
                 </td>
-                <td style={{ width: "180px" }}>
+                <td className={styles.fiapCell}>
                   <span className={styles.labelBold}>Atrelado a FIAP:</span>
                   <div style={{ textAlign: "center", fontWeight: "bold", marginTop: "2px" }}>
                     {ocorrencia?.numero_sequencial || "0737/2025"}

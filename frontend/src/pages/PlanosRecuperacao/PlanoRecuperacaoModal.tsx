@@ -76,10 +76,27 @@ export function PlanoRecuperacaoModal({
     setErrorMsg(null);
 
     if (!ocorrencia && !planoToEdit) {
-      ocorrenciaService.getOcorrencias({ per_page: 100 }).then((res) => {
-        const eligible = res.data.filter((o) => !o.deleted_at);
-        setAvailableOcorrencias(eligible);
-      }).catch(() => setAvailableOcorrencias([]));
+      Promise.all([
+        ocorrenciaService.getOcorrencias({ per_page: 100 }),
+        planoRecuperacaoService.getAll(),
+      ])
+        .then(([ocorrenciasRes, planosRes]) => {
+          const existingOcorrenciaIdsWithPlano = new Set(
+            planosRes.map((p) => p.ocorrencia_id).filter(Boolean)
+          );
+
+          const eligible = ocorrenciasRes.data.filter((o) => {
+            if (o.deleted_at) return false;
+            // Apenas FIAPs que realmente necessitam de Plano de Recuperação
+            if (!o.has_plano_pendente) return false;
+            // Não pode ter plano já criado para esta FIAP
+            if (existingOcorrenciaIdsWithPlano.has(o.id)) return false;
+            return true;
+          });
+
+          setAvailableOcorrencias(eligible);
+        })
+        .catch(() => setAvailableOcorrencias([]));
     }
 
     if (planoToEdit) {
@@ -126,7 +143,7 @@ export function PlanoRecuperacaoModal({
   if (!isOpen) return null;
 
   const targetOcorrencia = planoToEdit?.ocorrencia || ocorrencia || manualOcorrencia;
-  const targetAluno = targetOcorrencia?.aluno;
+  const targetAluno = targetOcorrencia?.aluno || planoToEdit?.aluno;
   const targetTurma = targetAluno?.turma;
   const targetCurso = targetTurma?.curso;
 
@@ -163,7 +180,10 @@ export function PlanoRecuperacaoModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!targetOcorrencia || !targetAluno) {
+    const finalOcorrenciaId = targetOcorrencia?.id || planoToEdit?.ocorrencia_id;
+    const finalAlunoId = targetAluno?.id || planoToEdit?.aluno_id;
+
+    if (!finalOcorrenciaId || !finalAlunoId) {
       setErrorMsg("É obrigatório selecionar uma FIAP atrelada válida para registrar o Plano de Recuperação.");
       return;
     }
@@ -173,9 +193,9 @@ export function PlanoRecuperacaoModal({
 
     try {
       const payload = {
-        ocorrencia_id: targetOcorrencia.id,
-        aluno_id: targetAluno.id,
-        unidade_curricular_id: targetOcorrencia.unidades?.[0]?.unidade_curricular_id || undefined,
+        ocorrencia_id: finalOcorrenciaId,
+        aluno_id: finalAlunoId,
+        unidade_curricular_id: targetOcorrencia?.unidades?.[0]?.unidade_curricular_id || planoToEdit?.unidade_curricular_id || undefined,
         tipo_programa: tipoPrograma,
         ciclo_avaliacao: cicloAvaliacao,
         conteudo_programatico: conteudoProgramatico.trim(),

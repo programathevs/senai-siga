@@ -216,7 +216,13 @@ export function PlanosRecuperacao() {
                   <tr key={plano.id} className={styles.tr} style={isDeleted ? { opacity: 0.7 } : undefined}>
                     {/* FIAP */}
                     <td className={styles.td}>
-                      <strong>{plano.ocorrencia?.numero_sequencial || "—"}</strong>
+                      {plano.ocorrencia?.numero_sequencial ? (
+                        <span className={styles.fiapBadge}>
+                          {plano.ocorrencia.numero_sequencial}
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--color-text-secondary)" }}>—</span>
+                      )}
                     </td>
 
                     {/* Aluno */}
@@ -289,7 +295,9 @@ export function PlanosRecuperacao() {
                           REPROVADO
                         </span>
                       ) : (
-                        <span style={{ color: "var(--color-text-secondary)" }}>Pendente</span>
+                        <span className={`${styles.conceitoBadge} ${styles.conceitoPendente}`}>
+                          PENDENTE
+                        </span>
                       )}
                     </td>
 

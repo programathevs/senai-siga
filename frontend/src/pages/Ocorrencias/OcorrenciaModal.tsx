@@ -84,6 +84,8 @@ export function OcorrenciaModal({
   // Preenche dados ao editar
   useEffect(() => {
     if (ocorrenciaToEdit) {
+      setMotivoEdicao("");
+      setErrorMessage("");
       setSelectedAlunoId(String(ocorrenciaToEdit.aluno_id));
       setTipo(ocorrenciaToEdit.tipo);
       setDataOcorrencia(
@@ -97,8 +99,18 @@ export function OcorrenciaModal({
       setProvidenciasGestao(ocorrenciaToEdit.providencias_gestao || "");
       setOutrasObservacoes(ocorrenciaToEdit.outras_observacoes || "");
 
-      if (ocorrenciaToEdit.aluno?.turma_id) {
-        setSelectedTurmaId(String(ocorrenciaToEdit.aluno.turma_id));
+      if (ocorrenciaToEdit.aluno) {
+        setAlunos((prev) => {
+          if (prev.some((a) => a.id === ocorrenciaToEdit.aluno!.id)) return prev;
+          return [ocorrenciaToEdit.aluno!, ...prev];
+        });
+        if (ocorrenciaToEdit.aluno.turma) {
+          setTurmas((prev) => {
+            if (prev.some((t) => t.id === ocorrenciaToEdit.aluno!.turma!.id)) return prev;
+            return [ocorrenciaToEdit.aluno!.turma!, ...prev];
+          });
+          setSelectedTurmaId(String(ocorrenciaToEdit.aluno.turma_id));
+        }
       }
 
       if (ocorrenciaToEdit.unidade_curricular_id) {
@@ -224,9 +236,12 @@ export function OcorrenciaModal({
     }
   }, [selectedTurmaId, unidadesCurricularesFiltradas, isEditing]);
 
+  const isTipoChangedByEdit = isEditing && ocorrenciaToEdit?.tipo !== tipo;
+  const shouldUpdateDefaults = !isEditing || isTipoChangedByEdit;
+
   // Atualiza automaticamente as providências da gestão com o nome do aluno selecionado
   useEffect(() => {
-    if (!isEditing) {
+    if (shouldUpdateDefaults) {
       const nomeAluno = alunoSelecionado?.nome || "o aluno";
       if (tipo === "falta") {
         setProvidenciasGestao(
@@ -242,11 +257,11 @@ export function OcorrenciaModal({
         );
       }
     }
-  }, [alunoSelecionado, tipo, isEditing]);
+  }, [alunoSelecionado, tipo, shouldUpdateDefaults]);
 
   // Pré-preenche os textos padrão institucionais de recomendações e observações para cada tipo de FIAP
   useEffect(() => {
-    if (!isEditing) {
+    if (shouldUpdateDefaults) {
       if (tipo === "falta") {
         setRecomendacoesProfessor(
           "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar."
@@ -261,7 +276,7 @@ export function OcorrenciaModal({
         setRecomendacoesGestao(
           "O estudante deverá cumprir integralmente o regimento escolar do SENAI. Reitera-se a importância do respeito mútuo, uso correto dos ambientes de prática e foco nas atividades pedagógicas propostas."
         );
-        if (!relatoDificuldades) {
+        if (!relatoDificuldades || isTipoChangedByEdit) {
           setRelatoDificuldades(
             "O estudante foi orientado em relação ao cumprimento das normas regimentais e de convivência escolar em sala de aula/laboratório, comprometendo-se a adotar uma atitude adequada ao ambiente profissional."
           );
@@ -273,7 +288,7 @@ export function OcorrenciaModal({
         setRecomendacoesGestao(
           "A coordenação pedagógica ofertará suporte de apoio de aprendizagem e acompanhará a evolução acadêmica do estudante. Reforçamos que a média mínima para aprovação no SENAI é de 50 pontos com 75% de frequência."
         );
-        if (!relatoDificuldades) {
+        if (!relatoDificuldades || isTipoChangedByEdit) {
           setRelatoDificuldades(
             "O estudante apresenta rendimento insatisfatório na Unidade Curricular, com dificuldades técnicas pontuais e entregas pendentes, necessitando de plano de recuperação pedagógica."
           );
@@ -281,7 +296,7 @@ export function OcorrenciaModal({
       }
       setOutrasObservacoes("----");
     }
-  }, [tipo, isEditing]);
+  }, [tipo, shouldUpdateDefaults]);
 
   // Atualiza automaticamente o relato de circunstâncias conforme UCs e faltas forem selecionadas/alteradas
   useEffect(() => {

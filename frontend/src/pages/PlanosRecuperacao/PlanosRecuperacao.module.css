@@ -233,6 +233,19 @@
   border: 1px solid color-mix(in srgb, #b91c1c 30%, transparent);
 }
 
+.fiapBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius);
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+  letter-spacing: 0.02em;
+}
+
 .statusBadge {
   display: inline-flex;
   align-items: center;
@@ -244,9 +257,9 @@
 }
 
 .statusRascunho {
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  color: #d97706;
+  border: 1px solid color-mix(in srgb, #f59e0b 25%, transparent);
 }
 
 .statusVisto {
@@ -265,7 +278,7 @@
   font-weight: 700;
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  border-radius: 9999px;
   text-transform: uppercase;
 }
 
@@ -279,6 +292,12 @@
   background: color-mix(in srgb, #dc2626 15%, transparent);
   color: #ef4444;
   border: 1px solid color-mix(in srgb, #dc2626 30%, transparent);
+}
+
+.conceitoPendente {
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  color: #d97706;
+  border: 1px solid color-mix(in srgb, #f59e0b 25%, transparent);
 }
 
 .actionsCell {
@@ -302,10 +321,16 @@
   transition: all 0.15s ease;
 }
 
+.actionBtnEdit {
+  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
 .actionBtnEdit:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
 }
 
 .actionBtnDelete:hover {
