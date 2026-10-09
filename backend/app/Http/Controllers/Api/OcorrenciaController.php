@@ -12,6 +12,7 @@ use App\Models\PlanoRecuperacao;
 use App\Models\UnidadeCurricular;
 use App\Models\User;
 use App\Notifications\OcorrenciaEncaminhadaAqvNotification;
+use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -214,6 +215,15 @@ class OcorrenciaController extends Controller
             return $ocorrencia->fresh();
         });
 
+        AuditService::registrar(
+            'criacao_fiap',
+            'Ocorrencia',
+            $ocorrencia->id,
+            "Criação da ocorrência {$ocorrencia->numero_sequencial} (Tipo: {$ocorrencia->tipo})",
+            null,
+            $ocorrencia->toArray()
+        );
+
         return response()->json([
             'message' => "Ocorrência {$ocorrencia->numero_sequencial} registrada com sucesso.",
             'data' => $ocorrencia->load([
@@ -256,6 +266,7 @@ class OcorrenciaController extends Controller
         }
 
         $validated = $request->validated();
+        $dadosAntigos = $ocorrencia->toArray();
 
         $ocorrencia = DB::transaction(function () use ($validated, $ocorrencia) {
             $novaVersao = $ocorrencia->versao + 1;
@@ -302,6 +313,15 @@ class OcorrenciaController extends Controller
 
             return $ocorrencia->fresh();
         });
+
+        AuditService::registrar(
+            'edicao_fiap',
+            'Ocorrencia',
+            $ocorrencia->id,
+            "Edição da ocorrência {$ocorrencia->numero_sequencial} (Versão {$ocorrencia->versao}) - Motivo: " . ($validated['motivo_edicao'] ?? 'Atualização dos dados.'),
+            $dadosAntigos,
+            $ocorrencia->toArray()
+        );
 
         return response()->json([
             'message' => 'Ocorrência atualizada com sucesso.',
@@ -427,7 +447,17 @@ class OcorrenciaController extends Controller
             ], 403);
         }
 
+        $dadosExcluidos = $ocorrencia->toArray();
         $ocorrencia->delete();
+
+        AuditService::registrar(
+            'exclusao_fiap',
+            'Ocorrencia',
+            $ocorrencia->id,
+            "Exclusão da ocorrência {$ocorrencia->numero_sequencial}",
+            $dadosExcluidos,
+            null
+        );
 
         return response()->json([
             'message' => 'Ocorrência removida com sucesso.',
@@ -448,6 +478,15 @@ class OcorrenciaController extends Controller
 
         $ocorrencia = Ocorrencia::withTrashed()->findOrFail($id);
         $ocorrencia->restore();
+
+        AuditService::registrar(
+            'restauracao_fiap',
+            'Ocorrencia',
+            $ocorrencia->id,
+            "Restauração da ocorrência {$ocorrencia->numero_sequencial}",
+            null,
+            $ocorrencia->toArray()
+        );
 
         return response()->json([
             'message' => "Ocorrência {$ocorrencia->numero_sequencial} restaurada com sucesso.",
@@ -501,6 +540,13 @@ class OcorrenciaController extends Controller
         } catch (\Throwable $e) {
             Log::error('Erro ao notificar equipe AQV: ' . $e->getMessage());
         }
+
+        AuditService::registrar(
+            'encaminhamento_aqv',
+            'Ocorrencia',
+            $ocorrencia->id,
+            "Encaminhamento da ocorrência {$ocorrencia->numero_sequencial} para a equipe AQV"
+        );
 
         return response()->json([
             'message' => "Ocorrência {$ocorrencia->numero_sequencial} encaminhada para a equipe AQV com sucesso.",

@@ -18,6 +18,10 @@ import {
   ShieldCheck,
   Loader2,
   Users,
+  GraduationCap,
+  Award,
+  CheckCircle2,
+  History,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { dashboardService, type DashboardStats } from "../../services/dashboardService";
@@ -186,6 +190,18 @@ export function Dashboard() {
             <span>Relatórios</span>
           </button>
 
+          {user?.role === "gestor" && (
+            <button
+              type="button"
+              className={styles.secondaryBtn}
+              onClick={() => navigate("/auditoria")}
+              title="Acessar Logs de Auditoria do Sistema"
+            >
+              <History size={16} />
+              <span>Auditoria</span>
+            </button>
+          )}
+
           {user?.role === "instrutor" && (
             <button
               type="button"
@@ -198,6 +214,323 @@ export function Dashboard() {
           )}
         </div>
       </section>
+
+      {/* Seção Estratégica Executiva (Exclusiva para o perfil Gestor) */}
+      {user?.role === "gestor" && stats?.metricas_gestao && (
+        <section className={styles.gestorSection} aria-label="Painel de Gestão Estratégica">
+          {/* 4 Cards Executivos da Escola */}
+          <div className={styles.executiveGrid}>
+            {/* Estudantes Ativos */}
+            <article className={styles.executiveCard}>
+              <div className={styles.kpiTopRow}>
+                <div>
+                  <span className={styles.kpiLabel}>Estudantes Matriculados</span>
+                  <div className={styles.kpiValue} style={{ color: "var(--color-primary)" }}>
+                    {isLoading ? <Loader2 size={24} className="animate-spin" /> : stats.metricas_gestao.total_alunos_ativos}
+                  </div>
+                </div>
+                <div
+                  className={styles.kpiIconWrapper}
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)",
+                    color: "var(--color-primary)",
+                  }}
+                >
+                  <Users size={22} />
+                </div>
+              </div>
+              <div className={styles.kpiFooter}>
+                <span>
+                  {stats.metricas_gestao.alunos_sem_turma > 0
+                    ? `${stats.metricas_gestao.alunos_sem_turma} pendentes de enturmação`
+                    : "100% dos alunos enturmados"}
+                </span>
+                <span
+                  style={{ cursor: "pointer", color: "var(--color-primary)", fontWeight: 600 }}
+                  onClick={() => navigate("/alunos")}
+                >
+                  Ver alunos
+                </span>
+              </div>
+            </article>
+
+            {/* Turmas em Andamento */}
+            <article className={styles.executiveCard}>
+              <div className={styles.kpiTopRow}>
+                <div>
+                  <span className={styles.kpiLabel}>Turmas Ativas</span>
+                  <div className={styles.kpiValue} style={{ color: "#0284c7" }}>
+                    {isLoading ? <Loader2 size={24} className="animate-spin" /> : stats.metricas_gestao.total_turmas_ativas}
+                  </div>
+                </div>
+                <div
+                  className={styles.kpiIconWrapper}
+                  style={{
+                    backgroundColor: "color-mix(in srgb, #0284c7 12%, transparent)",
+                    color: "#0284c7",
+                  }}
+                >
+                  <GraduationCap size={22} />
+                </div>
+              </div>
+              <div className={styles.kpiFooter}>
+                <span>{stats.metricas_gestao.total_cursos} cursos técnicos ofertados</span>
+                <span
+                  style={{ cursor: "pointer", color: "#0284c7", fontWeight: 600 }}
+                  onClick={() => navigate("/turmas")}
+                >
+                  Ver turmas
+                </span>
+              </div>
+            </article>
+
+            {/* Planos de Recuperação */}
+            <article className={styles.executiveCard}>
+              <div className={styles.kpiTopRow}>
+                <div>
+                  <span className={styles.kpiLabel}>Planos de Recuperação</span>
+                  <div className={styles.kpiValue} style={{ color: "var(--color-warning)" }}>
+                    {isLoading ? <Loader2 size={24} className="animate-spin" /> : stats.metricas_gestao.total_planos_ativos}
+                  </div>
+                </div>
+                <div
+                  className={styles.kpiIconWrapper}
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--color-warning) 12%, transparent)",
+                    color: "var(--color-warning)",
+                  }}
+                >
+                  <Award size={22} />
+                </div>
+              </div>
+              <div className={styles.kpiFooter}>
+                <span>Processos pedagógicos ativos</span>
+                <span
+                  style={{ cursor: "pointer", color: "var(--color-warning)", fontWeight: 600 }}
+                  onClick={() => navigate("/ocorrencias")}
+                >
+                  Acompanhar
+                </span>
+              </div>
+            </article>
+
+            {/* Taxa de Resolução Escolar */}
+            <article className={styles.executiveCard}>
+              <div className={styles.kpiTopRow}>
+                <div>
+                  <span className={styles.kpiLabel}>Taxa de Resolução</span>
+                  <div className={styles.kpiValue} style={{ color: "var(--color-success)" }}>
+                    {isLoading ? <Loader2 size={24} className="animate-spin" /> : `${stats.metricas_gestao.taxa_resolucao}%`}
+                  </div>
+                </div>
+                <div
+                  className={styles.kpiIconWrapper}
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--color-success) 12%, transparent)",
+                    color: "var(--color-success)",
+                  }}
+                >
+                  <CheckCircle2 size={22} />
+                </div>
+              </div>
+              <div className={styles.kpiFooter}>
+                <span>FIAPs assinadas/concluídas</span>
+                <span style={{ color: "var(--color-success)", fontWeight: 700 }}>
+                  Efetividade Escolar
+                </span>
+              </div>
+            </article>
+          </div>
+
+          {/* 3 Blocos de Análise Executiva */}
+          <div className={styles.executiveAnalyticsGrid}>
+            {/* Bloco 1: Ocorrências por Curso */}
+            <article className={styles.analyticsCard}>
+              <div>
+                <div className={styles.analyticsHeader}>
+                  <div className={styles.analyticsTitleGroup}>
+                    <BarChart3 size={18} color="var(--color-primary)" />
+                    <span className={styles.analyticsTitle}>Ocorrências por Curso</span>
+                  </div>
+                  <span className={styles.analyticsBadge}>
+                    {stats.metricas_gestao.distribuicao_cursos.length} Cursos
+                  </span>
+                </div>
+
+                <div className={styles.distributionList}>
+                  {stats.metricas_gestao.distribuicao_cursos.length > 0 ? (
+                    stats.metricas_gestao.distribuicao_cursos.map((curso) => (
+                      <div key={curso.id} className={styles.distributionItem}>
+                        <div className={styles.distributionHeader}>
+                          <span className={styles.distributionLabel}>
+                            {curso.nome}
+                          </span>
+                          <span className={styles.distributionCount}>
+                            {curso.ocorrencias_count} ({curso.percentual}%)
+                          </span>
+                        </div>
+                        <div className={styles.progressBarTrack}>
+                          <div
+                            className={styles.progressBarFill}
+                            style={{
+                              width: `${curso.percentual}%`,
+                              backgroundColor: "var(--color-primary)",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className={styles.emptyCardText}>Nenhum registro por curso ainda.</p>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className={styles.cardFooterBtn}
+                onClick={() => navigate("/relatorios")}
+              >
+                <span>Relatório analítico por curso</span>
+                <ArrowRight size={14} />
+              </button>
+            </article>
+
+            {/* Bloco 2: Top 5 UCs Críticas */}
+            <article className={styles.analyticsCard}>
+              <div>
+                <div className={styles.analyticsHeader}>
+                  <div className={styles.analyticsTitleGroup}>
+                    <BookOpen size={18} color="var(--color-warning)" />
+                    <span className={styles.analyticsTitle}>UCs com Mais Faltas</span>
+                  </div>
+                  <span className={styles.analyticsBadge} style={{ backgroundColor: "color-mix(in srgb, var(--color-warning) 12%, transparent)", color: "var(--color-warning)" }}>
+                    Top 5 Críticas
+                  </span>
+                </div>
+
+                <div className={styles.rankingList}>
+                  {stats.metricas_gestao.top_ucs_criticas.length > 0 ? (
+                    stats.metricas_gestao.top_ucs_criticas.map((uc, index) => (
+                      <div key={uc.id} className={styles.rankingItem}>
+                        <div className={styles.rankingPosition}>{index + 1}</div>
+                        <div className={styles.rankingInfo}>
+                          <span className={styles.rankingName} title={uc.nome}>
+                            {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome}
+                          </span>
+                          <span className={styles.rankingSubtext}>
+                            {uc.total_faltas} aulas faltadas acumuladas
+                          </span>
+                        </div>
+                        <span className={styles.rankingCount}>
+                          {uc.total_ocorrencias} FIAPs
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className={styles.emptyCardText}>Nenhuma unidade curricular com faltas críticas.</p>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className={styles.cardFooterBtn}
+                onClick={() => navigate("/relatorios")}
+              >
+                <span>Ver plano de disciplinas</span>
+                <ArrowRight size={14} />
+              </button>
+            </article>
+
+            {/* Bloco 3: Funil de Resoluções AQV */}
+            <article className={styles.analyticsCard}>
+              <div>
+                <div className={styles.analyticsHeader}>
+                  <div className={styles.analyticsTitleGroup}>
+                    <Headphones size={18} color="#0059a8" />
+                    <span className={styles.analyticsTitle}>Funil de Atendimento AQV</span>
+                  </div>
+                  <span className={styles.analyticsBadge} style={{ backgroundColor: "color-mix(in srgb, #0059a8 12%, transparent)", color: "#0059a8" }}>
+                    {stats.metricas_gestao.funil_aqv.total} Total
+                  </span>
+                </div>
+
+                <div className={styles.funnelList}>
+                  <div className={styles.funnelStep}>
+                    <div className={styles.funnelHeader}>
+                      <span className={styles.funnelLabel}>
+                        <Clock size={14} color="var(--color-warning)" /> Aguardando Acolhimento
+                      </span>
+                      <span className={styles.funnelValue}>
+                        {stats.metricas_gestao.funil_aqv.aguardando} casos
+                      </span>
+                    </div>
+                    <div className={styles.progressBarTrack}>
+                      <div
+                        className={styles.progressBarFill}
+                        style={{
+                          width: `${stats.metricas_gestao.funil_aqv.total > 0 ? (stats.metricas_gestao.funil_aqv.aguardando / stats.metricas_gestao.funil_aqv.total) * 100 : 0}%`,
+                          backgroundColor: "var(--color-warning)",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.funnelStep}>
+                    <div className={styles.funnelHeader}>
+                      <span className={styles.funnelLabel}>
+                        <Headphones size={14} color="#0059a8" /> Em Mediação Pedagógica
+                      </span>
+                      <span className={styles.funnelValue}>
+                        {stats.metricas_gestao.funil_aqv.em_atendimento} casos
+                      </span>
+                    </div>
+                    <div className={styles.progressBarTrack}>
+                      <div
+                        className={styles.progressBarFill}
+                        style={{
+                          width: `${stats.metricas_gestao.funil_aqv.total > 0 ? (stats.metricas_gestao.funil_aqv.em_atendimento / stats.metricas_gestao.funil_aqv.total) * 100 : 0}%`,
+                          backgroundColor: "#0059a8",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.funnelStep}>
+                    <div className={styles.funnelHeader}>
+                      <span className={styles.funnelLabel}>
+                        <CheckCircle2 size={14} color="var(--color-success)" /> Concluídas & Assinadas
+                      </span>
+                      <span className={styles.funnelValue}>
+                        {stats.metricas_gestao.funil_aqv.concluidos} casos
+                      </span>
+                    </div>
+                    <div className={styles.progressBarTrack}>
+                      <div
+                        className={styles.progressBarFill}
+                        style={{
+                          width: `${stats.metricas_gestao.funil_aqv.total > 0 ? (stats.metricas_gestao.funil_aqv.concluidos / stats.metricas_gestao.funil_aqv.total) * 100 : 0}%`,
+                          backgroundColor: "var(--color-success)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className={styles.cardFooterBtn}
+                onClick={() => navigate("/aqv")}
+              >
+                <span>Acessar fila completa do AQV</span>
+                <ArrowRight size={14} />
+              </button>
+            </article>
+          </div>
+        </section>
+      )}
 
       {/* 2. Grid de Cards KPI de Resumo */}
       <section className={styles.kpiGrid} aria-label="Indicadores gerais do mês">

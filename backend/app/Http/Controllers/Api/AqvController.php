@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\AuditService;
 
 class AqvController extends Controller
 {
@@ -179,6 +180,19 @@ class AqvController extends Controller
             );
         });
 
+        AuditService::registrar(
+            'atendimento_aqv',
+            'Ocorrencia',
+            $ocorrencia->id,
+            "Registro de acolhimento pedagógico da ocorrência {$ocorrencia->numero_sequencial}" . ($confirmarAssinatura ? ' com confirmação de assinatura' : ''),
+            null,
+            [
+                'status_atendimento' => $statusAtendimento,
+                'data_atendimento' => $dataAtendimento->toDateTimeString(),
+                'confirmar_assinatura' => $confirmarAssinatura,
+            ]
+        );
+
         return response()->json([
             'message' => 'Atendimento e acolhimento pedagógico registrados com sucesso.',
             'data' => $ocorrencia->fresh([
@@ -208,6 +222,15 @@ class AqvController extends Controller
             }
             $aqvRecebimento->save();
         });
+
+        AuditService::registrar(
+            'assinatura_fiap',
+            'Ocorrencia',
+            $ocorrencia->id,
+            "Confirmação de assinatura física da ocorrência {$ocorrencia->numero_sequencial}",
+            null,
+            ['status' => 'assinado', 'confirmado_em' => now()->toDateTimeString()]
+        );
 
         return response()->json([
             'message' => "Assinatura da ocorrência {$ocorrencia->numero_sequencial} confirmada com sucesso.",

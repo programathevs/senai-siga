@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  ClipboardCheck,
+  Plus,
   Search,
   FileText,
   Clock,
@@ -17,6 +17,7 @@ import {
   type PlanoTipoPrograma,
 } from "../../services/planoRecuperacaoService";
 import { useAuth } from "../../contexts/AuthContext";
+import { Pagination } from "../../components/Pagination/Pagination";
 import { PlanoRecuperacaoModal } from "./PlanoRecuperacaoModal";
 import { PlanoPdfModal } from "./PlanoPdfModal";
 import { showAvatarToast } from "../../utils/toast";
@@ -32,6 +33,10 @@ export function PlanosRecuperacao() {
   const [selectedTipo, setSelectedTipo] = useState<PlanoTipoPrograma | "">("");
   const [selectedStatus, setSelectedStatus] = useState<string>("");
 
+  // Paginação
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+
   // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [planoToEdit, setPlanoToEdit] = useState<PlanoRecuperacao | null>(null);
@@ -39,6 +44,10 @@ export function PlanosRecuperacao() {
   // PDF Modal
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [selectedPlanoPdf, setSelectedPlanoPdf] = useState<PlanoRecuperacao | null>(null);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, selectedTipo, selectedStatus]);
 
   useEffect(() => {
     loadPlanos();
@@ -103,32 +112,34 @@ export function PlanosRecuperacao() {
     }
   }
 
+  const total = planos.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const startIndex = (page - 1) * perPage;
+  const paginatedPlanos = planos.slice(startIndex, startIndex + perPage);
+
   return (
     <div className={styles.container}>
-      {/* Header */}
+      {/* Cabeçalho da Página */}
       <div className={styles.pageHeader}>
         <div className={styles.titleGroup}>
-          <h1 className={styles.title}>
-            <ClipboardCheck size={28} color="var(--color-primary)" />
-            Planos de Recuperação (PRP / PCA)
-          </h1>
+          <h1 className={styles.title}>Planos de Recuperação (PRP / PCA)</h1>
           <p className={styles.subtitle}>
             Acompanhamento e emissão dos Planos de Recuperação Paralela e Compensação de Ausências.
           </p>
         </div>
 
         {user?.role !== "aqv" && (
-          <button type="button" className={styles.createBtn} onClick={handleCreateNew}>
-            <ClipboardCheck size={18} />
-            Novo Plano de Recuperação
+          <button type="button" className={styles.addBtn} onClick={handleCreateNew}>
+            <Plus size={18} />
+            <span>Novo Plano de Recuperação</span>
           </button>
         )}
       </div>
 
       {/* Cartão de Filtros */}
       <div className={styles.filterCard}>
-        <div className={styles.searchGroup}>
-          <Search size={18} className={styles.searchIcon} />
+        <div className={styles.searchWrapper}>
+          <Search size={18} className={styles.searchIcon} aria-hidden="true" />
           <input
             type="text"
             className={styles.searchInput}
@@ -164,184 +175,194 @@ export function PlanosRecuperacao() {
         </select>
       </div>
 
-      {/* Tabela de Resultados */}
-      <div className={styles.tableCard}>
+      {/* Tabela de Listagem */}
+      <div className={styles.tableContainer}>
         {isLoading ? (
           <div className={styles.emptyState}>
-            <Loader2 size={36} className="animate-spin" color="var(--color-primary)" />
+            <Loader2 size={32} className="animate-spin" />
             <p>Carregando planos de recuperação...</p>
           </div>
         ) : planos.length === 0 ? (
           <div className={styles.emptyState}>
-            <FileText size={48} color="#94a3b8" />
+            <FileText size={40} className={styles.emptyIcon} />
             <p>Nenhum Plano de Recuperação encontrado.</p>
           </div>
         ) : (
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.th}>FIAP Atrelada</th>
-                  <th className={styles.th}>Estudante</th>
-                  <th className={styles.th}>Programa</th>
-                  <th className={styles.th}>Ciclo</th>
-                  <th className={styles.th}>Status</th>
-                  <th className={styles.th}>Conceito</th>
-                  <th className={styles.th} style={{ textAlign: "right" }}>
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {planos.map((plano) => {
-                  const aluno = plano.aluno;
-                  const initial = (aluno?.nome || "A").charAt(0).toUpperCase();
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.th}>FIAP Atrelada</th>
+                <th className={styles.th}>Estudante</th>
+                <th className={styles.th}>Programa</th>
+                <th className={styles.th}>Ciclo</th>
+                <th className={styles.th}>Status</th>
+                <th className={styles.th}>Conceito</th>
+                <th className={styles.th} style={{ textAlign: "right" }}>
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedPlanos.map((plano) => {
+                const aluno = plano.aluno;
+                const initial = (aluno?.nome || "A").charAt(0).toUpperCase();
 
-                  const isDeleted = Boolean(plano.deleted_at);
-                  const regId = typeof plano.registrado_por === "object" ? plano.registrado_por?.id : plano.registrado_por;
-                  const creatorId = plano.registrado_por_user?.id || regId;
-                  const canDelete = user?.role === "gestor" || (creatorId === user?.id && creatorId !== undefined);
+                const isDeleted = Boolean(plano.deleted_at);
+                const regId = typeof plano.registrado_por === "object" ? plano.registrado_por?.id : plano.registrado_por;
+                const creatorId = plano.registrado_por_user?.id || regId;
+                const canDelete = user?.role === "gestor" || (creatorId === user?.id && creatorId !== undefined);
 
-                  return (
-                    <tr key={plano.id} className={styles.tr} style={isDeleted ? { opacity: 0.7 } : undefined}>
-                      {/* FIAP */}
-                      <td className={styles.td}>
-                        <strong>{plano.ocorrencia?.numero_sequencial || "—"}</strong>
-                      </td>
+                return (
+                  <tr key={plano.id} className={styles.tr} style={isDeleted ? { opacity: 0.7 } : undefined}>
+                    {/* FIAP */}
+                    <td className={styles.td}>
+                      <strong>{plano.ocorrencia?.numero_sequencial || "—"}</strong>
+                    </td>
 
-                      {/* Aluno */}
-                      <td className={styles.td}>
-                        <div className={styles.alunoCell}>
-                          <div className={styles.alunoAvatar}>{initial}</div>
-                          <div className={styles.alunoInfo}>
-                            <span className={styles.alunoNome}>{aluno?.nome || "Estudante"}</span>
-                            <span className={styles.alunoSub}>
-                              RA: {aluno?.matricula || "—"} | {aluno?.turma?.nome || "Sem Turma"}
-                            </span>
-                          </div>
+                    {/* Aluno */}
+                    <td className={styles.td}>
+                      <div className={styles.alunoCell}>
+                        <div className={styles.alunoAvatar}>{initial}</div>
+                        <div className={styles.alunoInfo}>
+                          <span className={styles.alunoNome}>{aluno?.nome || "Estudante"}</span>
+                          <span className={styles.alunoSub}>
+                            RA: {aluno?.matricula || "—"} | {aluno?.turma?.nome || "Sem Turma"}
+                          </span>
                         </div>
-                      </td>
+                      </div>
+                    </td>
 
-                      {/* Programa */}
-                      <td className={styles.td}>
-                        {plano.tipo_programa === "recuperacao_paralela" && (
-                          <span className={`${styles.tipoBadge} ${styles.tipoParalela}`}>
-                            Recuperação Paralela
-                          </span>
-                        )}
-                        {plano.tipo_programa === "compensacao_ausencia" && (
-                          <span className={`${styles.tipoBadge} ${styles.tipoCompensacao}`}>
-                            Compensação Ausência
-                          </span>
-                        )}
-                        {plano.tipo_programa === "recuperacao_final" && (
-                          <span className={`${styles.tipoBadge} ${styles.tipoFinal}`}>
-                            Recuperação Final
-                          </span>
-                        )}
-                      </td>
+                    {/* Programa */}
+                    <td className={styles.td}>
+                      {plano.tipo_programa === "recuperacao_paralela" && (
+                        <span className={`${styles.tipoBadge} ${styles.tipoParalela}`}>
+                          Recuperação Paralela
+                        </span>
+                      )}
+                      {plano.tipo_programa === "compensacao_ausencia" && (
+                        <span className={`${styles.tipoBadge} ${styles.tipoCompensacao}`}>
+                          Compensação Ausência
+                        </span>
+                      )}
+                      {plano.tipo_programa === "recuperacao_final" && (
+                        <span className={`${styles.tipoBadge} ${styles.tipoFinal}`}>
+                          Recuperação Final
+                        </span>
+                      )}
+                    </td>
 
-                      {/* Ciclo */}
-                      <td className={styles.td}>{plano.ciclo_avaliacao || "1º"}</td>
+                    {/* Ciclo */}
+                    <td className={styles.td}>{plano.ciclo_avaliacao || "1º"}</td>
 
-                      {/* Status */}
-                      <td className={styles.td}>
-                        {isDeleted ? (
-                          <span className={styles.statusBadge} style={{ background: "color-mix(in srgb, #ef4444 12%, transparent)", color: "#ef4444", border: "1px solid color-mix(in srgb, #ef4444 30%, transparent)" }}>
-                            <Trash2 size={12} />
-                            Excluído (Adormecido)
-                          </span>
-                        ) : plano.status_processo === "concluido" ? (
-                          <span className={`${styles.statusBadge} ${styles.statusConcluido}`}>
-                            <CheckCircle2 size={12} />
-                            Concluído
-                          </span>
-                        ) : plano.status_processo === "aguardando_visto" ? (
-                          <span className={`${styles.statusBadge} ${styles.statusVisto}`}>
-                            <Clock size={12} />
-                            Aguardando Visto
-                          </span>
-                        ) : (
-                          <span className={`${styles.statusBadge} ${styles.statusRascunho}`}>
-                            Rascunho
-                          </span>
-                        )}
-                      </td>
+                    {/* Status */}
+                    <td className={styles.td}>
+                      {isDeleted ? (
+                        <span className={styles.statusBadge} style={{ background: "color-mix(in srgb, #ef4444 12%, transparent)", color: "#ef4444", border: "1px solid color-mix(in srgb, #ef4444 30%, transparent)" }}>
+                          <Trash2 size={12} />
+                          Excluído (Adormecido)
+                        </span>
+                      ) : plano.status_processo === "concluido" ? (
+                        <span className={`${styles.statusBadge} ${styles.statusConcluido}`}>
+                          <CheckCircle2 size={12} />
+                          Concluído
+                        </span>
+                      ) : plano.status_processo === "aguardando_visto" ? (
+                        <span className={`${styles.statusBadge} ${styles.statusVisto}`}>
+                          <Clock size={12} />
+                          Aguardando Visto
+                        </span>
+                      ) : (
+                        <span className={`${styles.statusBadge} ${styles.statusRascunho}`}>
+                          Rascunho
+                        </span>
+                      )}
+                    </td>
 
-                      {/* Conceito */}
-                      <td className={styles.td}>
-                        {plano.conceito === "aprovado" ? (
-                          <span className={`${styles.conceitoBadge} ${styles.conceitoAprovado}`}>
-                            APROVADO
-                          </span>
-                        ) : plano.conceito === "reprovado" ? (
-                          <span className={`${styles.conceitoBadge} ${styles.conceitoReprovado}`}>
-                            REPROVADO
-                          </span>
-                        ) : (
-                          <span style={{ color: "#94a3b8" }}>Pendente</span>
-                        )}
-                      </td>
+                    {/* Conceito */}
+                    <td className={styles.td}>
+                      {plano.conceito === "aprovado" ? (
+                        <span className={`${styles.conceitoBadge} ${styles.conceitoAprovado}`}>
+                          APROVADO
+                        </span>
+                      ) : plano.conceito === "reprovado" ? (
+                        <span className={`${styles.conceitoBadge} ${styles.conceitoReprovado}`}>
+                          REPROVADO
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--color-text-secondary)" }}>Pendente</span>
+                      )}
+                    </td>
 
-                      {/* Ações */}
-                      <td className={styles.td}>
-                        <div className={styles.actionsCell}>
+                    {/* Ações */}
+                    <td className={styles.td}>
+                      <div className={styles.actionsCell}>
+                        <button
+                          type="button"
+                          className={`${styles.actionBtn} ${styles.actionBtnPdf}`}
+                          onClick={() => handleViewPdf(plano)}
+                          title="Visualizar e Imprimir PDF"
+                        >
+                          <Printer size={16} />
+                        </button>
+
+                        {!isDeleted && (
                           <button
                             type="button"
-                            className={`${styles.actionBtn} ${styles.pdfBtn}`}
-                            onClick={() => handleViewPdf(plano)}
-                            title="Visualizar e Imprimir PDF"
+                            className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
+                            onClick={() => handleEdit(plano)}
+                            title="Editar Plano de Recuperação"
                           >
-                            <Printer size={16} />
+                            <Edit2 size={16} />
                           </button>
+                        )}
 
-                          {!isDeleted && (
-                            <button
-                              type="button"
-                              className={`${styles.actionBtn} ${styles.editBtn}`}
-                              onClick={() => handleEdit(plano)}
-                              title="Editar Plano de Recuperação"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                          )}
+                        {!isDeleted && canDelete && (
+                          <button
+                            type="button"
+                            className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
+                            onClick={() => handleDelete(plano)}
+                            title="Excluir Plano de Recuperação"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
 
-                          {!isDeleted && canDelete && (
-                            <button
-                              type="button"
-                              className={`${styles.actionBtn} ${styles.deleteBtn}`}
-                              onClick={() => handleDelete(plano)}
-                              title="Excluir Plano de Recuperação"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-
-                          {isDeleted && user?.role === "gestor" && (
-                            <button
-                              type="button"
-                              className={styles.actionBtn}
-                              style={{
-                                backgroundColor: "color-mix(in srgb, #16a34a 12%, transparent)",
-                                color: "#16a34a",
-                                borderColor: "color-mix(in srgb, #16a34a 30%, transparent)",
-                              }}
-                              onClick={() => handleRestore(plano)}
-                              title="Restaurar Plano de Recuperação Excluído"
-                            >
-                              <RotateCcw size={15} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        {isDeleted && user?.role === "gestor" && (
+                          <button
+                            type="button"
+                            className={`${styles.actionBtn} ${styles.actionBtnRestore}`}
+                            onClick={() => handleRestore(plano)}
+                            title="Restaurar Plano de Recuperação Excluído"
+                          >
+                            <RotateCcw size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {!isLoading && planos.length > 0 && (
+        <Pagination
+          currentPage={page}
+          lastPage={totalPages}
+          total={total}
+          perPage={perPage}
+          from={startIndex + 1}
+          to={Math.min(startIndex + perPage, total)}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          }}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* Modal de Formulário */}
       <PlanoRecuperacaoModal

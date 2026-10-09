@@ -19,6 +19,8 @@ import { EncaminhamentosAqv } from "../pages/EncaminhamentosAqv/EncaminhamentosA
 import { PlanosRecuperacao } from "../pages/PlanosRecuperacao/PlanosRecuperacao";
 import { Configuracoes } from "../pages/Configuracoes/Configuracoes";
 
+import { Auditoria } from "../pages/Auditoria/Auditoria";
+
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
   {
@@ -103,6 +105,10 @@ export const router = createBrowserRouter([
               {
                 path: "/instrutores",
                 element: <Instrutores />,
+              },
+              {
+                path: "/auditoria",
+                element: <Auditoria />,
               },
             ],
           },

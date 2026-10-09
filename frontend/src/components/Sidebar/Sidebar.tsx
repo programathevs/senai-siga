@@ -10,6 +10,7 @@ import {
   Headphones,
   BarChart3,
   Settings,
+  History,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
@@ -93,6 +94,12 @@ export function Sidebar() {
       label: "Relatórios & Histórico",
       icon: BarChart3,
       allowedRoles: ["gestor", "instrutor", "aqv"],
+    },
+    {
+      to: "/auditoria",
+      label: "Logs de Auditoria",
+      icon: History,
+      allowedRoles: ["gestor"],
     },
     {
       to: "/configuracoes",

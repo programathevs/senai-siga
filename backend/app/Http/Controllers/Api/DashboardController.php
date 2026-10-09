@@ -3,7 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Aluno;
+use App\Models\AqvRecebimento;
+use App\Models\Curso;
 use App\Models\Ocorrencia;
+use App\Models\OcorrenciaUnidade;
+use App\Models\PlanoRecuperacao;
 use App\Models\Turma;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -116,6 +121,98 @@ class DashboardController extends Controller
                 ];
             });
 
+        // 6. Métricas Executivas para Gestão (perfil Gestor)
+        $metricasGestao = null;
+        if ($user && $user->hasRole('gestor')) {
+            $totalAlunosAtivos = Aluno::where('status', 'ativo')->count();
+            $alunosSemTurma = Aluno::where('status', 'ativo')->whereNull('turma_id')->count();
+            $totalTurmasAtivas = Turma::count();
+            $totalCursos = Curso::count();
+            $totalPlanosAtivos = PlanoRecuperacao::where('status_processo', '!=', 'concluido')->count();
+
+            // Taxa de resolução no mês
+            $resolvidasMes = (clone $baseQuery)->whereBetween('data_ocorrencia', [$startOfMonth, $endOfMonth])
+                ->whereIn('status', ['assinado', 'impresso'])
+                ->count();
+            $taxaResolucao = $totalMes > 0 ? round(($resolvidasMes / $totalMes) * 100, 1) : 100.0;
+
+            // Distribuição por Cursos
+            $distribuicaoCursos = Curso::get()->map(function ($curso) {
+                $count = Ocorrencia::whereHas('aluno.turma', function ($q) use ($curso) {
+                    $q->where('curso_id', $curso->id);
+                })->count();
+
+                return [
+                    'id' => $curso->id,
+                    'nome' => $curso->nome,
+                    'ocorrencias_count' => $count,
+                ];
+            });
+            $totalOcorrenciasCursos = $distribuicaoCursos->sum('ocorrencias_count');
+            $distribuicaoCursos = $distribuicaoCursos->map(function ($c) use ($totalOcorrenciasCursos) {
+                $c['percentual'] = $totalOcorrenciasCursos > 0
+                    ? round(($c['ocorrencias_count'] / $totalOcorrenciasCursos) * 100, 1)
+                    : 0;
+                return $c;
+            })->values();
+
+            // Top UCs Críticas (com maior número de ocorrências / faltas registradas)
+            $topUcsCriticas = OcorrenciaUnidade::query()
+                ->selectRaw('unidade_curricular_id, COUNT(DISTINCT ocorrencia_id) as total_ocorrencias, SUM(quantidade_faltas) as total_faltas')
+                ->groupBy('unidade_curricular_id')
+                ->with('unidadeCurricular:id,nome,sigla,curso_id')
+                ->orderByDesc('total_ocorrencias')
+                ->limit(5)
+                ->get()
+                ->filter(fn($item) => $item->unidadeCurricular !== null)
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->unidade_curricular_id,
+                        'nome' => $item->unidadeCurricular->nome,
+                        'sigla' => $item->unidadeCurricular->sigla ?? '',
+                        'total_ocorrencias' => (int) $item->total_ocorrencias,
+                        'total_faltas' => (int) $item->total_faltas,
+                    ];
+                })
+                ->values();
+
+            // Funil AQV
+            $aqvTotal = Ocorrencia::where(function ($q) {
+                $q->where('status', 'enviado_aqv')
+                    ->orWhere('status', 'assinado')
+                    ->orWhereHas('aqvRecebimento');
+            })->count();
+
+            $aqvEmAtendimento = AqvRecebimento::where('status_atendimento', 'em_atendimento')
+                ->whereNull('confirmado_em')
+                ->count();
+
+            $aqvAssinados = Ocorrencia::where('status', 'assinado')
+                ->orWhereHas('aqvRecebimento', fn($q) => $q->where('status_atendimento', 'concluido'))
+                ->count();
+
+            $aqvAguardando = max(0, $aqvTotal - $aqvEmAtendimento - $aqvAssinados);
+
+            $funilAqv = [
+                'total' => $aqvTotal,
+                'aguardando' => $aqvAguardando,
+                'em_atendimento' => $aqvEmAtendimento,
+                'concluidos' => $aqvAssinados,
+            ];
+
+            $metricasGestao = [
+                'total_alunos_ativos' => $totalAlunosAtivos,
+                'alunos_sem_turma' => $alunosSemTurma,
+                'total_turmas_ativas' => $totalTurmasAtivas,
+                'total_cursos' => $totalCursos,
+                'total_planos_ativos' => $totalPlanosAtivos,
+                'taxa_resolucao' => $taxaResolucao,
+                'distribuicao_cursos' => $distribuicaoCursos,
+                'top_ucs_criticas' => $topUcsCriticas,
+                'funil_aqv' => $funilAqv,
+            ];
+        }
+
         return response()->json([
             'data' => [
                 'periodo' => [
@@ -135,6 +232,7 @@ class DashboardController extends Controller
                 'distribuicao_status' => $distribuicaoStatus,
                 'ocorrencias_recentes' => $ocorrenciasRecentes,
                 'turmas_resumo' => $turmasResumo,
+                'metricas_gestao' => $metricasGestao,
             ],
         ]);
     }

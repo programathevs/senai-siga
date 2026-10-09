@@ -701,12 +701,7 @@ export function Ocorrencias() {
                           {canSign && (
                             <button
                               type="button"
-                              className={styles.actionBtn}
-                              style={{
-                                backgroundColor: "color-mix(in srgb, #16a34a 12%, transparent)",
-                                color: "#16a34a",
-                                borderColor: "color-mix(in srgb, #16a34a 30%, transparent)",
-                              }}
+                              className={`${styles.actionBtn} ${styles.assinaturaBtn}`}
                               onClick={() => handleOpenConfirmAssinatura(oc)}
                               title="Confirmar Assinatura Física da FIAP (Gestão / AQV)"
                             >

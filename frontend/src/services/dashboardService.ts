@@ -25,6 +25,40 @@ export interface TurmaResumoDashboard {
   ocorrencias_count: number;
 }
 
+export interface DistribuicaoCurso {
+  id: number;
+  nome: string;
+  ocorrencias_count: number;
+  percentual: number;
+}
+
+export interface TopUcCritica {
+  id: number;
+  nome: string;
+  sigla: string;
+  total_ocorrencias: number;
+  total_faltas: number;
+}
+
+export interface FunilAqv {
+  total: number;
+  aguardando: number;
+  em_atendimento: number;
+  concluidos: number;
+}
+
+export interface MetricasGestao {
+  total_alunos_ativos: number;
+  alunos_sem_turma: number;
+  total_turmas_ativas: number;
+  total_cursos: number;
+  total_planos_ativos: number;
+  taxa_resolucao: number;
+  distribuicao_cursos: DistribuicaoCurso[];
+  top_ucs_criticas: TopUcCritica[];
+  funil_aqv: FunilAqv;
+}
+
 export interface DashboardStats {
   periodo: {
     mes_atual: string;
@@ -45,6 +79,7 @@ export interface DashboardStats {
   };
   ocorrencias_recentes: Ocorrencia[];
   turmas_resumo: TurmaResumoDashboard[];
+  metricas_gestao?: MetricasGestao | null;
 }
 
 export const dashboardService = {

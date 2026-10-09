@@ -58,10 +58,29 @@ class DashboardControllerTest extends TestCase
                     'distribuicao_status' => ['pendente', 'enviado_aqv', 'pdf_gerado', 'impresso', 'assinado'],
                     'ocorrencias_recentes',
                     'turmas_resumo',
+                    'metricas_gestao' => [
+                        'total_alunos_ativos',
+                        'alunos_sem_turma',
+                        'total_turmas_ativas',
+                        'total_cursos',
+                        'total_planos_ativos',
+                        'taxa_resolucao',
+                        'distribuicao_cursos',
+                        'top_ucs_criticas',
+                        'funil_aqv' => [
+                            'total',
+                            'aguardando',
+                            'em_atendimento',
+                            'concluidos',
+                        ],
+                    ],
                 ],
             ])
             ->assertJsonPath('data.kpis.total_mes', 1)
-            ->assertJsonPath('data.kpis.pendentes', 1);
+            ->assertJsonPath('data.kpis.pendentes', 1)
+            ->assertJsonPath('data.metricas_gestao.total_alunos_ativos', 1)
+            ->assertJsonPath('data.metricas_gestao.total_turmas_ativas', 1)
+            ->assertJsonPath('data.metricas_gestao.total_cursos', 1);
     }
 
     public function test_instrutor_can_access_dashboard_stats_scoped_to_his_turmas(): void
@@ -108,6 +127,7 @@ class DashboardControllerTest extends TestCase
             ->assertJsonPath('data.kpis.total_mes', 1)
             ->assertJsonPath('data.kpis.pendentes', 1)
             ->assertJsonPath('data.kpis.encaminhadas_aqv', 0)
+            ->assertJsonPath('data.metricas_gestao', null)
             ->assertJsonCount(1, 'data.ocorrencias_recentes')
             ->assertJsonCount(1, 'data.turmas_resumo');
     }

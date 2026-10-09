@@ -78,6 +78,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // --- RESTAURAÇÃO DE OCORRÊNCIAS / FIAPS E PLANOS (Apenas Gestor) ---
         Route::post('/ocorrencias/{id}/restaurar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'restaurar'])->name('ocorrencias.restaurar');
         Route::post('/planos-recuperacao/{id}/restaurar', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'restaurar'])->name('planos-recuperacao.restaurar');
+
+        // --- AUDITORIA & RASTREABILIDADE (Apenas Gestor) ---
+        Route::get('/auditoria', [\App\Http\Controllers\Api\AuditoriaController::class, 'index'])->name('auditoria.index');
+        Route::get('/auditoria/stats', [\App\Http\Controllers\Api\AuditoriaController::class, 'stats'])->name('auditoria.stats');
     });
 
     // --- GESTÃO DE OCORRÊNCIAS / FIAPS ---

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PlanoRecuperacaoRequest;
 use App\Models\PlanoFrequencia;
 use App\Models\PlanoRecuperacao;
+use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -93,6 +94,15 @@ class PlanoRecuperacaoController extends Controller
                 }
             }
 
+            AuditService::registrar(
+                'criacao_plano',
+                'PlanoRecuperacao',
+                $plano->id,
+                "Criação de plano {$plano->tipo_programa} para o aluno {$plano->aluno?->nome}",
+                null,
+                $plano->toArray()
+            );
+
             return response()->json([
                 'message' => 'Plano de Recuperação registrado com sucesso.',
                 'data' => $plano->load(['ocorrencia', 'aluno.turma.curso', 'unidadeCurricular', 'registradoPor', 'frequencias']),
@@ -116,8 +126,9 @@ class PlanoRecuperacaoController extends Controller
     public function update(PlanoRecuperacaoRequest $request, PlanoRecuperacao $plano): JsonResponse
     {
         $data = $request->validated();
+        $dadosAntigos = $plano->toArray();
 
-        return DB::transaction(function () use ($data, $plano) {
+        return DB::transaction(function () use ($data, $plano, $dadosAntigos) {
             $frequencias = $data['frequencias'] ?? null;
             unset($data['frequencias']);
 
@@ -130,6 +141,15 @@ class PlanoRecuperacaoController extends Controller
                     $plano->frequencias()->create($freq);
                 }
             }
+
+            AuditService::registrar(
+                'atualizacao_plano',
+                'PlanoRecuperacao',
+                $plano->id,
+                "Atualização de plano de recuperação #{$plano->id} ({$plano->tipo_programa}) - Status: {$plano->status_processo}",
+                $dadosAntigos,
+                $plano->toArray()
+            );
 
             return response()->json([
                 'message' => 'Plano de Recuperação atualizado com sucesso.',
@@ -153,6 +173,13 @@ class PlanoRecuperacaoController extends Controller
 
         $plano->delete();
 
+        AuditService::registrar(
+            'exclusao_plano',
+            'PlanoRecuperacao',
+            $plano->id,
+            "Exclusão do plano de recuperação #{$plano->id} ({$plano->tipo_programa})"
+        );
+
         return response()->json([
             'message' => 'Plano de Recuperação removido com sucesso.',
         ]);
@@ -173,6 +200,13 @@ class PlanoRecuperacaoController extends Controller
 
         $plano = PlanoRecuperacao::withTrashed()->findOrFail($id);
         $plano->restore();
+
+        AuditService::registrar(
+            'restauracao_plano',
+            'PlanoRecuperacao',
+            $plano->id,
+            "Restauração do plano de recuperação #{$plano->id} ({$plano->tipo_programa})"
+        );
 
         return response()->json([
             'message' => 'Plano de Recuperação restaurado com sucesso.',
