@@ -205,16 +205,26 @@ class AqvController extends Controller
     }
 
     /**
-     * Confirmação rápida de colhimento da assinatura física da FIAP.
+     * Confirmação de colhimento da assinatura física da FIAP.
+     * Exige que a justificativa do estudante e o parecer da gestão/AQV estejam cadastrados.
      */
     public function confirmarAssinatura(Request $request, Ocorrencia $ocorrencia): JsonResponse
     {
         $user = Auth::user();
 
-        DB::transaction(function () use ($ocorrencia, $user) {
+        $aqvRecebimento = $ocorrencia->aqvRecebimento()->first();
+        $justificativa = trim($aqvRecebimento?->justificativa_aluno ?? '');
+        $parecer = trim($aqvRecebimento?->parecer_aqv ?? '');
+
+        if (! $aqvRecebimento || empty($justificativa) || empty($parecer)) {
+            return response()->json([
+                'message' => 'Para finalizar a FIAP, é obrigatório registrar previamente a Justificativa do Estudante e o Parecer da Gestão/AQV no acolhimento.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($ocorrencia, $user, $aqvRecebimento) {
             $ocorrencia->update(['status' => 'assinado']);
 
-            $aqvRecebimento = AqvRecebimento::firstOrNew(['ocorrencia_id' => $ocorrencia->id]);
             $aqvRecebimento->confirmado_em = now();
             $aqvRecebimento->status_atendimento = 'concluido';
             if (! $aqvRecebimento->recebido_por) {

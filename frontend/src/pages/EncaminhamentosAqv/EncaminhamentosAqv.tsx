@@ -4,7 +4,7 @@ import {
   FilterX,
   Inbox,
   Clock,
-  MessageSquare,
+  FileSignature,
   CheckCircle2,
   Eye,
   FilePenLine,
@@ -25,6 +25,7 @@ import { AqvAtendimentoModal } from "./AqvAtendimentoModal";
 import { OcorrenciaDetalhesModal } from "../Ocorrencias/OcorrenciaDetalhesModal";
 import { AlunoHistoricoModal } from "../Alunos/AlunoHistoricoModal";
 import { ConfirmAssinaturaModal } from "./ConfirmAssinaturaModal";
+import { showAvatarToast } from "../../utils/toast";
 import styles from "./EncaminhamentosAqv.module.css";
 
 export function EncaminhamentosAqv() {
@@ -167,6 +168,19 @@ export function EncaminhamentosAqv() {
   }
 
   function handleOpenConfirmAssinatura(item: AqvEncaminhamentoItem) {
+    const hasJustificativa = Boolean(item.aqv_recebimento?.justificativa_aluno?.trim());
+    const hasParecer = Boolean(item.aqv_recebimento?.parecer_aqv?.trim());
+
+    if (!hasJustificativa || !hasParecer) {
+      showAvatarToast(
+        "Para finalizar a FIAP, registre previamente a Justificativa do Estudante e o Parecer da equipe.",
+        "Acolhimento Necessário",
+        "warning"
+      );
+      handleOpenAtendimento(item);
+      return;
+    }
+
     setItemParaAssinar(item);
     setConfirmAssinaturaModalOpen(true);
   }
@@ -200,8 +214,8 @@ export function EncaminhamentosAqv() {
     if (item.aqv_recebimento?.status_atendimento === "em_atendimento") {
       return (
         <span className={`${styles.statusBadge} ${styles.statusEmAtendimento}`}>
-          <MessageSquare size={13} />
-          Em Acolhimento
+          <FileSignature size={13} />
+          Aguardando Assinatura
         </span>
       );
     }
@@ -278,10 +292,10 @@ export function EncaminhamentosAqv() {
               color: "#6366f1",
             }}
           >
-            <MessageSquare size={22} />
+            <FileSignature size={22} />
           </div>
           <div className={styles.kpiContent}>
-            <span className={styles.kpiLabel}>Em Acolhimento</span>
+            <span className={styles.kpiLabel}>Aguardando Assinatura</span>
             <span className={styles.kpiValue}>{stats.em_atendimento}</span>
           </div>
         </div>
@@ -324,7 +338,7 @@ export function EncaminhamentosAqv() {
           >
             <option value="">Status: Todos</option>
             <option value="pendente">Aguardando Atendimento</option>
-            <option value="em_atendimento">Em Acolhimento</option>
+            <option value="em_atendimento">Aguardando Assinatura</option>
             <option value="concluido">Concluído & Assinado</option>
           </select>
 
@@ -403,6 +417,10 @@ export function EncaminhamentosAqv() {
                   const isAssinado =
                     item.status === "assinado" ||
                     item.aqv_recebimento?.status_atendimento === "concluido";
+                  const hasAtendimentoCompleto = Boolean(
+                    item.aqv_recebimento?.justificativa_aluno?.trim() &&
+                    item.aqv_recebimento?.parecer_aqv?.trim()
+                  );
 
                   return (
                     <tr key={item.id}>
@@ -440,20 +458,30 @@ export function EncaminhamentosAqv() {
                           {/* Registrar / Editar Atendimento */}
                           <button
                             type="button"
-                            className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                            className={`${styles.actionBtn} ${
+                              !isAssinado && !hasAtendimentoCompleto
+                                ? styles.actionBtnPrimary
+                                : ""
+                            }`}
                             onClick={() => handleOpenAtendimento(item)}
-                            title="Registrar Atendimento e Justificativa"
+                            title={
+                              !isAssinado
+                                ? hasAtendimentoCompleto
+                                  ? "Editar Acolhimento e Parecer"
+                                  : "Registrar Acolhimento Pedagógico"
+                                : "Ver / Editar Acolhimento Registrado"
+                            }
                           >
                             <FilePenLine size={16} />
                           </button>
 
-                          {/* Confirmação Rápida de Assinatura */}
-                          {!isAssinado && (
+                          {/* Confirmação Rápida de Assinatura (Exibido apenas quando justificativa e parecer já foram salvos) */}
+                          {!isAssinado && hasAtendimentoCompleto && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.actionBtnSuccess}`}
                               onClick={() => handleOpenConfirmAssinatura(item)}
-                              title="Confirmar Assinatura Física da FIAP"
+                              title="Confirmar Coleta de Assinatura Física e Concluir FIAP"
                             >
                               <Check size={16} />
                             </button>

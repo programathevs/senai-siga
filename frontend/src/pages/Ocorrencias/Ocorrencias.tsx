@@ -13,7 +13,6 @@ import {
   Loader2,
   Send,
   RotateCcw,
-  Check,
 } from "lucide-react";
 import {
   ocorrenciaService,
@@ -31,10 +30,8 @@ import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
 import { ConfirmAqvModal } from "./ConfirmAqvModal";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { ConfirmRestoreModal } from "./ConfirmRestoreModal";
-import { ConfirmAssinaturaModal } from "../EncaminhamentosAqv/ConfirmAssinaturaModal";
 import { PlanoRecuperacaoModal } from "../PlanosRecuperacao/PlanoRecuperacaoModal";
 import { ClipboardCheck } from "lucide-react";
-import { aqvService } from "../../services/aqvService";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./Ocorrencias.module.css";
 
@@ -109,29 +106,6 @@ export function Ocorrencias() {
     return false;
   }
 
-  // Modal de Confirmação Rápida de Assinatura Física (Gestor e AQV)
-  const [confirmAssinaturaModalOpen, setConfirmAssinaturaModalOpen] = useState(false);
-  const [itemParaAssinar, setItemParaAssinar] = useState<Ocorrencia | null>(null);
-
-  function handleOpenConfirmAssinatura(oc: Ocorrencia) {
-    setItemParaAssinar(oc);
-    setConfirmAssinaturaModalOpen(true);
-  }
-
-  async function handleConfirmAssinaturaSubmit() {
-    if (!itemParaAssinar) return;
-    try {
-      await aqvService.confirmarAssinatura(itemParaAssinar.id);
-      showAvatarToast(
-        "Assinatura Confirmada",
-        `Assinatura física da FIAP ${itemParaAssinar.numero_sequencial} confirmada com sucesso.`
-      );
-      loadOcorrencias(page, perPage);
-    } catch (err) {
-      console.error("Erro ao confirmar assinatura:", err);
-      throw err;
-    }
-  }
 
   async function loadOcorrencias(targetPage = page, targetPerPage = perPage) {
     try {
@@ -515,11 +489,6 @@ export function Ocorrencias() {
                     (user?.role === "gestor" || (user?.role === "instrutor" && isOwner));
                   const canRestore = isDeleted && user?.role === "gestor";
 
-                  const canSign =
-                    !isDeleted &&
-                    oc.status !== "assinado" &&
-                    (user?.role === "gestor" || user?.role === "aqv");
-
                   return (
                     <tr key={oc.id} className={`${styles.tr} ${isDeleted ? styles.trDeleted : ""}`}>
                       {/* Nº Sequencial */}
@@ -611,16 +580,24 @@ export function Ocorrencias() {
                           {oc.tipo === "comportamento" && (
                             <>
                               <div className={styles.resumoPrimary}>
-                                <span className={styles.ucNomeSpan}>
-                                  {primaryUc?.unidade_curricular?.nome
-                                    ? (primaryUc.unidade_curricular.sigla ? `[${primaryUc.unidade_curricular.sigla}] ${primaryUc.unidade_curricular.nome}` : primaryUc.unidade_curricular.nome)
-                                    : (oc.unidade_curricular?.nome
-                                      ? (oc.unidade_curricular.sigla ? `[${oc.unidade_curricular.sigla}] ${oc.unidade_curricular.nome}` : oc.unidade_curricular.nome)
-                                      : "Convivência / Regimento Escolar")}
-                                </span>
+                                {primaryUc?.unidade_curricular?.nome ? (
+                                  <span className={styles.ucNomeSpan}>
+                                    {primaryUc.unidade_curricular.sigla
+                                      ? `[${primaryUc.unidade_curricular.sigla}] ${primaryUc.unidade_curricular.nome}`
+                                      : primaryUc.unidade_curricular.nome}
+                                  </span>
+                                ) : oc.unidade_curricular?.nome ? (
+                                  <span className={styles.ucNomeSpan}>
+                                    {oc.unidade_curricular.sigla
+                                      ? `[${oc.unidade_curricular.sigla}] ${oc.unidade_curricular.nome}`
+                                      : oc.unidade_curricular.nome}
+                                  </span>
+                                ) : (
+                                  <span className={styles.semUcSpan}>Sem unidade curricular vinculada</span>
+                                )}
                               </div>
                               <span className={styles.resumoSecondary} title={oc.providencias_gestao || oc.relato_dificuldades || ""}>
-                                {oc.providencias_gestao || oc.relato_dificuldades || "Ocorrência disciplinar registrada"}
+                                {oc.providencias_gestao || oc.relato_dificuldades || "Normas de convivência / Regimento escolar"}
                               </span>
                             </>
                           )}
@@ -628,9 +605,21 @@ export function Ocorrencias() {
                           {oc.tipo === "desempenho" && (
                             <>
                               <div className={styles.resumoPrimary}>
-                                <span className={styles.ucNomeSpan}>
-                                  {primaryUc?.unidade_curricular?.nome || "Dificuldade Pedagógica"}
-                                </span>
+                                {primaryUc?.unidade_curricular?.nome ? (
+                                  <span className={styles.ucNomeSpan}>
+                                    {primaryUc.unidade_curricular.sigla
+                                      ? `[${primaryUc.unidade_curricular.sigla}] ${primaryUc.unidade_curricular.nome}`
+                                      : primaryUc.unidade_curricular.nome}
+                                  </span>
+                                ) : oc.unidade_curricular?.nome ? (
+                                  <span className={styles.ucNomeSpan}>
+                                    {oc.unidade_curricular.sigla
+                                      ? `[${oc.unidade_curricular.sigla}] ${oc.unidade_curricular.nome}`
+                                      : oc.unidade_curricular.nome}
+                                  </span>
+                                ) : (
+                                  <span className={styles.semUcSpan}>Sem unidade curricular vinculada</span>
+                                )}
                               </div>
                               <span
                                 className={styles.resumoSecondary}
@@ -746,17 +735,7 @@ export function Ocorrencias() {
                             </button>
                           )}
 
-                          {/* Confirmação de Assinatura Física para Gestão e AQV */}
-                          {canSign && (
-                            <button
-                              type="button"
-                              className={`${styles.actionBtn} ${styles.assinaturaBtn}`}
-                              onClick={() => handleOpenConfirmAssinatura(oc)}
-                              title="Confirmar Assinatura Física da FIAP (Gestão / AQV)"
-                            >
-                              <Check size={16} />
-                            </button>
-                          )}
+
 
                           {canEdit && (
                             <button
@@ -877,19 +856,6 @@ export function Ocorrencias() {
         onConfirm={handleConfirmRestore}
         ocorrencia={ocorrenciaRestorePending}
       />
-
-      {/* Modal de Confirmação de Assinatura Física */}
-      {confirmAssinaturaModalOpen && itemParaAssinar && (
-        <ConfirmAssinaturaModal
-          isOpen={confirmAssinaturaModalOpen}
-          onClose={() => {
-            setConfirmAssinaturaModalOpen(false);
-            setItemParaAssinar(null);
-          }}
-          onConfirm={handleConfirmAssinaturaSubmit}
-          item={itemParaAssinar as any}
-        />
-      )}
     </div>
   );
 }

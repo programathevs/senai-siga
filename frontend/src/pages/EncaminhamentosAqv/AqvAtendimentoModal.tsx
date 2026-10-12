@@ -81,15 +81,22 @@ export function AqvAtendimentoModal({
       return;
     }
 
+    const willConfirm = confirmSignatureNow || confirmarAssinatura;
+
+    if (willConfirm && !parecerAqv.trim()) {
+      setErrorMsg(
+        "O parecer da equipe de gestão/AQV é obrigatório para confirmar a assinatura e concluir a FIAP."
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg(null);
 
     try {
-      const willConfirm = confirmSignatureNow || confirmarAssinatura;
-
       await aqvService.salvarAtendimento(ocorrencia.id, {
         justificativa_aluno: justificativaAluno.trim(),
-        parecer_aqv: parecerAqv.trim() || undefined,
+        parecer_aqv: parecerAqv.trim(),
         data_atendimento: dataAtendimento || undefined,
         confirmar_assinatura: willConfirm,
       });
@@ -244,7 +251,11 @@ export function AqvAtendimentoModal({
 
             <div className={styles.formGroupFull}>
               <label className={styles.label}>
-                Parecer, Recomendações e Encaminhamentos Acordados (AQV)
+                Parecer, Recomendações e Encaminhamentos Acordados (Gestão / AQV)
+                <span className={styles.required}>*</span>
+                <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "var(--color-text-secondary)", marginLeft: "6px" }}>
+                  (Obrigatório para concluir e assinar a FIAP)
+                </span>
               </label>
               <textarea
                 className={styles.textarea}
@@ -302,7 +313,7 @@ export function AqvAtendimentoModal({
               disabled={isSubmitting}
             >
               {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              <span>Salvar em Andamento</span>
+              <span>Salvar (Aguardar Assinatura)</span>
             </button>
           )}
 
