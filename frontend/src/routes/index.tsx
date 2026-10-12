@@ -10,7 +10,7 @@ import { PrivateRoute } from "./PrivateRoute";
 import { PublicRoute } from "./PublicRoute";
 import { RoleRoute } from "./RoleRoute";
 import { Cursos } from "../pages/Cursos/Cursos";
-import { Instrutores } from "../pages/Instrutores/Instrutores";
+import { Usuarios } from "../pages/Usuarios/Usuarios";
 import { Turmas } from "../pages/Turmas/Turmas";
 import { Alunos } from "../pages/Alunos/Alunos";
 import { Ocorrencias } from "../pages/Ocorrencias/Ocorrencias";
@@ -103,8 +103,12 @@ export const router = createBrowserRouter([
                 element: <Alunos />,
               },
               {
+                path: "/usuarios",
+                element: <Usuarios />,
+              },
+              {
                 path: "/instrutores",
-                element: <Instrutores />,
+                element: <Usuarios />,
               },
               {
                 path: "/auditoria",

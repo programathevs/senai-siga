@@ -66,8 +66,8 @@ export function Sidebar() {
       allowedRoles: ["gestor"],
     },
     {
-      to: "/instrutores",
-      label: "Gestão de Instrutores",
+      to: "/usuarios",
+      label: "Gestão de Usuários",
       icon: UserCheck,
       allowedRoles: ["gestor"],
     },
