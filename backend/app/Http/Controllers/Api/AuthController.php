@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
+use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,17 @@ class AuthController extends Controller
         // Regenera o ID da sessão para prevenir Session Fixation
         $request->session()->regenerate();
 
-        return (new UserResource(Auth::user()))
+        $user = Auth::user();
+        AuditService::registrar(
+            'login',
+            'User',
+            $user->id,
+            "Autenticação bem-sucedida de {$user->name} ({$user->email})",
+            null,
+            ['role' => $user->role?->value ?? (string) $user->role]
+        );
+
+        return (new UserResource($user))
             ->response()
             ->setStatusCode(Response::HTTP_OK);
     }

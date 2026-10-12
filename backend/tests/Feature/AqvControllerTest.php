@@ -147,10 +147,26 @@ class AqvControllerTest extends TestCase
         $this->assertNotNull($data['ocorrencia']->fresh()->aqvRecebimento->confirmado_em);
     }
 
-    public function test_aqv_can_quick_confirm_signature(): void
+    public function test_aqv_can_confirm_signature_only_after_justificativa_and_parecer(): void
     {
         $data = $this->criarEstruturaBase();
 
+        // 1. Sem justificativa e parecer, deve falhar com 422
+        $responseError = $this->actingAs($data['aqv'])
+            ->postJson("/api/aqv/encaminhamentos/{$data['ocorrencia']->id}/confirmar-assinatura");
+
+        $responseError->assertStatus(422)
+            ->assertJsonPath('message', 'Para finalizar a FIAP, é obrigatório registrar previamente a Justificativa do Estudante e o Parecer da Gestão/AQV no acolhimento.');
+
+        // 2. Registra atendimento com justificativa e parecer atualizando o recebimento
+        $data['ocorrencia']->aqvRecebimento->update([
+            'recebido_por' => $data['aqv']->id,
+            'justificativa_aluno' => 'Estudante justificou ausência com declaração.',
+            'parecer_aqv' => 'Parecer favorável da equipe.',
+            'status_atendimento' => 'em_atendimento',
+        ]);
+
+        // 3. Agora a confirmação de assinatura deve ter sucesso
         $response = $this->actingAs($data['aqv'])
             ->postJson("/api/aqv/encaminhamentos/{$data['ocorrencia']->id}/confirmar-assinatura");
 

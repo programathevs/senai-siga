@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PlanoRecuperacaoRequest extends FormRequest
 {
@@ -14,7 +15,10 @@ class PlanoRecuperacaoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ocorrencia_id' => ['required', 'exists:ocorrencias,id'],
+            'ocorrencia_id' => [
+                'required',
+                Rule::exists('ocorrencias', 'id')->whereNull('deleted_at'),
+            ],
             'aluno_id' => ['required', 'exists:alunos,id'],
             'turma_uc_id' => ['nullable', 'exists:turma_uc,id'],
             'unidade_curricular_id' => ['nullable', 'exists:unidades_curriculares,id'],
@@ -36,6 +40,13 @@ class PlanoRecuperacaoRequest extends FormRequest
             'frequencias.*.entrada' => ['nullable', 'string'],
             'frequencias.*.saida' => ['nullable', 'string'],
             'frequencias.*.aulas_compensadas' => ['nullable', 'integer', 'min:1'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'ocorrencia_id.exists' => 'A FIAP selecionada não existe ou está excluída (na lixeira). Restaure-a antes de elaborar o plano.',
         ];
     }
 }

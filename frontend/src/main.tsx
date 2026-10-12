@@ -6,6 +6,20 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import "./index.css";
 
+// Desativa a alteração acidental de valores em inputs numéricos ao rolar o scroll do mouse
+document.addEventListener(
+  "wheel",
+  () => {
+    if (
+      document.activeElement instanceof HTMLInputElement &&
+      document.activeElement.type === "number"
+    ) {
+      document.activeElement.blur();
+    }
+  },
+  { passive: true }
+);
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider>
@@ -15,3 +29,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </ThemeProvider>
   </React.StrictMode>,
 );
+

@@ -10,7 +10,7 @@ import { PrivateRoute } from "./PrivateRoute";
 import { PublicRoute } from "./PublicRoute";
 import { RoleRoute } from "./RoleRoute";
 import { Cursos } from "../pages/Cursos/Cursos";
-import { Instrutores } from "../pages/Instrutores/Instrutores";
+import { Usuarios } from "../pages/Usuarios/Usuarios";
 import { Turmas } from "../pages/Turmas/Turmas";
 import { Alunos } from "../pages/Alunos/Alunos";
 import { Ocorrencias } from "../pages/Ocorrencias/Ocorrencias";
@@ -18,6 +18,8 @@ import { Relatorios } from "../pages/Relatorios/Relatorios";
 import { EncaminhamentosAqv } from "../pages/EncaminhamentosAqv/EncaminhamentosAqv";
 import { PlanosRecuperacao } from "../pages/PlanosRecuperacao/PlanosRecuperacao";
 import { Configuracoes } from "../pages/Configuracoes/Configuracoes";
+
+import { Auditoria } from "../pages/Auditoria/Auditoria";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
@@ -101,8 +103,16 @@ export const router = createBrowserRouter([
                 element: <Alunos />,
               },
               {
+                path: "/usuarios",
+                element: <Usuarios />,
+              },
+              {
                 path: "/instrutores",
-                element: <Instrutores />,
+                element: <Usuarios />,
+              },
+              {
+                path: "/auditoria",
+                element: <Auditoria />,
               },
             ],
           },

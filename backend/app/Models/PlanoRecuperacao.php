@@ -45,9 +45,18 @@ class PlanoRecuperacao extends Model
         'visto_professor' => 'date',
     ];
 
+    protected static function booted(): void
+    {
+        static::restoring(function (PlanoRecuperacao $plano) {
+            if ($plano->ocorrencia_id) {
+                Ocorrencia::onlyTrashed()->where('id', $plano->ocorrencia_id)->restore();
+            }
+        });
+    }
+
     public function ocorrencia(): BelongsTo
     {
-        return $this->belongsTo(Ocorrencia::class, 'ocorrencia_id');
+        return $this->belongsTo(Ocorrencia::class, 'ocorrencia_id')->withTrashed();
     }
 
     public function aluno(): BelongsTo

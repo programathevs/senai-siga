@@ -44,6 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/instrutores', [\App\Http\Controllers\Api\InstrutorController::class, 'index'])->name('instrutores.index');
         Route::get('/instrutores/{instrutor}', [\App\Http\Controllers\Api\InstrutorController::class, 'show'])->name('instrutores.show');
 
+        // --- GESTÃO UNIFICADA DE USUÁRIOS (Leitura: Gestor) ---
+        Route::get('/usuarios', [\App\Http\Controllers\Api\UsuarioController::class, 'index'])->name('usuarios.index');
+        Route::get('/usuarios/{usuario}', [\App\Http\Controllers\Api\UsuarioController::class, 'show'])->name('usuarios.show');
+
         // --- DASHBOARD STATS ---
         Route::get('/dashboard/stats', [\App\Http\Controllers\Api\DashboardController::class, 'stats'])->name('dashboard.stats');
 
@@ -57,6 +61,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'store'])->name('cursos.store');
         Route::put('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'update'])->name('cursos.update');
         Route::delete('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'destroy'])->name('cursos.destroy');
+
+        // --- GESTÃO UNIFICADA DE USUÁRIOS (Escrita: Apenas Gestor) ---
+        Route::post('/usuarios', [\App\Http\Controllers\Api\UsuarioController::class, 'store'])->name('usuarios.store');
+        Route::put('/usuarios/{usuario}', [\App\Http\Controllers\Api\UsuarioController::class, 'update'])->name('usuarios.update');
+        Route::delete('/usuarios/{usuario}', [\App\Http\Controllers\Api\UsuarioController::class, 'destroy'])->name('usuarios.destroy');
 
         // --- CRUD DE INSTRUTORES (Escrita) ---
         Route::post('/instrutores', [\App\Http\Controllers\Api\InstrutorController::class, 'store'])->name('instrutores.store');
@@ -78,6 +87,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // --- RESTAURAÇÃO DE OCORRÊNCIAS / FIAPS E PLANOS (Apenas Gestor) ---
         Route::post('/ocorrencias/{id}/restaurar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'restaurar'])->name('ocorrencias.restaurar');
         Route::post('/planos-recuperacao/{id}/restaurar', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'restaurar'])->name('planos-recuperacao.restaurar');
+
+        // --- AUDITORIA & RASTREABILIDADE (Apenas Gestor) ---
+        Route::get('/auditoria', [\App\Http\Controllers\Api\AuditoriaController::class, 'index'])->name('auditoria.index');
+        Route::get('/auditoria/stats', [\App\Http\Controllers\Api\AuditoriaController::class, 'stats'])->name('auditoria.stats');
     });
 
     // --- GESTÃO DE OCORRÊNCIAS / FIAPS ---

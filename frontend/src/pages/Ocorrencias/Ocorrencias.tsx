@@ -13,7 +13,6 @@ import {
   Loader2,
   Send,
   RotateCcw,
-  Check,
 } from "lucide-react";
 import {
   ocorrenciaService,
@@ -29,10 +28,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { OcorrenciaModal } from "./OcorrenciaModal";
 import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
 import { ConfirmAqvModal } from "./ConfirmAqvModal";
-import { ConfirmAssinaturaModal } from "../EncaminhamentosAqv/ConfirmAssinaturaModal";
+import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
+import { ConfirmRestoreModal } from "./ConfirmRestoreModal";
 import { PlanoRecuperacaoModal } from "../PlanosRecuperacao/PlanoRecuperacaoModal";
 import { ClipboardCheck } from "lucide-react";
-import { aqvService } from "../../services/aqvService";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./Ocorrencias.module.css";
 
@@ -71,12 +70,22 @@ export function Ocorrencias() {
   const [editingOcorrencia, setEditingOcorrencia] = useState<Ocorrencia | null>(null);
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
   const [ocorrenciaAqvPending, setOcorrenciaAqvPending] = useState<Ocorrencia | null>(null);
+  const [ocorrenciaDeletePending, setOcorrenciaDeletePending] = useState<Ocorrencia | null>(null);
+  const [ocorrenciaRestorePending, setOcorrenciaRestorePending] = useState<Ocorrencia | null>(null);
 
   // Modal de Plano de Recuperação (Ideia 2 & 3)
   const [isPlanoModalOpen, setIsPlanoModalOpen] = useState(false);
   const [ocorrenciaParaPlano, setOcorrenciaParaPlano] = useState<Ocorrencia | null>(null);
 
   function handleOpenPlanoModal(oc: Ocorrencia) {
+    if (oc.deleted_at) {
+      showAvatarToast(
+        "Não é possível criar um Plano de Recuperação para uma FIAP excluída. Restaure a FIAP antes de elaborar o plano.",
+        "Atenção",
+        "warning"
+      );
+      return;
+    }
     setOcorrenciaParaPlano(oc);
     setIsPlanoModalOpen(true);
   }
@@ -97,29 +106,6 @@ export function Ocorrencias() {
     return false;
   }
 
-  // Modal de Confirmação Rápida de Assinatura Física (Gestor e AQV)
-  const [confirmAssinaturaModalOpen, setConfirmAssinaturaModalOpen] = useState(false);
-  const [itemParaAssinar, setItemParaAssinar] = useState<Ocorrencia | null>(null);
-
-  function handleOpenConfirmAssinatura(oc: Ocorrencia) {
-    setItemParaAssinar(oc);
-    setConfirmAssinaturaModalOpen(true);
-  }
-
-  async function handleConfirmAssinaturaSubmit() {
-    if (!itemParaAssinar) return;
-    try {
-      await aqvService.confirmarAssinatura(itemParaAssinar.id);
-      showAvatarToast(
-        "Assinatura Confirmada",
-        `Assinatura física da FIAP ${itemParaAssinar.numero_sequencial} confirmada com sucesso.`
-      );
-      loadOcorrencias(page, perPage);
-    } catch (err) {
-      console.error("Erro ao confirmar assinatura:", err);
-      throw err;
-    }
-  }
 
   async function loadOcorrencias(targetPage = page, targetPerPage = perPage) {
     try {
@@ -132,6 +118,13 @@ export function Ocorrencias() {
         page: targetPage,
         per_page: targetPerPage,
       });
+
+      // Se a página atual ficou vazia após exclusão, mas ainda existem registros em páginas anteriores
+      if (res.data.length === 0 && res.meta && res.meta.total > 0 && targetPage > 1) {
+        const fallbackPage = Math.max(1, res.meta.last_page);
+        setPage(fallbackPage);
+        return;
+      }
 
       setOcorrencias(res.data);
       setMeta(res.meta || null);
@@ -192,34 +185,56 @@ export function Ocorrencias() {
     setSelectedDetalhes(oc);
   }
 
-  async function handleDelete(oc: Ocorrencia) {
-    if (
-      window.confirm(
-        `Tem certeza de que deseja remover a FIAP "${oc.numero_sequencial}" do aluno "${oc.aluno?.nome}"?`
-      )
-    ) {
-      try {
-        await ocorrenciaService.deleteOcorrencia(oc.id);
-        loadOcorrencias(page, perPage);
-      } catch (err: any) {
-        alert(err.response?.data?.message || "Não foi possível remover a ocorrência.");
+  function handleDelete(oc: Ocorrencia) {
+    setOcorrenciaDeletePending(oc);
+  }
+
+  async function handleConfirmDelete() {
+    if (!ocorrenciaDeletePending) return;
+    const oc = ocorrenciaDeletePending;
+
+    try {
+      await ocorrenciaService.deleteOcorrencia(oc.id);
+      showAvatarToast(`FIAP "${oc.numero_sequencial}" excluída com sucesso!`);
+      const nextPage = ocorrencias.length === 1 && page > 1 ? page - 1 : page;
+      if (nextPage !== page) {
+        setPage(nextPage);
+      } else {
+        loadOcorrencias(nextPage, perPage);
       }
+      if (selectedDetalhes?.id === oc.id) {
+        setSelectedDetalhes(null);
+      }
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message || "Não foi possível remover a ocorrência.",
+        "Erro",
+        "error"
+      );
+      throw err;
     }
   }
 
-  async function handleRestore(oc: Ocorrencia) {
-    if (
-      window.confirm(
-        `Deseja restaurar a FIAP "${oc.numero_sequencial}" do aluno "${oc.aluno?.nome}"?`
-      )
-    ) {
-      try {
-        await ocorrenciaService.restaurarOcorrencia(oc.id);
-        alert(`FIAP "${oc.numero_sequencial}" restaurada com sucesso!`);
-        loadOcorrencias(page, perPage);
-      } catch (err: any) {
-        alert(err.response?.data?.message || "Erro ao restaurar ocorrência.");
-      }
+  function handleRestore(oc: Ocorrencia) {
+    setOcorrenciaRestorePending(oc);
+  }
+
+  async function handleConfirmRestore() {
+    if (!ocorrenciaRestorePending) return;
+    const oc = ocorrenciaRestorePending;
+
+    try {
+      await ocorrenciaService.restaurarOcorrencia(oc.id);
+      showAvatarToast(`FIAP "${oc.numero_sequencial}" restaurada com sucesso!`);
+      loadOcorrencias(page, perPage);
+      setOcorrenciaRestorePending(null);
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message || "Erro ao restaurar ocorrência.",
+        "Erro",
+        "error"
+      );
+      throw err;
     }
   }
 
@@ -230,7 +245,11 @@ export function Ocorrencias() {
         : ocOrId;
 
     if (targetOc?.has_plano_pendente) {
-      alert("Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.");
+      showAvatarToast(
+        "Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.",
+        "Atenção",
+        "warning"
+      );
       return;
     }
 
@@ -254,7 +273,11 @@ export function Ocorrencias() {
         setSelectedDetalhes(updated);
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao encaminhar para o AQV.");
+      showAvatarToast(
+        err.response?.data?.message || "Erro ao encaminhar para o AQV.",
+        "Erro",
+        "error"
+      );
       throw err;
     }
   }
@@ -466,11 +489,6 @@ export function Ocorrencias() {
                     (user?.role === "gestor" || (user?.role === "instrutor" && isOwner));
                   const canRestore = isDeleted && user?.role === "gestor";
 
-                  const canSign =
-                    !isDeleted &&
-                    oc.status !== "assinado" &&
-                    (user?.role === "gestor" || user?.role === "aqv");
-
                   return (
                     <tr key={oc.id} className={`${styles.tr} ${isDeleted ? styles.trDeleted : ""}`}>
                       {/* Nº Sequencial */}
@@ -562,16 +580,24 @@ export function Ocorrencias() {
                           {oc.tipo === "comportamento" && (
                             <>
                               <div className={styles.resumoPrimary}>
-                                <span className={styles.ucNomeSpan}>
-                                  {primaryUc?.unidade_curricular?.nome
-                                    ? (primaryUc.unidade_curricular.sigla ? `[${primaryUc.unidade_curricular.sigla}] ${primaryUc.unidade_curricular.nome}` : primaryUc.unidade_curricular.nome)
-                                    : (oc.unidade_curricular?.nome
-                                      ? (oc.unidade_curricular.sigla ? `[${oc.unidade_curricular.sigla}] ${oc.unidade_curricular.nome}` : oc.unidade_curricular.nome)
-                                      : "Convivência / Regimento Escolar")}
-                                </span>
+                                {primaryUc?.unidade_curricular?.nome ? (
+                                  <span className={styles.ucNomeSpan}>
+                                    {primaryUc.unidade_curricular.sigla
+                                      ? `[${primaryUc.unidade_curricular.sigla}] ${primaryUc.unidade_curricular.nome}`
+                                      : primaryUc.unidade_curricular.nome}
+                                  </span>
+                                ) : oc.unidade_curricular?.nome ? (
+                                  <span className={styles.ucNomeSpan}>
+                                    {oc.unidade_curricular.sigla
+                                      ? `[${oc.unidade_curricular.sigla}] ${oc.unidade_curricular.nome}`
+                                      : oc.unidade_curricular.nome}
+                                  </span>
+                                ) : (
+                                  <span className={styles.semUcSpan}>Sem unidade curricular vinculada</span>
+                                )}
                               </div>
                               <span className={styles.resumoSecondary} title={oc.providencias_gestao || oc.relato_dificuldades || ""}>
-                                {oc.providencias_gestao || oc.relato_dificuldades || "Ocorrência disciplinar registrada"}
+                                {oc.providencias_gestao || oc.relato_dificuldades || "Normas de convivência / Regimento escolar"}
                               </span>
                             </>
                           )}
@@ -579,9 +605,21 @@ export function Ocorrencias() {
                           {oc.tipo === "desempenho" && (
                             <>
                               <div className={styles.resumoPrimary}>
-                                <span className={styles.ucNomeSpan}>
-                                  {primaryUc?.unidade_curricular?.nome || "Dificuldade Pedagógica"}
-                                </span>
+                                {primaryUc?.unidade_curricular?.nome ? (
+                                  <span className={styles.ucNomeSpan}>
+                                    {primaryUc.unidade_curricular.sigla
+                                      ? `[${primaryUc.unidade_curricular.sigla}] ${primaryUc.unidade_curricular.nome}`
+                                      : primaryUc.unidade_curricular.nome}
+                                  </span>
+                                ) : oc.unidade_curricular?.nome ? (
+                                  <span className={styles.ucNomeSpan}>
+                                    {oc.unidade_curricular.sigla
+                                      ? `[${oc.unidade_curricular.sigla}] ${oc.unidade_curricular.nome}`
+                                      : oc.unidade_curricular.nome}
+                                  </span>
+                                ) : (
+                                  <span className={styles.semUcSpan}>Sem unidade curricular vinculada</span>
+                                )}
                               </div>
                               <span
                                 className={styles.resumoSecondary}
@@ -653,7 +691,7 @@ export function Ocorrencias() {
                             <Eye size={16} />
                           </button>
 
-                          {oc.has_plano_pendente && (
+                          {oc.has_plano_pendente && !isDeleted && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.planoBtn}`}
@@ -697,22 +735,7 @@ export function Ocorrencias() {
                             </button>
                           )}
 
-                          {/* Confirmação de Assinatura Física para Gestão e AQV */}
-                          {canSign && (
-                            <button
-                              type="button"
-                              className={styles.actionBtn}
-                              style={{
-                                backgroundColor: "color-mix(in srgb, #16a34a 12%, transparent)",
-                                color: "#16a34a",
-                                borderColor: "color-mix(in srgb, #16a34a 30%, transparent)",
-                              }}
-                              onClick={() => handleOpenConfirmAssinatura(oc)}
-                              title="Confirmar Assinatura Física da FIAP (Gestão / AQV)"
-                            >
-                              <Check size={16} />
-                            </button>
-                          )}
+
 
                           {canEdit && (
                             <button
@@ -818,18 +841,21 @@ export function Ocorrencias() {
         ocorrencia={ocorrenciaAqvPending}
       />
 
-      {/* Modal de Confirmação de Assinatura Física */}
-      {confirmAssinaturaModalOpen && itemParaAssinar && (
-        <ConfirmAssinaturaModal
-          isOpen={confirmAssinaturaModalOpen}
-          onClose={() => {
-            setConfirmAssinaturaModalOpen(false);
-            setItemParaAssinar(null);
-          }}
-          onConfirm={handleConfirmAssinaturaSubmit}
-          item={itemParaAssinar as any}
-        />
-      )}
+      {/* Modal de Confirmação de Exclusão */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(ocorrenciaDeletePending)}
+        onClose={() => setOcorrenciaDeletePending(null)}
+        onConfirm={handleConfirmDelete}
+        ocorrencia={ocorrenciaDeletePending}
+      />
+
+      {/* Modal de Confirmação de Restauração */}
+      <ConfirmRestoreModal
+        isOpen={Boolean(ocorrenciaRestorePending)}
+        onClose={() => setOcorrenciaRestorePending(null)}
+        onConfirm={handleConfirmRestore}
+        ocorrencia={ocorrenciaRestorePending}
+      />
     </div>
   );
 }

@@ -15,6 +15,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -39,6 +40,7 @@
     opacity: 0;
     transform: translateY(16px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -338,9 +340,12 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.8;
   }
@@ -375,7 +380,6 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
-  background-color: color-mix(in srgb, var(--color-surface) 60%, transparent);
 }
 
 .btnCancel {
@@ -423,9 +427,11 @@
   .tipoCardsGrid {
     grid-template-columns: 1fr;
   }
+
   .formGrid {
     grid-template-columns: 1fr;
   }
+
   .calcStatsRow {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -465,3 +471,66 @@
   border-color: var(--color-danger);
 }
 
+/* Aviso de arquivamento de plano de recuperação (Soft Delete) */
+.planoNoticeBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  background-color: color-mix(in srgb, var(--color-warning, #f59e0b) 10%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 35%, transparent);
+  border-left: 4px solid var(--color-warning, #f59e0b);
+  border-radius: var(--radius);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  animation: fadeInNotice 0.2s ease-in-out;
+}
+
+@keyframes fadeInNotice {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.planoNoticeIcon {
+  color: var(--color-warning, #f59e0b);
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.planoNoticeContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--color-text-primary);
+}
+
+.planoNoticeTitle {
+  font-weight: 600;
+  color: var(--color-warning, #d97706);
+}
+
+.planoNoticeText {
+  color: var(--color-text-secondary);
+}
+
+/* Aviso de nenhuma alteração detectada */
+.noChangesNotice {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  background-color: color-mix(in srgb, var(--color-text-secondary) 8%, transparent);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px dashed var(--color-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}

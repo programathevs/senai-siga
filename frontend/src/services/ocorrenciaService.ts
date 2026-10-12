@@ -69,10 +69,14 @@ export interface Ocorrencia {
   pdf_path?: string | null;
   unidade_curricular_id?: number | null;
   unidade_curricular?: UnidadeCurricular | null;
+  quantidade_faltas?: number;
+  limite_percentual?: number;
   unidades?: OcorrenciaUnidade[];
   instrutores?: Instrutor[];
   edicoes?: OcorrenciaEdicao[];
   has_plano_pendente?: boolean;
+  planos_recuperacao?: any[];
+  planosRecuperacao?: any[];
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;
@@ -152,12 +156,18 @@ export const ocorrenciaService = {
   async updateOcorrencia(
     id: number,
     payload: Partial<CreateOcorrenciaPayload> & { motivo_edicao?: string }
-  ): Promise<Ocorrencia> {
-    const response = await api.put<{ message: string; data: Ocorrencia }>(
-      `/api/ocorrencias/${id}`,
-      payload
-    );
-    return response.data.data;
+  ): Promise<Ocorrencia & { plano_arquivado?: boolean; sem_alteracoes?: boolean }> {
+    const response = await api.put<{
+      message: string;
+      data: Ocorrencia;
+      plano_arquivado?: boolean;
+      sem_alteracoes?: boolean;
+    }>(`/api/ocorrencias/${id}`, payload);
+    return {
+      ...response.data.data,
+      plano_arquivado: response.data.plano_arquivado,
+      sem_alteracoes: response.data.sem_alteracoes,
+    };
   },
 
   async deleteOcorrencia(id: number): Promise<void> {

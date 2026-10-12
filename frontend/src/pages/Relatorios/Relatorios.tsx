@@ -230,6 +230,11 @@ export function Relatorios() {
       window.print();
     } finally {
       setIsExportingPdf(false);
+      window.focus();
+      document.body.style.pointerEvents = "";
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
     }
   }
 
