@@ -563,8 +563,12 @@ export function OcorrenciaModal({
         unidades: tipo === "falta"
           ? validUnidades
           : (selectedUcNum ? [{ unidade_curricular_id: selectedUcNum, quantidade_faltas: 0 }] : undefined),
-        unidade_curricular_id: validUnidades.length > 0 ? validUnidades[0].unidade_curricular_id : selectedUcNum,
-        quantidade_faltas: validUnidades.length > 0 ? validUnidades[0].quantidade_faltas : (tipo === "falta" ? Number(quantidadeFaltas) : 0),
+        unidade_curricular_id: tipo === "falta"
+          ? (validUnidades.length > 0 ? validUnidades[0].unidade_curricular_id : undefined)
+          : selectedUcNum,
+        quantidade_faltas: tipo === "falta"
+          ? (validUnidades.length > 0 ? validUnidades[0].quantidade_faltas : Number(quantidadeFaltas))
+          : 0,
         limite_percentual: 25.0,
         relato_dificuldades: relatoDificuldades.trim() || undefined,
         recomendacoes_professor: recomendacoesProfessor.trim() || undefined,
@@ -783,7 +787,7 @@ export function OcorrenciaModal({
                     <option value="">
                       {selectedTurmaId
                         ? unidadesCurricularesFiltradas.length > 0
-                          ? "Selecione a unidade curricular (opcional)..."
+                          ? "Nenhuma (Não vincular a matéria específica)"
                           : "Nenhuma UC cadastrada para este semestre"
                         : "Selecione uma turma primeiro"}
                     </option>

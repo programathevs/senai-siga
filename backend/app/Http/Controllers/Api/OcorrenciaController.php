@@ -383,6 +383,7 @@ class OcorrenciaController extends Controller
         }
 
         if (empty($unidadesData)) {
+            OcorrenciaUnidade::where('ocorrencia_id', $ocorrencia->id)->delete();
             return ['plano_arquivado' => false];
         }
 

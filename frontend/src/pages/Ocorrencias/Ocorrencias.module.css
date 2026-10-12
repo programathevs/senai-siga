@@ -351,6 +351,13 @@
   white-space: nowrap;
 }
 
+.semUcSpan {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 0.8125rem;
+}
+
 /* Badges de Status */
 .statusBadge {
   display: inline-flex;

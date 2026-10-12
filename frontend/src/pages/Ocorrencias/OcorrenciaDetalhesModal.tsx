@@ -113,7 +113,11 @@ export function OcorrenciaDetalhesModal({
     if (ucObj?.nome) {
       return ucObj.sigla ? `${ucObj.nome} (${ucObj.sigla})` : ucObj.nome;
     }
-    return ocorrencia.tipo === "comportamento" ? "Convivência / Regimento Escolar" : "Componente Curricular";
+    return ocorrencia.tipo === "comportamento"
+      ? "Sem unidade curricular vinculada (Normas de Convivência / Regimento Escolar)"
+      : ocorrencia.tipo === "desempenho"
+      ? "Sem unidade curricular vinculada (Acompanhamento Pedagógico)"
+      : "Não informada";
   })();
 
   const faltasDisplay = ocorrencia.tipo === "comportamento"
