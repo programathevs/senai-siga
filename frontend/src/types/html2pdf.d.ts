@@ -2,7 +2,7 @@ declare module "html2pdf.js" {
   export interface Html2PdfOptions {
     margin?: number | [number, number, number, number];
     filename?: string;
-    image?: { type?: string; quality?: number };
+    image?: { type?: "jpeg" | "png" | "webp"; quality?: number };
     enableLinks?: boolean;
     html2canvas?: {
       scale?: number;

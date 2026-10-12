@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PlanoRecuperacaoRequest;
+use App\Models\Ocorrencia;
 use App\Models\PlanoFrequencia;
 use App\Models\PlanoRecuperacao;
 use App\Services\AuditService;
@@ -18,13 +19,24 @@ class PlanoRecuperacaoController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = PlanoRecuperacao::with([
-            'ocorrencia',
-            'aluno.turma.curso',
-            'unidadeCurricular',
-            'registradoPor:id,name,email',
-            'frequencias',
-        ]);
+        $user = $request->user();
+
+        // Gestores visualizam inclusive Planos excluídos (Soft Delete) na listagem, igual às ocorrências
+        $query = $user && $user->hasRole('gestor')
+            ? PlanoRecuperacao::withTrashed()->with([
+                'ocorrencia',
+                'aluno.turma.curso',
+                'unidadeCurricular',
+                'registradoPor:id,name,email',
+                'frequencias',
+            ])
+            : PlanoRecuperacao::with([
+                'ocorrencia',
+                'aluno.turma.curso',
+                'unidadeCurricular',
+                'registradoPor:id,name,email',
+                'frequencias',
+            ]);
 
         // Filtro por termo de busca (Aluno ou Número da FIAP)
         if ($search = $request->input('search')) {
@@ -46,13 +58,13 @@ class PlanoRecuperacaoController extends Controller
         // Filtro por Conceito / Status
         if ($status = $request->input('status_processo') ?? $request->input('status')) {
             if ($status === 'excluidos') {
-                if ($request->user() && $request->user()->hasRole('gestor')) {
+                if ($user && $user->hasRole('gestor')) {
                     $query->onlyTrashed();
                 } else {
                     return response()->json(['data' => []]);
                 }
             } else {
-                $query->where('status_processo', $status);
+                $query->where('status_processo', $status)->whereNull('deleted_at');
             }
         }
 
@@ -80,6 +92,14 @@ class PlanoRecuperacaoController extends Controller
     {
         $data = $request->validated();
         $user = $request->user();
+
+        // Guarda defensiva: garante que a ocorrência vinculada não está na lixeira
+        $ocorrencia = Ocorrencia::find($data['ocorrencia_id']);
+        if (! $ocorrencia) {
+            return response()->json([
+                'message' => 'Não é possível criar um plano de recuperação para uma FIAP excluída. Restaure-a antes de elaborar o plano.',
+            ], 422);
+        }
 
         return DB::transaction(function () use ($data, $user) {
             $data['registrado_por'] = $user->id;
@@ -200,6 +220,10 @@ class PlanoRecuperacaoController extends Controller
 
         $plano = PlanoRecuperacao::withTrashed()->findOrFail($id);
         $plano->restore();
+
+        if ($plano->ocorrencia_id) {
+            Ocorrencia::onlyTrashed()->where('id', $plano->ocorrencia_id)->restore();
+        }
 
         AuditService::registrar(
             'restauracao_plano',

@@ -1,10 +1,11 @@
-import { useState, useEffect, type FormEvent, useMemo } from "react";
+import { useState, useEffect, useRef, type FormEvent, useMemo } from "react";
 import {
   X,
   Clock,
   ShieldAlert,
   BookOpen,
   AlertCircle,
+  AlertTriangle,
   Loader2,
   FileText,
   Plus,
@@ -18,11 +19,41 @@ import {
 import { turmaService, type Turma } from "../../services/turmaService";
 import { alunoService, type Aluno } from "../../services/alunoService";
 import { cursoService, type Curso } from "../../services/cursoService";
+import { showAvatarToast } from "../../utils/toast";
 import styles from "./OcorrenciaModal.module.css";
 
 export interface UcItem {
   unidade_curricular_id: string;
-  quantidade_faltas: number;
+  quantidade_faltas: number | "";
+}
+
+function areUnidadesEqual(
+  listA: Array<{ unidade_curricular_id?: string | number; quantidade_faltas?: number | string | "" }>,
+  listB: Array<{ unidade_curricular_id?: string | number; quantidade_faltas?: number | string | "" }>
+): boolean {
+  const normA = listA
+    .filter((u) => Boolean(u.unidade_curricular_id))
+    .map((u) => ({
+      id: String(u.unidade_curricular_id),
+      faltas: Number(u.quantidade_faltas) || 0,
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  const normB = listB
+    .filter((u) => Boolean(u.unidade_curricular_id))
+    .map((u) => ({
+      id: String(u.unidade_curricular_id),
+      faltas: Number(u.quantidade_faltas) || 0,
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  if (normA.length !== normB.length) return false;
+  for (let i = 0; i < normA.length; i++) {
+    if (normA[i].id !== normB[i].id || normA[i].faltas !== normB[i].faltas) {
+      return false;
+    }
+  }
+  return true;
 }
 
 interface OcorrenciaModalProps {
@@ -67,6 +98,9 @@ export function OcorrenciaModal({
   const [outrasObservacoes, setOutrasObservacoes] = useState("");
   const [motivoEdicao, setMotivoEdicao] = useState("");
 
+  const initialUnidadesSnapshotRef = useRef<string>("");
+  const isRelatoManuallyEditedRef = useRef<boolean>(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -84,6 +118,7 @@ export function OcorrenciaModal({
   // Preenche dados ao editar
   useEffect(() => {
     if (ocorrenciaToEdit) {
+      isRelatoManuallyEditedRef.current = false;
       setMotivoEdicao("");
       setErrorMessage("");
       setSelectedAlunoId(String(ocorrenciaToEdit.aluno_id));
@@ -115,21 +150,32 @@ export function OcorrenciaModal({
 
       if (ocorrenciaToEdit.unidade_curricular_id) {
         setSelectedUcId(String(ocorrenciaToEdit.unidade_curricular_id));
-      } else if (ocorrenciaToEdit.unidades && ocorrenciaToEdit.unidades.length > 0) {
-        setUnidadesList(
-          ocorrenciaToEdit.unidades.map((u) => ({
-            unidade_curricular_id: String(u.unidade_curricular_id || ""),
-            quantidade_faltas: u.quantidade_faltas || 4,
-          }))
-        );
+      }
+      if (ocorrenciaToEdit.unidades && ocorrenciaToEdit.unidades.length > 0) {
+        const ucs = ocorrenciaToEdit.unidades.map((u) => ({
+          unidade_curricular_id: String(u.unidade_curricular_id || ""),
+          quantidade_faltas: Number(u.quantidade_faltas) || 4,
+        }));
+        setUnidadesList(ucs);
+        initialUnidadesSnapshotRef.current = JSON.stringify(ucs);
         const primaryUc = ocorrenciaToEdit.unidades[0];
         if (primaryUc.unidade_curricular_id) {
           setSelectedUcId(String(primaryUc.unidade_curricular_id));
         }
-        setQuantidadeFaltas(primaryUc.quantidade_faltas);
+        setQuantidadeFaltas(Number(primaryUc.quantidade_faltas) || 4);
+      } else if (ocorrenciaToEdit.unidade_curricular_id) {
+        const ucs = [
+          {
+            unidade_curricular_id: String(ocorrenciaToEdit.unidade_curricular_id),
+            quantidade_faltas: Number(ocorrenciaToEdit.quantidade_faltas) || 4,
+          },
+        ];
+        setUnidadesList(ucs);
+        initialUnidadesSnapshotRef.current = JSON.stringify(ucs);
       } else {
         setSelectedUcId("");
         setUnidadesList([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
+        initialUnidadesSnapshotRef.current = JSON.stringify([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
       }
     } else {
       resetForm();
@@ -137,6 +183,7 @@ export function OcorrenciaModal({
   }, [ocorrenciaToEdit, isOpen]);
 
   function resetForm() {
+    isRelatoManuallyEditedRef.current = false;
     setSelectedTurmaId("");
     setSelectedAlunoId("");
     setTipo("falta");
@@ -144,6 +191,7 @@ export function OcorrenciaModal({
     setSelectedUcId("");
     setQuantidadeFaltas(4);
     setUnidadesList([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
+    initialUnidadesSnapshotRef.current = "";
     setRelatoDificuldades("");
     setRecomendacoesProfessor(
       "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar."
@@ -298,23 +346,64 @@ export function OcorrenciaModal({
     }
   }, [tipo, shouldUpdateDefaults]);
 
+  // Lista normalizada das UCs originais da ocorrência para comparação
+  const origUnidades = useMemo(() => {
+    if (!ocorrenciaToEdit) return [];
+    if (ocorrenciaToEdit.unidades && ocorrenciaToEdit.unidades.length > 0) {
+      return ocorrenciaToEdit.unidades.map((u) => ({
+        unidade_curricular_id: String(u.unidade_curricular_id || ""),
+        quantidade_faltas: Number(u.quantidade_faltas) || 0,
+      }));
+    }
+    if (ocorrenciaToEdit.unidade_curricular_id) {
+      return [
+        {
+          unidade_curricular_id: String(ocorrenciaToEdit.unidade_curricular_id),
+          quantidade_faltas: Number(ocorrenciaToEdit.quantidade_faltas) || 0,
+        },
+      ];
+    }
+    return [];
+  }, [ocorrenciaToEdit]);
+
+  // Indica se a lista atual de UCs e faltas no modal é idêntica à que veio do banco
+  const unidadesIguaisAoOriginal = useMemo(() => {
+    if (!isEditing) return false;
+    return areUnidadesEqual(unidadesList, origUnidades);
+  }, [isEditing, unidadesList, origUnidades]);
+
   // Atualiza automaticamente o relato de circunstâncias conforme UCs e faltas forem selecionadas/alteradas
   useEffect(() => {
     if (tipo !== "falta") return;
+
+    if (isEditing && unidadesIguaisAoOriginal) {
+      // Se as UCs e faltas voltaram ao estado original e o usuário não editou o relato manualmente,
+      // restaura exatamente o texto original salvo no banco
+      if (!isRelatoManuallyEditedRef.current) {
+        setRelatoDificuldades(ocorrenciaToEdit?.relato_dificuldades || "");
+      }
+      return;
+    }
+
+    // Se o usuário customizou o relato manualmente na caixa de texto, não sobrescreve
+    if (isRelatoManuallyEditedRef.current) {
+      return;
+    }
 
     const relatoPartes: string[] = [];
     unidadesList.forEach((item) => {
       const uc = unidadesCurriculares.find(
         (u) => String(u.id) === String(item.unidade_curricular_id)
       );
-      if (uc && Number(item.quantidade_faltas) > 0) {
+      const qtdFaltas = Number(item.quantidade_faltas);
+      if (uc && qtdFaltas > 0) {
         const siglaOuNome = uc.sigla ? uc.sigla : uc.nome;
         const ch = Number(uc.carga_horaria) || 80;
         const aulas = Math.round(ch / 0.75);
         const lim = Math.round(aulas * 0.25);
-        const perc = lim > 0 ? ((item.quantidade_faltas / lim) * 100).toFixed(1) : "0.0";
+        const perc = lim > 0 ? ((qtdFaltas / lim) * 100).toFixed(1) : "0.0";
         relatoPartes.push(
-          `unidade curricular ${siglaOuNome} – ${ch} h/a: possui até a data de hoje ${item.quantidade_faltas} faltas, representando ${perc}% do limite permitido (${lim} aulas)`
+          `unidade curricular ${siglaOuNome} – ${ch} h/a: possui até a data de hoje ${qtdFaltas} faltas, representando ${perc}% do limite permitido (${lim} aulas)`
         );
       }
     });
@@ -334,11 +423,112 @@ export function OcorrenciaModal({
     } else if (!isEditing) {
       setRelatoDificuldades("");
     }
-  }, [unidadesList, unidadesCurriculares, tipo, isEditing]);
+  }, [unidadesList, unidadesCurriculares, tipo, isEditing, unidadesIguaisAoOriginal, ocorrenciaToEdit]);
+
+  // Verifica se o estado atual de faltas no formulário ultrapassa o limite de 25% (100% de tolerância)
+  const excedeLimiteAtual = useMemo(() => {
+    if (tipo !== "falta") return false;
+    return unidadesList.some((item) => {
+      const uc = unidadesCurriculares.find(
+        (u) => String(u.id) === String(item.unidade_curricular_id)
+      );
+      const ch = uc ? Number(uc.carga_horaria) : 80;
+      const aulas = Math.round(ch / 0.75);
+      const lim = Math.round(aulas * 0.25);
+      const qtd = Number(item.quantidade_faltas) || 0;
+      return lim > 0 && qtd > lim;
+    });
+  }, [tipo, unidadesList, unidadesCurriculares]);
+
+  // Detecta se a FIAP sendo editada possui um Plano de Recuperação vinculado ativo
+  const temPlanoVinculado = useMemo(() => {
+    if (!ocorrenciaToEdit || ocorrenciaToEdit.tipo !== "falta") return false;
+    const planos =
+      (ocorrenciaToEdit as any).planos_recuperacao ||
+      (ocorrenciaToEdit as any).planosRecuperacao;
+    if (Array.isArray(planos) && planos.length > 0) {
+      return planos.some((p: any) => !p.deleted_at);
+    }
+    if (ocorrenciaToEdit.has_plano_pendente) return true;
+    if (ocorrenciaToEdit.unidades && ocorrenciaToEdit.unidades.length > 0) {
+      return ocorrenciaToEdit.unidades.some((u) => {
+        const lim = u.limite_faltas_aulas;
+        return lim != null && lim > 0 && u.quantidade_faltas > lim;
+      });
+    }
+    return false;
+  }, [ocorrenciaToEdit]);
+
+  // Se a FIAP tinha plano e agora as faltas foram reduzidas para dentro do limite (<= 100%), o plano será enviado para a lixeira (Soft Delete)
+  const planoSeraArquivado = isEditing && tipo === "falta" && temPlanoVinculado && !excedeLimiteAtual;
+
+  // Detecta se houve alguma alteração real nos dados da FIAP
+  const hasChanges = useMemo(() => {
+    if (!isEditing || !ocorrenciaToEdit) return true;
+
+    // 1. Aluno
+    if (String(selectedAlunoId) !== String(ocorrenciaToEdit.aluno_id)) return true;
+
+    // 2. Tipo
+    if (tipo !== ocorrenciaToEdit.tipo) return true;
+
+    // 3. Data da Ocorrência
+    const origData = ocorrenciaToEdit.data_ocorrencia
+      ? ocorrenciaToEdit.data_ocorrencia.split("T")[0]
+      : "";
+    if (dataOcorrencia !== origData) return true;
+
+    // 4. Textos (normalizados com trim)
+    const norm = (val?: string | null) => (val || "").trim();
+    // O relato só conta como alteração se o usuário editou manualmente
+    if (isRelatoManuallyEditedRef.current && norm(relatoDificuldades) !== norm(ocorrenciaToEdit.relato_dificuldades)) {
+      return true;
+    }
+    if (norm(recomendacoesProfessor) !== norm(ocorrenciaToEdit.recomendacoes_professor)) return true;
+    if (norm(recomendacoesGestao) !== norm(ocorrenciaToEdit.recomendacoes_gestao)) return true;
+    if (norm(providenciasGestao) !== norm(ocorrenciaToEdit.providencias_gestao)) return true;
+    if (norm(outrasObservacoes) !== norm(ocorrenciaToEdit.outras_observacoes)) return true;
+
+    // 5. Unidades Curriculares e Faltas
+    if (tipo === "falta") {
+      if (!areUnidadesEqual(unidadesList, origUnidades)) return true;
+    } else {
+      const origUcId = ocorrenciaToEdit.unidade_curricular_id
+        ? String(ocorrenciaToEdit.unidade_curricular_id)
+        : "";
+      if (selectedUcId !== origUcId) return true;
+    }
+
+    return false;
+  }, [
+    isEditing,
+    ocorrenciaToEdit,
+    selectedAlunoId,
+    tipo,
+    dataOcorrencia,
+    relatoDificuldades,
+    recomendacoesProfessor,
+    recomendacoesGestao,
+    providenciasGestao,
+    outrasObservacoes,
+    unidadesList,
+    origUnidades,
+    selectedUcId,
+  ]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setErrorMessage("");
+
+    if (isEditing && !hasChanges) {
+      showAvatarToast("Nenhuma alteração foi realizada no formulário.", "Sem alterações", "warning");
+      return;
+    }
+
+    if (isEditing && !motivoEdicao.trim()) {
+      setErrorMessage("Por favor, preencha a justificativa da edição para o histórico de auditoria.");
+      return;
+    }
 
     if (!selectedAlunoId) {
       setErrorMessage("Selecione o estudante para o qual a FIAP será registrada.");
@@ -349,7 +539,7 @@ export function OcorrenciaModal({
       .filter((u) => Boolean(u.unidade_curricular_id))
       .map((u) => ({
         unidade_curricular_id: Number(u.unidade_curricular_id),
-        quantidade_faltas: Number(u.quantidade_faltas),
+        quantidade_faltas: Math.max(1, Number(u.quantidade_faltas) || 1),
       }));
 
     if (tipo === "falta" && validUnidades.length === 0) {
@@ -385,9 +575,21 @@ export function OcorrenciaModal({
       };
 
       if (isEditing && ocorrenciaToEdit) {
-        await ocorrenciaService.updateOcorrencia(ocorrenciaToEdit.id, payload);
+        const updated = await ocorrenciaService.updateOcorrencia(ocorrenciaToEdit.id, payload);
+        if (updated.sem_alteracoes) {
+          showAvatarToast("Nenhuma alteração foi realizada na FIAP.", "Sem alterações", "warning");
+        } else if (updated.plano_arquivado) {
+          showAvatarToast(
+            "FIAP atualizada! Como as faltas voltaram para o limite permitido (≤100%), o Plano de Recuperação vinculado foi movido para a Lixeira.",
+            "Plano Arquivado",
+            "warning"
+          );
+        } else {
+          showAvatarToast("FIAP atualizada com sucesso!");
+        }
       } else {
         const created = await ocorrenciaService.createOcorrencia(payload);
+        showAvatarToast("FIAP cadastrada com sucesso!");
         if (onOpenPlanoModal && created.has_plano_pendente) {
           onOpenPlanoModal(created);
         }
@@ -445,9 +647,8 @@ export function OcorrenciaModal({
 
             <div className={styles.tipoCardsGrid}>
               <div
-                className={`${styles.tipoCard} ${
-                  tipo === "falta" ? styles.tipoCardActiveFalta : ""
-                }`}
+                className={`${styles.tipoCard} ${tipo === "falta" ? styles.tipoCardActiveFalta : ""
+                  }`}
                 onClick={() => setTipo("falta")}
               >
                 <Clock size={28} />
@@ -458,9 +659,8 @@ export function OcorrenciaModal({
               </div>
 
               <div
-                className={`${styles.tipoCard} ${
-                  tipo === "comportamento" ? styles.tipoCardActiveComportamento : ""
-                }`}
+                className={`${styles.tipoCard} ${tipo === "comportamento" ? styles.tipoCardActiveComportamento : ""
+                  }`}
                 onClick={() => {
                   setTipo("comportamento");
                   if (!relatoDificuldades.trim()) {
@@ -478,9 +678,8 @@ export function OcorrenciaModal({
               </div>
 
               <div
-                className={`${styles.tipoCard} ${
-                  tipo === "desempenho" ? styles.tipoCardActiveDesempenho : ""
-                }`}
+                className={`${styles.tipoCard} ${tipo === "desempenho" ? styles.tipoCardActiveDesempenho : ""
+                  }`}
                 onClick={() => {
                   setTipo("desempenho");
                   if (!relatoDificuldades.trim()) {
@@ -519,6 +718,7 @@ export function OcorrenciaModal({
                     setSelectedTurmaId(e.target.value);
                     setSelectedAlunoId("");
                     setSelectedUcId("");
+                    setUnidadesList([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
                   }}
                   required
                 >
@@ -626,7 +826,8 @@ export function OcorrenciaModal({
                 const ch = ucItemObj ? Number(ucItemObj.carga_horaria) : 80;
                 const aulas = Math.round(ch / 0.75);
                 const lim = Math.round(aulas * 0.25);
-                const perc = lim > 0 ? Number(((item.quantidade_faltas / lim) * 100).toFixed(1)) : 0;
+                const faltasNum = Number(item.quantidade_faltas) || 0;
+                const perc = lim > 0 ? Number(((faltasNum / lim) * 100).toFixed(1)) : 0;
 
                 return (
                   <div key={index} className={styles.calculadoraFaltasCard}>
@@ -687,9 +888,20 @@ export function OcorrenciaModal({
                             min="1"
                             className={styles.input}
                             value={item.quantidade_faltas}
-                            onChange={(e) =>
-                              handleUpdateUcLine(index, "quantidade_faltas", Math.max(1, Number(e.target.value)))
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              handleUpdateUcLine(
+                                index,
+                                "quantidade_faltas",
+                                val === "" ? "" : Math.max(1, parseInt(val, 10) || 0)
+                              );
+                            }}
+                            onBlur={() => {
+                              if (item.quantidade_faltas === "" || Number(item.quantidade_faltas) < 1) {
+                                handleUpdateUcLine(index, "quantidade_faltas", 1);
+                              }
+                            }}
+                            onWheel={(e) => e.currentTarget.blur()}
                             required
                           />
                         </div>
@@ -732,8 +944,8 @@ export function OcorrenciaModal({
                                 perc >= 100
                                   ? "var(--color-danger)"
                                   : perc >= 80
-                                  ? "var(--color-warning)"
-                                  : "var(--color-success)",
+                                    ? "var(--color-warning)"
+                                    : "var(--color-success)",
                             }}
                           >
                             {perc}%
@@ -745,6 +957,20 @@ export function OcorrenciaModal({
                 );
               })}
 
+              {planoSeraArquivado && (
+                <div className={styles.planoNoticeBox}>
+                  <AlertTriangle className={styles.planoNoticeIcon} size={20} />
+                  <div className={styles.planoNoticeContent}>
+                    <span className={styles.planoNoticeTitle}>
+                      Aviso: Plano de Recuperação será arquivado
+                    </span>
+                    <span className={styles.planoNoticeText}>
+                      Com a redução das faltas para dentro do limite permitido (≤100%), o <strong>Plano de Recuperação Pedagógica vinculado</strong> será movido para a <strong>Lixeira (Soft Delete)</strong> ao salvar. Caso as faltas voltem a ultrapassar o limite no futuro, o plano será reativado automaticamente.
+                    </span>
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
 
@@ -755,8 +981,8 @@ export function OcorrenciaModal({
                 {tipo === "falta"
                   ? "4. Justificativa & Recomendações"
                   : tipo === "comportamento"
-                  ? "3. Relato da Ocorrência Disciplinar"
-                  : "3. Diagnóstico de Aproveitamento Pedagógico"}
+                    ? "3. Relato da Ocorrência Disciplinar"
+                    : "3. Diagnóstico de Aproveitamento Pedagógico"}
               </span>
             </div>
 
@@ -765,8 +991,8 @@ export function OcorrenciaModal({
                 {tipo === "falta"
                   ? "Relato circunstanciado das faltas / motivos apresentados"
                   : tipo === "comportamento"
-                  ? "Descrição detalhada do comportamento / incidente observado"
-                  : "Dificuldades de aprendizagem e competências não atingidas"}
+                    ? "Descrição detalhada do comportamento / incidente observado"
+                    : "Dificuldades de aprendizagem e competências não atingidas"}
                 {tipo !== "falta" && <span className={styles.required}>*</span>}
               </label>
               <textarea
@@ -774,7 +1000,10 @@ export function OcorrenciaModal({
                 rows={3}
                 placeholder="Descreva detalhadamente o ocorrido com horário, local e contexto..."
                 value={relatoDificuldades}
-                onChange={(e) => setRelatoDificuldades(e.target.value)}
+                onChange={(e) => {
+                  isRelatoManuallyEditedRef.current = true;
+                  setRelatoDificuldades(e.target.value);
+                }}
                 required={tipo !== "falta"}
               />
             </div>
@@ -809,6 +1038,7 @@ export function OcorrenciaModal({
             <div className={styles.fieldGroup}>
               <label className={styles.label}>
                 Justificativa da Edição (Histórico de Auditoria)
+                <span className={styles.required}>*</span>
               </label>
               <input
                 type="text"
@@ -816,12 +1046,29 @@ export function OcorrenciaModal({
                 placeholder="Informe o motivo da alteração desta ocorrência..."
                 value={motivoEdicao}
                 onChange={(e) => setMotivoEdicao(e.target.value)}
+                required
               />
             </div>
           )}
 
           {/* Rodapé com Botões */}
           <div className={styles.modalFooter}>
+            {isEditing && !hasChanges && (
+              <span className={styles.noChangesNotice}>
+                Nenhuma alteração detectada
+              </span>
+            )}
+            {isEditing && hasChanges && !motivoEdicao.trim() && (
+              <span
+                className={styles.noChangesNotice}
+                style={{
+                  borderColor: "var(--color-warning, #f59e0b)",
+                  color: "var(--color-warning, #d97706)",
+                }}
+              >
+                Justificativa obrigatória
+              </span>
+            )}
             <button
               type="button"
               className={styles.btnCancel}
@@ -830,7 +1077,18 @@ export function OcorrenciaModal({
             >
               Cancelar
             </button>
-            <button type="submit" className={styles.btnSubmit} disabled={isSubmitting}>
+            <button
+              type="submit"
+              className={styles.btnSubmit}
+              disabled={isSubmitting || (isEditing && (!hasChanges || !motivoEdicao.trim()))}
+              title={
+                isEditing && !hasChanges
+                  ? "Altere algum campo para habilitar o salvamento"
+                  : isEditing && !motivoEdicao.trim()
+                  ? "Informe a justificativa da edição para salvar"
+                  : undefined
+              }
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />

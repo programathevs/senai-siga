@@ -7,6 +7,8 @@ import type { PaginationMeta } from "../../types/pagination";
 import { useAuth } from "../../contexts/AuthContext";
 import { TurmaModal } from "./TurmaModal";
 import { TurmaAlunosModal } from "./TurmaAlunosModal";
+import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
+import { showAvatarToast } from "../../utils/toast";
 import styles from "./Turmas.module.css";
 
 export function Turmas() {
@@ -27,6 +29,7 @@ export function Turmas() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTurma, setEditingTurma] = useState<Turma | null>(null);
   const [selectedTurmaIdParaAlunos, setSelectedTurmaIdParaAlunos] = useState<number | null>(null);
+  const [turmaToDelete, setTurmaToDelete] = useState<Turma | null>(null);
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -100,18 +103,26 @@ export function Turmas() {
     setIsModalOpen(true);
   }
 
-  async function handleDeleteTurma(turma: Turma) {
-    if (
-      window.confirm(
-        `Tem certeza de que deseja remover a turma "${turma.nome}"? Os alunos vinculados serão mantidos no sistema e marcados como sem turma.`
-      )
-    ) {
-      try {
-        await turmaService.deleteTurma(turma.id);
-        loadTurmas(page, perPage);
-      } catch (err: any) {
-        alert(err.response?.data?.message || "Não foi possível remover a turma.");
-      }
+  function handleOpenDelete(turma: Turma) {
+    setTurmaToDelete(turma);
+  }
+
+  async function handleConfirmDelete() {
+    if (!turmaToDelete) return;
+    try {
+      await turmaService.deleteTurma(turmaToDelete.id);
+      showAvatarToast(
+        `Turma "${turmaToDelete.nome}" removida com sucesso!`,
+        "Turma Removida",
+        "success"
+      );
+      loadTurmas(page, perPage);
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message || "Não foi possível remover a turma.",
+        "Erro ao Remover",
+        "error"
+      );
     }
   }
 
@@ -261,7 +272,7 @@ export function Turmas() {
                       type="button"
                       className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
                       title="Remover Turma"
-                      onClick={() => handleDeleteTurma(turma)}
+                      onClick={() => handleOpenDelete(turma)}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -305,6 +316,31 @@ export function Turmas() {
         onClose={() => setSelectedTurmaIdParaAlunos(null)}
         turmaId={selectedTurmaIdParaAlunos}
         onUpdated={() => loadTurmas(page, perPage)}
+      />
+
+      {/* Modal Institucional de Confirmação de Exclusão */}
+      <ConfirmModal
+        isOpen={turmaToDelete !== null}
+        onClose={() => setTurmaToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Remover Turma"
+        subtitle="Confirmação de exclusão da turma"
+        confirmLabel="Sim, remover turma"
+        confirmVariant="danger"
+        icon="trash"
+        itemDetails={
+          turmaToDelete
+            ? [
+                { label: "Turma", value: turmaToDelete.nome },
+                { label: "Curso", value: turmaToDelete.curso?.nome || "Não informado" },
+                {
+                  label: "Turno / Semestre",
+                  value: `${turmaToDelete.turno ? turmaToDelete.turno.toUpperCase() : "—"}${turmaToDelete.semestre_atual ? ` • ${turmaToDelete.semestre_atual}º Semestre` : ""}`,
+                },
+              ]
+            : []
+        }
+        warningText="Os alunos vinculados permanecerão no sistema como alunos sem turma. Esta ação não apaga o cadastro dos estudantes."
       />
     </div>
   );

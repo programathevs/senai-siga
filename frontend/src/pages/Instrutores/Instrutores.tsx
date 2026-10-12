@@ -5,6 +5,8 @@ import { Pagination } from "../../components/Pagination/Pagination";
 import type { PaginationMeta } from "../../types/pagination";
 import { formatPhoneNumber } from "../../utils/formatters";
 import { InstrutorModal } from "./InstrutorModal";
+import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
+import { showAvatarToast } from "../../utils/toast";
 import styles from "./Instrutores.module.css";
 
 export function Instrutores() {
@@ -19,6 +21,7 @@ export function Instrutores() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingInstrutor, setEditingInstrutor] = useState<Instrutor | null>(null);
+  const [instrutorToDelete, setInstrutorToDelete] = useState<Instrutor | null>(null);
 
   const isFirstRender = useRef(true);
 
@@ -70,22 +73,27 @@ export function Instrutores() {
     setIsModalOpen(true);
   }
 
-  async function handleDeleteInstrutor(instrutor: Instrutor) {
-    const nome = instrutor.user?.name || "este instrutor";
-    if (
-      window.confirm(
-        `Tem certeza de que deseja remover o instrutor "${nome}"? Esta ação também removerá a conta de acesso associada.`
-      )
-    ) {
-      try {
-        await instrutorService.deleteInstrutor(instrutor.id);
-        loadInstrutores(page, perPage);
-      } catch (err: any) {
-        alert(
-          err.response?.data?.message ||
-            "Não foi possível remover o instrutor no momento."
-        );
-      }
+  function handleOpenDelete(instrutor: Instrutor) {
+    setInstrutorToDelete(instrutor);
+  }
+
+  async function handleConfirmDelete() {
+    if (!instrutorToDelete) return;
+    try {
+      await instrutorService.deleteInstrutor(instrutorToDelete.id);
+      showAvatarToast(
+        `Instrutor "${instrutorToDelete.user?.name || ""}" removido com sucesso!`,
+        "Instrutor Removido",
+        "success"
+      );
+      loadInstrutores(page, perPage);
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message ||
+          "Não foi possível remover o instrutor no momento.",
+        "Erro ao Remover",
+        "error"
+      );
     }
   }
 
@@ -185,7 +193,7 @@ export function Instrutores() {
                           type="button"
                           className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
                           title="Remover Instrutor"
-                          onClick={() => handleDeleteInstrutor(instrutor)}
+                          onClick={() => handleOpenDelete(instrutor)}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -221,6 +229,33 @@ export function Instrutores() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => loadInstrutores(page, perPage)}
         instrutorToEdit={editingInstrutor}
+      />
+
+      {/* Modal Institucional de Confirmação de Exclusão */}
+      <ConfirmModal
+        isOpen={instrutorToDelete !== null}
+        onClose={() => setInstrutorToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Remover Instrutor"
+        subtitle="Confirmação de exclusão do docente"
+        confirmLabel="Sim, remover instrutor"
+        confirmVariant="danger"
+        icon="trash"
+        itemDetails={
+          instrutorToDelete
+            ? [
+                { label: "Nome", value: instrutorToDelete.user?.name || "—" },
+                { label: "E-mail", value: instrutorToDelete.user?.email || "—" },
+                {
+                  label: "Telefone",
+                  value: instrutorToDelete.telefone
+                    ? formatPhoneNumber(instrutorToDelete.telefone)
+                    : "Não informado",
+                },
+              ]
+            : []
+        }
+        warningText="Esta ação também removerá a conta de acesso ao sistema vinculada a este instrutor."
       />
     </div>
   );

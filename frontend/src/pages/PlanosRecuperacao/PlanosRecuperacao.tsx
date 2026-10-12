@@ -20,6 +20,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Pagination } from "../../components/Pagination/Pagination";
 import { PlanoRecuperacaoModal } from "./PlanoRecuperacaoModal";
 import { PlanoPdfModal } from "./PlanoPdfModal";
+import { ConfirmDeletePlanoModal } from "./ConfirmDeletePlanoModal";
+import { ConfirmRestorePlanoModal } from "./ConfirmRestorePlanoModal";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./PlanosRecuperacao.module.css";
 
@@ -40,6 +42,13 @@ export function PlanosRecuperacao() {
   // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [planoToEdit, setPlanoToEdit] = useState<PlanoRecuperacao | null>(null);
+
+  // Modais de Confirmação Institucional
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [planoToDelete, setPlanoToDelete] = useState<PlanoRecuperacao | null>(null);
+
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [planoToRestore, setPlanoToRestore] = useState<PlanoRecuperacao | null>(null);
 
   // PDF Modal
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
@@ -84,36 +93,67 @@ export function PlanosRecuperacao() {
     setIsPdfModalOpen(true);
   }
 
-  async function handleDelete(plano: PlanoRecuperacao) {
-    if (!window.confirm(`Deseja realmente excluir o Plano de Recuperação #${plano.id}?`)) {
-      return;
-    }
+  function handleOpenDelete(plano: PlanoRecuperacao) {
+    setPlanoToDelete(plano);
+    setIsDeleteModalOpen(true);
+  }
+
+  async function handleConfirmDelete() {
+    if (!planoToDelete) return;
 
     try {
-      await planoRecuperacaoService.delete(plano.id);
-      showAvatarToast("Plano Removido", `O Plano de Recuperação #${plano.id} foi excluído com sucesso.`);
+      await planoRecuperacaoService.delete(planoToDelete.id);
+      showAvatarToast(
+        `Plano de Recuperação #${planoToDelete.id} excluído com sucesso!`,
+        "Plano Excluído",
+        "success"
+      );
       loadPlanos();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao excluir plano:", err);
+      showAvatarToast(
+        err.response?.data?.message || "Erro ao excluir Plano de Recuperação.",
+        "Erro ao Excluir",
+        "error"
+      );
     }
   }
 
-  async function handleRestore(plano: PlanoRecuperacao) {
-    if (!window.confirm(`Deseja restaurar o Plano de Recuperação do estudante "${plano.aluno?.nome || ''}"?`)) {
-      return;
-    }
+  function handleOpenRestore(plano: PlanoRecuperacao) {
+    setPlanoToRestore(plano);
+    setIsRestoreModalOpen(true);
+  }
+
+  async function handleConfirmRestore() {
+    if (!planoToRestore) return;
 
     try {
-      await planoRecuperacaoService.restaurar(plano.id);
-      showAvatarToast("Plano Restaurado", `O Plano de Recuperação foi restaurado com sucesso!`);
+      await planoRecuperacaoService.restaurar(planoToRestore.id);
+      showAvatarToast(
+        `Plano de Recuperação #${planoToRestore.id} restaurado com sucesso!`,
+        "Plano Restaurado",
+        "success"
+      );
       loadPlanos();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao restaurar Plano de Recuperação.");
+      console.error("Erro ao restaurar plano:", err);
+      showAvatarToast(
+        err.response?.data?.message || "Erro ao restaurar Plano de Recuperação.",
+        "Erro ao Restaurar",
+        "error"
+      );
     }
   }
 
   const total = planos.length;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   const startIndex = (page - 1) * perPage;
   const paginatedPlanos = planos.slice(startIndex, startIndex + perPage);
 
@@ -213,7 +253,7 @@ export function PlanosRecuperacao() {
                 const canDelete = user?.role === "gestor" || (creatorId === user?.id && creatorId !== undefined);
 
                 return (
-                  <tr key={plano.id} className={styles.tr} style={isDeleted ? { opacity: 0.7 } : undefined}>
+                  <tr key={plano.id} className={`${styles.tr} ${isDeleted ? styles.trDeleted : ""}`}>
                     {/* FIAP */}
                     <td className={styles.td}>
                       {plano.ocorrencia?.numero_sequencial ? (
@@ -263,9 +303,9 @@ export function PlanosRecuperacao() {
                     {/* Status */}
                     <td className={styles.td}>
                       {isDeleted ? (
-                        <span className={styles.statusBadge} style={{ background: "color-mix(in srgb, #ef4444 12%, transparent)", color: "#ef4444", border: "1px solid color-mix(in srgb, #ef4444 30%, transparent)" }}>
+                        <span className={`${styles.statusBadge} ${styles.statusExcluido}`}>
                           <Trash2 size={12} />
-                          Excluído (Adormecido)
+                          Excluído
                         </span>
                       ) : plano.status_processo === "concluido" ? (
                         <span className={`${styles.statusBadge} ${styles.statusConcluido}`}>
@@ -288,15 +328,15 @@ export function PlanosRecuperacao() {
                     <td className={styles.td}>
                       {plano.conceito === "aprovado" ? (
                         <span className={`${styles.conceitoBadge} ${styles.conceitoAprovado}`}>
-                          APROVADO
+                          Aprovado
                         </span>
                       ) : plano.conceito === "reprovado" ? (
                         <span className={`${styles.conceitoBadge} ${styles.conceitoReprovado}`}>
-                          REPROVADO
+                          Reprovado
                         </span>
                       ) : (
                         <span className={`${styles.conceitoBadge} ${styles.conceitoPendente}`}>
-                          PENDENTE
+                          Pendente
                         </span>
                       )}
                     </td>
@@ -328,7 +368,7 @@ export function PlanosRecuperacao() {
                           <button
                             type="button"
                             className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
-                            onClick={() => handleDelete(plano)}
+                            onClick={() => handleOpenDelete(plano)}
                             title="Excluir Plano de Recuperação"
                           >
                             <Trash2 size={16} />
@@ -339,7 +379,7 @@ export function PlanosRecuperacao() {
                           <button
                             type="button"
                             className={`${styles.actionBtn} ${styles.actionBtnRestore}`}
-                            onClick={() => handleRestore(plano)}
+                            onClick={() => handleOpenRestore(plano)}
                             title="Restaurar Plano de Recuperação Excluído"
                           >
                             <RotateCcw size={16} />
@@ -385,6 +425,28 @@ export function PlanosRecuperacao() {
         isOpen={isPdfModalOpen}
         onClose={() => setIsPdfModalOpen(false)}
         plano={selectedPlanoPdf}
+      />
+
+      {/* Modal Institucional de Confirmação de Exclusão */}
+      <ConfirmDeletePlanoModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setPlanoToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        plano={planoToDelete}
+      />
+
+      {/* Modal Institucional de Confirmação de Restauração */}
+      <ConfirmRestorePlanoModal
+        isOpen={isRestoreModalOpen}
+        onClose={() => {
+          setIsRestoreModalOpen(false);
+          setPlanoToRestore(null);
+        }}
+        onConfirm={handleConfirmRestore}
+        plano={planoToRestore}
       />
     </div>
   );

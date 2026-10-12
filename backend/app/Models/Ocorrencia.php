@@ -45,6 +45,21 @@ class Ocorrencia extends Model
         'registrado_por_id',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Ocorrencia $ocorrencia) {
+            if ($ocorrencia->isForceDeleting()) {
+                $ocorrencia->planosRecuperacao()->forceDelete();
+            } else {
+                $ocorrencia->planosRecuperacao()->delete();
+            }
+        });
+
+        static::restoring(function (Ocorrencia $ocorrencia) {
+            PlanoRecuperacao::onlyTrashed()->where('ocorrencia_id', $ocorrencia->id)->restore();
+        });
+    }
+
     public function getRegistradoPorIdAttribute(): int
     {
         return (int) ($this->attributes['registrado_por'] ?? 0);

@@ -5,6 +5,8 @@ import { Pagination } from "../../components/Pagination/Pagination";
 import type { PaginationMeta } from "../../types/pagination";
 import { useAuth } from "../../contexts/AuthContext";
 import { CursoModal } from "./CursoModal";
+import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
+import { showAvatarToast } from "../../utils/toast";
 import styles from "./Cursos.module.css";
 
 export function Cursos() {
@@ -20,6 +22,7 @@ export function Cursos() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCurso, setEditingCurso] = useState<Curso | null>(null);
+  const [cursoToDelete, setCursoToDelete] = useState<Curso | null>(null);
 
   const isFirstRender = useRef(true);
 
@@ -73,21 +76,26 @@ export function Cursos() {
     setIsModalOpen(true);
   }
 
-  async function handleDeleteCurso(curso: Curso) {
-    if (
-      window.confirm(
-        `Tem certeza de que deseja remover o curso "${curso.nome}"?`
-      )
-    ) {
-      try {
-        await cursoService.deleteCurso(curso.id);
-        loadCursos(page, perPage);
-      } catch (err: any) {
-        alert(
-          err.response?.data?.message ||
-            "Não foi possível remover o curso no momento."
-        );
-      }
+  function handleOpenDelete(curso: Curso) {
+    setCursoToDelete(curso);
+  }
+
+  async function handleConfirmDelete() {
+    if (!cursoToDelete) return;
+    try {
+      await cursoService.deleteCurso(cursoToDelete.id);
+      showAvatarToast(
+        `Curso "${cursoToDelete.nome}" removido com sucesso!`,
+        "Curso Removido",
+        "success"
+      );
+      loadCursos(page, perPage);
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message || "Não foi possível remover o curso no momento.",
+        "Erro ao Remover",
+        "error"
+      );
     }
   }
 
@@ -194,7 +202,7 @@ export function Cursos() {
                         <button
                           type="button"
                           className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
-                          onClick={() => handleDeleteCurso(curso)}
+                          onClick={() => handleOpenDelete(curso)}
                           title="Excluir curso"
                         >
                           <Trash2 size={16} />
@@ -232,6 +240,32 @@ export function Cursos() {
         curso={editingCurso}
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => loadCursos(page, perPage)}
+      />
+
+      {/* Modal Institucional de Confirmação de Exclusão */}
+      <ConfirmModal
+        isOpen={cursoToDelete !== null}
+        onClose={() => setCursoToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Remover Curso"
+        subtitle="Confirmação de exclusão do curso"
+        confirmLabel="Sim, remover curso"
+        confirmVariant="danger"
+        icon="trash"
+        itemDetails={
+          cursoToDelete
+            ? [
+                { label: "Curso", value: cursoToDelete.nome },
+                {
+                  label: "Carga Horária",
+                  value: cursoToDelete.carga_horaria_total
+                    ? `${cursoToDelete.carga_horaria_total} horas`
+                    : "Não informada",
+                },
+              ]
+            : []
+        }
+        warningText="A remoção deste curso afetará eventuais turmas e unidades curriculares vinculadas."
       />
     </div>
   );

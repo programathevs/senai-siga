@@ -51,6 +51,11 @@ class OcorrenciaRequest extends FormRequest
             $rules['relato_dificuldades'] = ['required', 'string', 'min:5'];
         }
 
+        // Na edição (PUT/PATCH), a justificativa da alteração é obrigatória para o histórico de auditoria
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
+            $rules['motivo_edicao'] = ['required', 'string', 'min:3', 'max:1000'];
+        }
+
         return $rules;
     }
 
@@ -67,6 +72,8 @@ class OcorrenciaRequest extends FormRequest
             'quantidade_faltas.min' => 'A quantidade de faltas deve ser de ao menos 1 aula.',
             'relato_dificuldades.required' => 'O relato circunstanciado dos fatos ou dificuldades pedagógicas é obrigatório.',
             'relato_dificuldades.min' => 'O relato deve conter pelo menos 5 caracteres.',
+            'motivo_edicao.required' => 'A justificativa da edição é obrigatória para o histórico de auditoria.',
+            'motivo_edicao.min' => 'A justificativa da edição deve conter pelo menos 3 caracteres.',
         ];
     }
 }

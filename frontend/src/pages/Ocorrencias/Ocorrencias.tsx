@@ -29,6 +29,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { OcorrenciaModal } from "./OcorrenciaModal";
 import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
 import { ConfirmAqvModal } from "./ConfirmAqvModal";
+import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
+import { ConfirmRestoreModal } from "./ConfirmRestoreModal";
 import { ConfirmAssinaturaModal } from "../EncaminhamentosAqv/ConfirmAssinaturaModal";
 import { PlanoRecuperacaoModal } from "../PlanosRecuperacao/PlanoRecuperacaoModal";
 import { ClipboardCheck } from "lucide-react";
@@ -71,12 +73,22 @@ export function Ocorrencias() {
   const [editingOcorrencia, setEditingOcorrencia] = useState<Ocorrencia | null>(null);
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
   const [ocorrenciaAqvPending, setOcorrenciaAqvPending] = useState<Ocorrencia | null>(null);
+  const [ocorrenciaDeletePending, setOcorrenciaDeletePending] = useState<Ocorrencia | null>(null);
+  const [ocorrenciaRestorePending, setOcorrenciaRestorePending] = useState<Ocorrencia | null>(null);
 
   // Modal de Plano de Recuperação (Ideia 2 & 3)
   const [isPlanoModalOpen, setIsPlanoModalOpen] = useState(false);
   const [ocorrenciaParaPlano, setOcorrenciaParaPlano] = useState<Ocorrencia | null>(null);
 
   function handleOpenPlanoModal(oc: Ocorrencia) {
+    if (oc.deleted_at) {
+      showAvatarToast(
+        "Não é possível criar um Plano de Recuperação para uma FIAP excluída. Restaure a FIAP antes de elaborar o plano.",
+        "Atenção",
+        "warning"
+      );
+      return;
+    }
     setOcorrenciaParaPlano(oc);
     setIsPlanoModalOpen(true);
   }
@@ -132,6 +144,13 @@ export function Ocorrencias() {
         page: targetPage,
         per_page: targetPerPage,
       });
+
+      // Se a página atual ficou vazia após exclusão, mas ainda existem registros em páginas anteriores
+      if (res.data.length === 0 && res.meta && res.meta.total > 0 && targetPage > 1) {
+        const fallbackPage = Math.max(1, res.meta.last_page);
+        setPage(fallbackPage);
+        return;
+      }
 
       setOcorrencias(res.data);
       setMeta(res.meta || null);
@@ -192,34 +211,56 @@ export function Ocorrencias() {
     setSelectedDetalhes(oc);
   }
 
-  async function handleDelete(oc: Ocorrencia) {
-    if (
-      window.confirm(
-        `Tem certeza de que deseja remover a FIAP "${oc.numero_sequencial}" do aluno "${oc.aluno?.nome}"?`
-      )
-    ) {
-      try {
-        await ocorrenciaService.deleteOcorrencia(oc.id);
-        loadOcorrencias(page, perPage);
-      } catch (err: any) {
-        alert(err.response?.data?.message || "Não foi possível remover a ocorrência.");
+  function handleDelete(oc: Ocorrencia) {
+    setOcorrenciaDeletePending(oc);
+  }
+
+  async function handleConfirmDelete() {
+    if (!ocorrenciaDeletePending) return;
+    const oc = ocorrenciaDeletePending;
+
+    try {
+      await ocorrenciaService.deleteOcorrencia(oc.id);
+      showAvatarToast(`FIAP "${oc.numero_sequencial}" excluída com sucesso!`);
+      const nextPage = ocorrencias.length === 1 && page > 1 ? page - 1 : page;
+      if (nextPage !== page) {
+        setPage(nextPage);
+      } else {
+        loadOcorrencias(nextPage, perPage);
       }
+      if (selectedDetalhes?.id === oc.id) {
+        setSelectedDetalhes(null);
+      }
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message || "Não foi possível remover a ocorrência.",
+        "Erro",
+        "error"
+      );
+      throw err;
     }
   }
 
-  async function handleRestore(oc: Ocorrencia) {
-    if (
-      window.confirm(
-        `Deseja restaurar a FIAP "${oc.numero_sequencial}" do aluno "${oc.aluno?.nome}"?`
-      )
-    ) {
-      try {
-        await ocorrenciaService.restaurarOcorrencia(oc.id);
-        alert(`FIAP "${oc.numero_sequencial}" restaurada com sucesso!`);
-        loadOcorrencias(page, perPage);
-      } catch (err: any) {
-        alert(err.response?.data?.message || "Erro ao restaurar ocorrência.");
-      }
+  function handleRestore(oc: Ocorrencia) {
+    setOcorrenciaRestorePending(oc);
+  }
+
+  async function handleConfirmRestore() {
+    if (!ocorrenciaRestorePending) return;
+    const oc = ocorrenciaRestorePending;
+
+    try {
+      await ocorrenciaService.restaurarOcorrencia(oc.id);
+      showAvatarToast(`FIAP "${oc.numero_sequencial}" restaurada com sucesso!`);
+      loadOcorrencias(page, perPage);
+      setOcorrenciaRestorePending(null);
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message || "Erro ao restaurar ocorrência.",
+        "Erro",
+        "error"
+      );
+      throw err;
     }
   }
 
@@ -230,7 +271,11 @@ export function Ocorrencias() {
         : ocOrId;
 
     if (targetOc?.has_plano_pendente) {
-      alert("Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.");
+      showAvatarToast(
+        "Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.",
+        "Atenção",
+        "warning"
+      );
       return;
     }
 
@@ -254,7 +299,11 @@ export function Ocorrencias() {
         setSelectedDetalhes(updated);
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao encaminhar para o AQV.");
+      showAvatarToast(
+        err.response?.data?.message || "Erro ao encaminhar para o AQV.",
+        "Erro",
+        "error"
+      );
       throw err;
     }
   }
@@ -653,7 +702,7 @@ export function Ocorrencias() {
                             <Eye size={16} />
                           </button>
 
-                          {oc.has_plano_pendente && (
+                          {oc.has_plano_pendente && !isDeleted && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.planoBtn}`}
@@ -811,6 +860,22 @@ export function Ocorrencias() {
         onClose={() => setOcorrenciaAqvPending(null)}
         onConfirm={handleConfirmEncaminharAqv}
         ocorrencia={ocorrenciaAqvPending}
+      />
+
+      {/* Modal de Confirmação de Exclusão */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(ocorrenciaDeletePending)}
+        onClose={() => setOcorrenciaDeletePending(null)}
+        onConfirm={handleConfirmDelete}
+        ocorrencia={ocorrenciaDeletePending}
+      />
+
+      {/* Modal de Confirmação de Restauração */}
+      <ConfirmRestoreModal
+        isOpen={Boolean(ocorrenciaRestorePending)}
+        onClose={() => setOcorrenciaRestorePending(null)}
+        onConfirm={handleConfirmRestore}
+        ocorrencia={ocorrenciaRestorePending}
       />
 
       {/* Modal de Confirmação de Assinatura Física */}

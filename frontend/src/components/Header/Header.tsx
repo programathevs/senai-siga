@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { Building2, Menu, CheckCircle2, X } from "lucide-react";
+import { Building2, Menu, CheckCircle2, AlertCircle, AlertTriangle, X } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
 import { PerfilDropdown } from "../PerfilDropdown/PerfilDropdown";
 import { PerfilModal } from "../PerfilModal/PerfilModal";
 import { AlterarSenhaModal } from "../AlterarSenhaModal/AlterarSenhaModal";
+import type { ToastType } from "../../utils/toast";
 import styles from "./Header.module.css";
 
 function getInitials(name?: string) {
@@ -18,6 +19,7 @@ function getInitials(name?: string) {
 interface ToastData {
   title: string;
   message: string;
+  type?: ToastType;
 }
 
 export function Header() {
@@ -35,9 +37,14 @@ export function Header() {
     function handleAvatarToast(e: Event) {
       const detail = (e as CustomEvent).detail;
       if (detail?.message) {
+        const type: ToastType = detail.type || "success";
+        const defaultTitle =
+          type === "error" ? "Erro" : type === "warning" ? "Atenção" : "Sucesso!";
+
         setToast({
-          title: detail.title || "Sucesso!",
+          title: detail.title || defaultTitle,
           message: detail.message,
+          type,
         });
 
         if (toastTimeoutRef.current) {
@@ -116,10 +123,25 @@ export function Header() {
             />
 
             {toast && (
-              <div className={styles.avatarToast} role="alert">
+              <div
+                className={`${styles.avatarToast} ${
+                  toast.type === "error"
+                    ? styles.toastError
+                    : toast.type === "warning"
+                      ? styles.toastWarning
+                      : styles.toastSuccess
+                }`}
+                role="alert"
+              >
                 <div className={styles.toastArrow} />
                 <div className={styles.toastIconWrapper}>
-                  <CheckCircle2 size={18} className={styles.toastIcon} />
+                  {toast.type === "error" ? (
+                    <AlertCircle size={18} className={styles.toastIcon} />
+                  ) : toast.type === "warning" ? (
+                    <AlertTriangle size={18} className={styles.toastIcon} />
+                  ) : (
+                    <CheckCircle2 size={18} className={styles.toastIcon} />
+                  )}
                 </div>
                 <div className={styles.toastBody}>
                   <span className={styles.toastTitle}>{toast.title}</span>

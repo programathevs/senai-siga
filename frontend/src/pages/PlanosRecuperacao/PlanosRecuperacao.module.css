@@ -279,7 +279,6 @@
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
   border-radius: 9999px;
-  text-transform: uppercase;
 }
 
 .conceitoAprovado {
@@ -364,4 +363,21 @@
 .emptyIcon {
   color: var(--color-text-secondary);
   opacity: 0.5;
+}
+
+/* Soft Deleted Row & Status Excluído */
+.trDeleted {
+  opacity: 0.55;
+  background-color: color-mix(in srgb, var(--color-danger, #ef4444) 4%, transparent);
+}
+
+.trDeleted:hover {
+  opacity: 0.85;
+  background-color: color-mix(in srgb, var(--color-danger, #ef4444) 8%, transparent);
+}
+
+.statusExcluido {
+  background-color: color-mix(in srgb, #ef4444 15%, transparent);
+  color: #dc2626;
+  border: 1px dashed color-mix(in srgb, #ef4444 40%, transparent);
 }

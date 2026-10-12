@@ -9,8 +9,10 @@ import {
   History,
 } from "lucide-react";
 import html2pdf from "html2pdf.js";
+import { printElementAsPdf } from "../../utils/printPdf";
 import type { Ocorrencia } from "../../services/ocorrenciaService";
 import { useAuth } from "../../contexts/AuthContext";
+import { showAvatarToast } from "../../utils/toast";
 import senaiLogo from "../../assets/senai-logo.jpg";
 import styles from "./OcorrenciaDetalhesModal.module.css";
 
@@ -33,6 +35,7 @@ export function OcorrenciaDetalhesModal({
 }: OcorrenciaDetalhesModalProps) {
   const { user } = useAuth();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -218,19 +221,44 @@ export function OcorrenciaDetalhesModal({
     return false;
   })();
 
-  function handlePrint() {
-    const originalTitle = document.title;
-    const nomeSanitizado = (aluno?.nome || "Aluno").replace(/\s+/g, "_");
-    const numFiapSanitizado = formattedSeq.replace(/[\/\s]/g, "_");
-    document.title = `FIAP_${nomeSanitizado}_${numFiapSanitizado}`;
+  async function handlePrint() {
+    const element = document.getElementById("content-to-pdf");
+    if (!element) return;
 
-    setTimeout(() => {
+    setIsPrinting(true);
+    try {
+      const nomeSanitizado = (aluno?.nome || "Aluno").replace(/\s+/g, "");
+      const primarySigla = primaryUc?.unidade_curricular?.sigla;
+      const primaryNome = primaryUc?.unidade_curricular?.nome || "Componente";
+      const siglaComp = primarySigla || primaryNome.substring(0, 10).replace(/\s+/g, "");
+
+      const options = {
+        margin: [6, 6, 6, 6] as [number, number, number, number],
+        filename: `FIAP_${nomeSanitizado}_${siglaComp}.pdf`,
+        image: { type: "jpeg" as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2.5,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: 800,
+        },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
+      };
+
+      await printElementAsPdf(element, options);
+    } catch (err) {
+      console.error("Erro ao preparar impressão da FIAP:", err);
       window.print();
+    } finally {
+      setIsPrinting(false);
       window.focus();
-      setTimeout(() => {
-        document.title = originalTitle;
-      }, 500);
-    }, 150);
+      document.body.style.pointerEvents = "";
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }
   }
 
   async function handleDownloadPdf() {
@@ -262,7 +290,11 @@ export function OcorrenciaDetalhesModal({
       await html2pdf().set(options).from(element).save();
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
-      alert("Não foi possível gerar o PDF. Você pode utilizar a opção Imprimir.");
+      showAvatarToast(
+        "Não foi possível gerar o PDF. Você pode utilizar a opção Imprimir.",
+        "Aviso",
+        "warning"
+      );
     } finally {
       setIsGeneratingPdf(false);
       window.focus();
@@ -517,7 +549,7 @@ export function OcorrenciaDetalhesModal({
               type="button"
               className={`${styles.btnAction} ${styles.btnPrimary}`}
               onClick={handleDownloadPdf}
-              disabled={isGeneratingPdf}
+              disabled={isGeneratingPdf || isPrinting}
             >
               {isGeneratingPdf ? (
                 <>
@@ -532,9 +564,24 @@ export function OcorrenciaDetalhesModal({
               )}
             </button>
 
-            <button type="button" className={styles.btnAction} onClick={handlePrint}>
-              <Printer size={15} />
-              Imprimir
+            <button
+              type="button"
+              className={styles.btnAction}
+              onClick={handlePrint}
+              disabled={isPrinting || isGeneratingPdf}
+              title="Imprimir FIAP Oficial"
+            >
+              {isPrinting ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Preparando...
+                </>
+              ) : (
+                <>
+                  <Printer size={15} />
+                  Imprimir
+                </>
+              )}
             </button>
 
             <button type="button" className={styles.btnAction} onClick={onClose}>

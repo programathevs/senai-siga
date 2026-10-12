@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Printer, Download, Loader2 } from "lucide-react";
 import html2pdf from "html2pdf.js";
+import { printElementAsPdf } from "../../utils/printPdf";
 import type { PlanoRecuperacao } from "../../services/planoRecuperacaoService";
 import styles from "./PlanoPdfModal.module.css";
 
@@ -12,6 +13,7 @@ interface PlanoPdfModalProps {
 
 export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   if (!isOpen || !plano) return null;
 
@@ -30,22 +32,40 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
   const numFiapSanitizado = (ocorrencia?.numero_sequencial || `FIAP_${plano.id}`).replace(/[\/\s]/g, "_");
   const defaultFilename = `Plano_Recuperacao_${nomeAlunoSanitizado}_FIAP_${numFiapSanitizado}`;
 
-  function handlePrint() {
-    const bodyElem = document.getElementById("content-to-pdf-plano");
-    if (bodyElem) {
-      bodyElem.scrollTop = 0;
-    }
+  async function handlePrint() {
+    const element = document.getElementById("content-to-pdf-plano");
+    if (!element) return;
 
-    const originalTitle = document.title;
-    document.title = defaultFilename;
+    element.scrollTop = 0;
+    setIsPrinting(true);
 
-    setTimeout(() => {
+    try {
+      const options = {
+        margin: [6, 6, 6, 6] as [number, number, number, number],
+        filename: `${defaultFilename}.pdf`,
+        image: { type: "jpeg" as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2.2,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+        },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
+      };
+
+      await printElementAsPdf(element, options);
+    } catch (err) {
+      console.error("Erro ao imprimir Plano:", err);
       window.print();
+    } finally {
+      setIsPrinting(false);
       window.focus();
-      setTimeout(() => {
-        document.title = originalTitle;
-      }, 500);
-    }, 150);
+      document.body.style.pointerEvents = "";
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }
   }
 
   async function handleDownloadPdf() {
@@ -92,7 +112,7 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
               type="button"
               className={styles.downloadBtn}
               onClick={handleDownloadPdf}
-              disabled={isGeneratingPdf}
+              disabled={isGeneratingPdf || isPrinting}
               title="Baixar arquivo PDF com nome específico do estudante e FIAP"
             >
               {isGeneratingPdf ? (
@@ -103,9 +123,19 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
               <span>Baixar PDF</span>
             </button>
 
-            <button type="button" className={styles.printBtn} onClick={handlePrint}>
-              <Printer size={16} />
-              <span>Imprimir</span>
+            <button
+              type="button"
+              className={styles.printBtn}
+              onClick={handlePrint}
+              disabled={isPrinting || isGeneratingPdf}
+              title="Imprimir Plano de Recuperação Oficial"
+            >
+              {isPrinting ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Printer size={16} />
+              )}
+              <span>{isPrinting ? "Preparando..." : "Imprimir"}</span>
             </button>
 
             <button type="button" className={styles.closeBtn} onClick={onClose}>

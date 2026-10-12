@@ -143,6 +143,7 @@ export function PlanoRecuperacaoModal({
   if (!isOpen) return null;
 
   const targetOcorrencia = planoToEdit?.ocorrencia || ocorrencia || manualOcorrencia;
+  const isOcorrenciaExcluida = Boolean(targetOcorrencia?.deleted_at);
   const targetAluno = targetOcorrencia?.aluno || planoToEdit?.aluno;
   const targetTurma = targetAluno?.turma;
   const targetCurso = targetTurma?.curso;
@@ -185,6 +186,11 @@ export function PlanoRecuperacaoModal({
 
     if (!finalOcorrenciaId || !finalAlunoId) {
       setErrorMsg("É obrigatório selecionar uma FIAP atrelada válida para registrar o Plano de Recuperação.");
+      return;
+    }
+
+    if (isOcorrenciaExcluida && !planoToEdit) {
+      setErrorMsg("Não é possível criar um Plano de Recuperação para uma FIAP excluída. Restaure a FIAP antes de elaborar o plano.");
       return;
     }
 
@@ -252,6 +258,22 @@ export function PlanoRecuperacaoModal({
 
         {/* Formulário */}
         <form onSubmit={handleSubmit} className={styles.body}>
+          {isOcorrenciaExcluida && !planoToEdit && (
+            <div
+              className={styles.alertBox}
+              style={{
+                borderColor: "color-mix(in srgb, #ef4444 40%, transparent)",
+                color: "#ef4444",
+                backgroundColor: "color-mix(in srgb, #ef4444 8%, transparent)",
+              }}
+            >
+              <AlertCircle size={18} />
+              <span>
+                Esta FIAP está excluída (na lixeira). Restaure-a na gestão antes de elaborar um Plano de Recuperação.
+              </span>
+            </div>
+          )}
+
           {errorMsg && (
             <div className={styles.alertBox}>
               <AlertCircle size={18} />
@@ -497,10 +519,21 @@ export function PlanoRecuperacaoModal({
                               type="number"
                               min="1"
                               className={styles.tableInput}
-                              value={freq.aulas_compensadas || 1}
-                              onChange={(e) =>
-                                updateFrequenciaRow(idx, "aulas_compensadas", parseInt(e.target.value) || 1)
-                              }
+                              value={freq.aulas_compensadas ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                updateFrequenciaRow(
+                                  idx,
+                                  "aulas_compensadas",
+                                  val === "" ? ("" as any) : Math.max(1, parseInt(val, 10) || 0)
+                                );
+                              }}
+                              onBlur={() => {
+                                if (!freq.aulas_compensadas || Number(freq.aulas_compensadas) < 1) {
+                                  updateFrequenciaRow(idx, "aulas_compensadas", 1);
+                                }
+                              }}
+                              onWheel={(e) => e.currentTarget.blur()}
                             />
                           </td>
                           <td>
@@ -576,7 +609,11 @@ export function PlanoRecuperacaoModal({
             >
               Cancelar
             </button>
-            <button type="submit" className={styles.saveBtn} disabled={isSubmitting}>
+            <button
+              type="submit"
+              className={styles.saveBtn}
+              disabled={isSubmitting || (isOcorrenciaExcluida && !planoToEdit)}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />

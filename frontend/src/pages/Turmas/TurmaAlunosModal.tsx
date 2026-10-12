@@ -3,6 +3,8 @@ import { X, Users, UserPlus, UserMinus, Loader2 } from "lucide-react";
 import { turmaService, type Turma } from "../../services/turmaService";
 import { alunoService, type Aluno } from "../../services/alunoService";
 import { formatPhoneNumber } from "../../utils/formatters";
+import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
+import { showAvatarToast } from "../../utils/toast";
 import styles from "./TurmaAlunosModal.module.css";
 
 interface TurmaAlunosModalProps {
@@ -25,6 +27,7 @@ export const TurmaAlunosModal: React.FC<TurmaAlunosModalProps> = ({
   const [searchCandidato, setSearchCandidato] = useState("");
   const [selectedAlunoIds, setSelectedAlunoIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [alunoToDesenturmar, setAlunoToDesenturmar] = useState<{ id: number; nome: string } | null>(null);
 
   async function loadTurmaDetails() {
     if (!turmaId) return;
@@ -66,15 +69,27 @@ export const TurmaAlunosModal: React.FC<TurmaAlunosModalProps> = ({
 
   if (!isOpen || !turmaId) return null;
 
-  async function handleDesenturmar(alunoId: number, nome: string) {
-    if (window.confirm(`Deseja remover "${nome}" desta turma? O aluno não será apagado, apenas desvinculado.`)) {
-      try {
-        await turmaService.desenturmarAluno(turmaId!, alunoId);
-        loadTurmaDetails();
-        onUpdated();
-      } catch (err: any) {
-        alert(err.response?.data?.message || "Não foi possível remover o aluno.");
-      }
+  function handleOpenDesenturmar(alunoId: number, nome: string) {
+    setAlunoToDesenturmar({ id: alunoId, nome });
+  }
+
+  async function handleConfirmDesenturmar() {
+    if (!alunoToDesenturmar || !turmaId) return;
+    try {
+      await turmaService.desenturmarAluno(turmaId, alunoToDesenturmar.id);
+      showAvatarToast(
+        `Estudante "${alunoToDesenturmar.nome}" desvinculado da turma com sucesso!`,
+        "Desvinculado da Turma",
+        "success"
+      );
+      loadTurmaDetails();
+      onUpdated();
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message || "Não foi possível remover o aluno da turma.",
+        "Erro ao Desvincular",
+        "error"
+      );
     }
   }
 
@@ -89,12 +104,21 @@ export const TurmaAlunosModal: React.FC<TurmaAlunosModalProps> = ({
     try {
       setIsSaving(true);
       await turmaService.enturmarAlunos(turmaId!, selectedAlunoIds);
+      showAvatarToast(
+        `${selectedAlunoIds.length} estudante(s) enturmado(s) com sucesso!`,
+        "Enturmação Realizada",
+        "success"
+      );
       setShowEnturmarPanel(false);
       setSelectedAlunoIds([]);
       loadTurmaDetails();
       onUpdated();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao enturmar alunos.");
+      showAvatarToast(
+        err.response?.data?.message || "Erro ao enturmar alunos.",
+        "Erro ao Enturmar",
+        "error"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -244,7 +268,7 @@ export const TurmaAlunosModal: React.FC<TurmaAlunosModalProps> = ({
                           type="button"
                           className={styles.btnDesenturmar}
                           title="Desvincular da turma"
-                          onClick={() => handleDesenturmar(aluno.id, aluno.nome)}
+                          onClick={() => handleOpenDesenturmar(aluno.id, aluno.nome)}
                         >
                           <UserMinus size={14} />
                           Desenturmar
@@ -264,6 +288,27 @@ export const TurmaAlunosModal: React.FC<TurmaAlunosModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Modal Institucional de Confirmação para Desenturmar */}
+      <ConfirmModal
+        isOpen={alunoToDesenturmar !== null}
+        onClose={() => setAlunoToDesenturmar(null)}
+        onConfirm={handleConfirmDesenturmar}
+        title="Desvincular Aluno da Turma"
+        subtitle="Confirmação de desenturmação"
+        confirmLabel="Sim, desvincular aluno"
+        confirmVariant="warning"
+        icon="user-minus"
+        itemDetails={
+          alunoToDesenturmar
+            ? [
+                { label: "Estudante", value: alunoToDesenturmar.nome },
+                { label: "Turma Atual", value: turma?.nome || "Esta Turma" },
+              ]
+            : []
+        }
+        warningText="O aluno não será excluído do sistema. Ele apenas deixará de pertencer a esta turma e ficará disponível para enturmação em outra."
+      />
     </div>
   );
 };

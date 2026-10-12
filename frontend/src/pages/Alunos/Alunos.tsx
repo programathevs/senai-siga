@@ -8,6 +8,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { formatPhoneNumber } from "../../utils/formatters";
 import { AlunoModal } from "./AlunoModal";
 import { AlunoHistoricoModal } from "./AlunoHistoricoModal";
+import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
+import { showAvatarToast } from "../../utils/toast";
 import styles from "./Alunos.module.css";
 
 export function Alunos() {
@@ -28,6 +30,7 @@ export function Alunos() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAluno, setEditingAluno] = useState<Aluno | null>(null);
   const [historicoAlunoId, setHistoricoAlunoId] = useState<number | null>(null);
+  const [alunoToDelete, setAlunoToDelete] = useState<Aluno | null>(null);
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -99,14 +102,26 @@ export function Alunos() {
     setIsModalOpen(true);
   }
 
-  async function handleDeleteAluno(aluno: Aluno) {
-    if (window.confirm(`Tem certeza de que deseja remover o cadastro do aluno "${aluno.nome}"?`)) {
-      try {
-        await alunoService.deleteAluno(aluno.id);
-        loadAlunos(page, perPage);
-      } catch (err: any) {
-        alert(err.response?.data?.message || "Não foi possível remover o aluno.");
-      }
+  function handleOpenDelete(aluno: Aluno) {
+    setAlunoToDelete(aluno);
+  }
+
+  async function handleConfirmDelete() {
+    if (!alunoToDelete) return;
+    try {
+      await alunoService.deleteAluno(alunoToDelete.id);
+      showAvatarToast(
+        `Cadastro do estudante "${alunoToDelete.nome}" removido com sucesso!`,
+        "Estudante Removido",
+        "success"
+      );
+      loadAlunos(page, perPage);
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message || "Não foi possível remover o aluno.",
+        "Erro ao Remover",
+        "error"
+      );
     }
   }
 
@@ -257,7 +272,7 @@ export function Alunos() {
                               type="button"
                               className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
                               title="Remover Aluno"
-                              onClick={() => handleDeleteAluno(aluno)}
+                              onClick={() => handleOpenDelete(aluno)}
                             >
                               <Trash2 size={16} />
                             </button>
@@ -303,6 +318,28 @@ export function Alunos() {
         isOpen={historicoAlunoId !== null}
         onClose={() => setHistoricoAlunoId(null)}
         alunoId={historicoAlunoId}
+      />
+
+      {/* Modal Institucional de Confirmação de Exclusão */}
+      <ConfirmModal
+        isOpen={alunoToDelete !== null}
+        onClose={() => setAlunoToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Remover Cadastro do Aluno"
+        subtitle="Confirmação de exclusão do estudante"
+        confirmLabel="Sim, remover aluno"
+        confirmVariant="danger"
+        icon="trash"
+        itemDetails={
+          alunoToDelete
+            ? [
+                { label: "Estudante", value: alunoToDelete.nome },
+                { label: "Matrícula / RA", value: alunoToDelete.matricula || "—" },
+                { label: "Turma", value: alunoToDelete.turma?.nome || "Sem Turma" },
+              ]
+            : []
+        }
+        warningText="Esta ação removerá o cadastro do estudante no sistema. O histórico também será afetado."
       />
     </div>
   );

@@ -37,6 +37,7 @@ class OcorrenciaController extends Controller
                 'unidades.unidadeCurricular',
                 'instrutores.user',
                 'edicoes.editadoPor',
+                'planosRecuperacao',
             ])
             : Ocorrencia::with([
                 'aluno.turma.curso',
@@ -44,6 +45,7 @@ class OcorrenciaController extends Controller
                 'unidades.unidadeCurricular',
                 'instrutores.user',
                 'edicoes.editadoPor',
+                'planosRecuperacao',
             ]);
 
         // Filtro por busca textual (número sequencial, nome do aluno, matrícula ou CPF)
@@ -266,9 +268,27 @@ class OcorrenciaController extends Controller
         }
 
         $validated = $request->validated();
-        $dadosAntigos = $ocorrencia->toArray();
 
-        $ocorrencia = DB::transaction(function () use ($validated, $ocorrencia) {
+        // Se nenhum dado relevante tiver sido alterado, bloqueia a criação de versão fantasma
+        if (! $this->ocorrenciaPossuiAlteracoes($ocorrencia, $validated)) {
+            return response()->json([
+                'message' => 'Nenhuma alteração foi realizada na ocorrência.',
+                'sem_alteracoes' => true,
+                'data' => $ocorrencia->load([
+                    'aluno.turma.curso',
+                    'registradoPor',
+                    'unidades.unidadeCurricular',
+                    'instrutores.user',
+                    'edicoes.editadoPor',
+                    'planosRecuperacao',
+                ]),
+            ]);
+        }
+
+        $dadosAntigos = $ocorrencia->toArray();
+        $planoArquivado = false;
+
+        $ocorrencia = DB::transaction(function () use ($validated, $ocorrencia, &$planoArquivado) {
             $novaVersao = $ocorrencia->versao + 1;
 
             // Registra a alteração na tabela de auditoria de edições
@@ -304,7 +324,8 @@ class OcorrenciaController extends Controller
             }
 
             // Processa as unidades curriculares da ocorrência (suporte a N UCs)
-            $this->processarUnidades($ocorrencia, $validated);
+            $resUnidades = $this->processarUnidades($ocorrencia, $validated);
+            $planoArquivado = $resUnidades['plano_arquivado'] ?? false;
 
             // Atualiza instrutores notificantes
             if (isset($validated['instrutor_ids'])) {
@@ -323,14 +344,20 @@ class OcorrenciaController extends Controller
             $ocorrencia->toArray()
         );
 
+        $msg = $planoArquivado
+            ? 'Ocorrência atualizada com sucesso. O Plano de Recuperação vinculado foi movido para a lixeira pois as faltas estão dentro do limite permitido.'
+            : 'Ocorrência atualizada com sucesso.';
+
         return response()->json([
-            'message' => 'Ocorrência atualizada com sucesso.',
+            'message' => $msg,
+            'plano_arquivado' => $planoArquivado,
             'data' => $ocorrencia->load([
                 'aluno.turma.curso',
                 'registradoPor',
                 'unidades.unidadeCurricular',
                 'instrutores.user',
                 'edicoes.editadoPor',
+                'planosRecuperacao',
             ]),
         ]);
     }
@@ -338,7 +365,7 @@ class OcorrenciaController extends Controller
     /**
      * Sincroniza e calcula os dados das Unidades Curriculares da ocorrência.
      */
-    private function processarUnidades(Ocorrencia $ocorrencia, array $validated): void
+    private function processarUnidades(Ocorrencia $ocorrencia, array $validated): array
     {
         $unidadesData = [];
 
@@ -356,7 +383,7 @@ class OcorrenciaController extends Controller
         }
 
         if (empty($unidadesData)) {
-            return;
+            return ['plano_arquivado' => false];
         }
 
         // Limpa unidades antigas se estiver atualizando
@@ -421,9 +448,14 @@ class OcorrenciaController extends Controller
                 return $unidade->percentual_atingido > 100.0;
             });
 
+            $planoArquivado = false;
             if (!$excedeLimite) {
                 // Faltas dentro do limite (<= 100%): se existirem planos ativos vinculados, colocar em soft delete
-                PlanoRecuperacao::where('ocorrencia_id', $ocorrencia->id)->delete();
+                $planosAtivos = PlanoRecuperacao::where('ocorrencia_id', $ocorrencia->id)->get();
+                if ($planosAtivos->isNotEmpty()) {
+                    PlanoRecuperacao::where('ocorrencia_id', $ocorrencia->id)->delete();
+                    $planoArquivado = true;
+                }
             } else {
                 // Faltas excedem o limite (> 100%): se existirem planos adormecidos (trashed) vinculados, restaurar
                 $planosAdormecidos = PlanoRecuperacao::onlyTrashed()->where('ocorrencia_id', $ocorrencia->id)->get();
@@ -431,7 +463,89 @@ class OcorrenciaController extends Controller
                     $planoAdormecido->restore();
                 }
             }
+
+            return ['plano_arquivado' => $planoArquivado];
         }
+
+        return ['plano_arquivado' => false];
+    }
+
+    /**
+     * Compara se os novos dados da ocorrência diferem do estado atual persistido.
+     */
+    private function ocorrenciaPossuiAlteracoes(Ocorrencia $ocorrencia, array $validated): bool
+    {
+        if ((int) $ocorrencia->aluno_id !== (int) $validated['aluno_id']) {
+            return true;
+        }
+
+        if ($ocorrencia->tipo !== $validated['tipo']) {
+            return true;
+        }
+
+        $dataAntiga = $ocorrencia->data_ocorrencia ? Carbon::parse($ocorrencia->data_ocorrencia)->format('Y-m-d') : null;
+        $dataNova = Carbon::parse($validated['data_ocorrencia'])->format('Y-m-d');
+        if ($dataAntiga !== $dataNova) {
+            return true;
+        }
+
+        $camposTexto = [
+            'relato_dificuldades',
+            'recomendacoes_professor',
+            'recomendacoes_gestao',
+            'providencias_gestao',
+            'outras_observacoes',
+        ];
+
+        foreach ($camposTexto as $campo) {
+            $antigo = trim((string) ($ocorrencia->{$campo} ?? ''));
+            $novo = trim((string) ($validated[$campo] ?? ''));
+            if ($antigo !== $novo) {
+                return true;
+            }
+        }
+
+        // Unidades curriculares e faltas
+        $unidadesValidadas = [];
+        if (! empty($validated['unidades']) && is_array($validated['unidades'])) {
+            $unidadesValidadas = $validated['unidades'];
+        } elseif (! empty($validated['unidade_curricular_id'])) {
+            $unidadesValidadas = [
+                [
+                    'unidade_curricular_id' => $validated['unidade_curricular_id'],
+                    'quantidade_faltas' => (int) ($validated['quantidade_faltas'] ?? 0),
+                ],
+            ];
+        }
+
+        $unidadesAtuais = $ocorrencia->unidades()->orderBy('id')->get();
+        if ($unidadesAtuais->count() !== count($unidadesValidadas)) {
+            return true;
+        }
+
+        foreach ($unidadesValidadas as $idx => $item) {
+            $atual = $unidadesAtuais->get($idx);
+            if (! $atual) {
+                return true;
+            }
+            if ((int) $atual->unidade_curricular_id !== (int) $item['unidade_curricular_id']) {
+                return true;
+            }
+            if ((int) $atual->quantidade_faltas !== (int) ($item['quantidade_faltas'] ?? 0)) {
+                return true;
+            }
+        }
+
+        // Instrutores notificantes
+        if (isset($validated['instrutor_ids'])) {
+            $instrutoresAtuais = $ocorrencia->instrutores()->pluck('instrutores.id')->sort()->values()->toArray();
+            $instrutoresNovos = collect($validated['instrutor_ids'])->map(fn($id) => (int) $id)->sort()->values()->toArray();
+            if ($instrutoresAtuais !== $instrutoresNovos) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
