@@ -141,4 +141,78 @@ class OcorrenciaControllerTest extends TestCase
             'status' => 'enviado_aqv',
         ]);
     }
+
+    public function test_instrutor_cannot_delete_signed_fiap(): void
+    {
+        $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
+        $aluno = Aluno::factory()->create();
+
+        $ocorrencia = Ocorrencia::create([
+            'aluno_id' => $aluno->id,
+            'registrado_por' => $instrutor->id,
+            'numero_sequencial' => 'FIAP-2026-0002',
+            'versao' => 1,
+            'tipo' => 'falta',
+            'data_ocorrencia' => '2026-10-02',
+            'status' => 'assinado',
+            'relato_dificuldades' => 'FIAP já assinada',
+        ]);
+
+        $response = $this->actingAs($instrutor)->deleteJson("/api/ocorrencias/{$ocorrencia->id}");
+
+        $response->assertStatus(403)
+            ->assertJsonPath('message', 'Ocorrências com status Assinado só podem ser excluídas pela equipe de gestão.');
+
+        $this->assertNotSoftDeleted('ocorrencias', ['id' => $ocorrencia->id]);
+    }
+
+    public function test_gestor_can_delete_signed_fiap(): void
+    {
+        $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
+        $gestor = User::factory()->create(['role' => UserRole::GESTOR]);
+        $aluno = Aluno::factory()->create();
+
+        $ocorrencia = Ocorrencia::create([
+            'aluno_id' => $aluno->id,
+            'registrado_por' => $instrutor->id,
+            'numero_sequencial' => 'FIAP-2026-0003',
+            'versao' => 1,
+            'tipo' => 'falta',
+            'data_ocorrencia' => '2026-10-02',
+            'status' => 'assinado',
+            'relato_dificuldades' => 'FIAP já assinada para exclusão por gestor',
+        ]);
+
+        $response = $this->actingAs($gestor)->deleteJson("/api/ocorrencias/{$ocorrencia->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Ocorrência removida com sucesso.');
+
+        $this->assertSoftDeleted('ocorrencias', ['id' => $ocorrencia->id]);
+    }
+
+    public function test_instrutor_can_delete_own_pending_fiap(): void
+    {
+        $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
+        $aluno = Aluno::factory()->create();
+
+        $ocorrencia = Ocorrencia::create([
+            'aluno_id' => $aluno->id,
+            'registrado_por' => $instrutor->id,
+            'numero_sequencial' => 'FIAP-2026-0004',
+            'versao' => 1,
+            'tipo' => 'falta',
+            'data_ocorrencia' => '2026-10-02',
+            'status' => 'pendente',
+            'relato_dificuldades' => 'FIAP pendente',
+        ]);
+
+        $response = $this->actingAs($instrutor)->deleteJson("/api/ocorrencias/{$ocorrencia->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Ocorrência removida com sucesso.');
+
+        $this->assertSoftDeleted('ocorrencias', ['id' => $ocorrencia->id]);
+    }
 }
+

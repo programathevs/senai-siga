@@ -185,7 +185,13 @@ class PlanoRecuperacaoController extends Controller
     {
         $user = $request->user();
 
-        if ($user && !$user->hasRole('gestor') && $plano->registrado_por !== $user->id) {
+        if ($plano->status_processo === 'concluido' && (! $user || ! $user->hasRole('gestor'))) {
+            return response()->json([
+                'message' => 'Planos de Recuperação concluídos só podem ser excluídos pela equipe de gestão.',
+            ], 403);
+        }
+
+        if ($user && ! $user->hasRole('gestor') && $plano->registrado_por !== $user->id) {
             return response()->json([
                 'message' => 'Você só pode excluir Planos de Recuperação que foram registrados por você.',
             ], 403);

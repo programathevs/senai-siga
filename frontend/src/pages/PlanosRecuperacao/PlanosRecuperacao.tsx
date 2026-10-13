@@ -250,7 +250,11 @@ export function PlanosRecuperacao() {
                 const isDeleted = Boolean(plano.deleted_at);
                 const regId = typeof plano.registrado_por === "object" ? plano.registrado_por?.id : plano.registrado_por;
                 const creatorId = plano.registrado_por_user?.id || regId;
-                const canDelete = user?.role === "gestor" || (creatorId === user?.id && creatorId !== undefined);
+                const canDelete =
+                  user?.role === "gestor" ||
+                  (creatorId === user?.id &&
+                    creatorId !== undefined &&
+                    plano.status_processo !== "concluido");
 
                 return (
                   <tr key={plano.id} className={`${styles.tr} ${isDeleted ? styles.trDeleted : ""}`}>

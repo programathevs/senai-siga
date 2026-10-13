@@ -486,7 +486,8 @@ export function Ocorrencias() {
 
                   const canDelete =
                     !isDeleted &&
-                    (user?.role === "gestor" || (user?.role === "instrutor" && isOwner));
+                    (user?.role === "gestor" ||
+                      (user?.role === "instrutor" && isOwner && oc.status !== "assinado"));
                   const canRestore = isDeleted && user?.role === "gestor";
 
                   return (
