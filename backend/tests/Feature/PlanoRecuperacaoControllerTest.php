@@ -94,4 +94,66 @@ class PlanoRecuperacaoControllerTest extends TestCase
         // Agora a FIAP não deve mais ter plano pendente
         $this->assertFalse($data['ocorrencia']->fresh()->has_plano_pendente);
     }
+
+    public function test_instrutor_cannot_delete_completed_plano(): void
+    {
+        $data = $this->criarEstruturaBase();
+
+        $plano = PlanoRecuperacao::create([
+            'ocorrencia_id' => $data['ocorrencia']->id,
+            'aluno_id' => $data['aluno']->id,
+            'registrado_por' => $data['instrutor']->id,
+            'tipo_programa' => 'recuperacao_paralela',
+            'status_processo' => 'concluido',
+        ]);
+
+        $response = $this->actingAs($data['instrutor'])->deleteJson("/api/planos-recuperacao/{$plano->id}");
+
+        $response->assertStatus(403)
+            ->assertJsonPath('message', 'Planos de Recuperação concluídos só podem ser excluídos pela equipe de gestão.');
+
+        $this->assertNotSoftDeleted('planos_recuperacao', ['id' => $plano->id]);
+    }
+
+    public function test_gestor_can_delete_completed_plano(): void
+    {
+        $data = $this->criarEstruturaBase();
+        $gestor = User::factory()->create(['role' => 'gestor']);
+
+        $plano = PlanoRecuperacao::create([
+            'ocorrencia_id' => $data['ocorrencia']->id,
+            'aluno_id' => $data['aluno']->id,
+            'registrado_por' => $data['instrutor']->id,
+            'tipo_programa' => 'recuperacao_paralela',
+            'status_processo' => 'concluido',
+        ]);
+
+        $response = $this->actingAs($gestor)->deleteJson("/api/planos-recuperacao/{$plano->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Plano de Recuperação removido com sucesso.');
+
+        $this->assertSoftDeleted('planos_recuperacao', ['id' => $plano->id]);
+    }
+
+    public function test_instrutor_can_delete_own_draft_plano(): void
+    {
+        $data = $this->criarEstruturaBase();
+
+        $plano = PlanoRecuperacao::create([
+            'ocorrencia_id' => $data['ocorrencia']->id,
+            'aluno_id' => $data['aluno']->id,
+            'registrado_por' => $data['instrutor']->id,
+            'tipo_programa' => 'recuperacao_paralela',
+            'status_processo' => 'rascunho',
+        ]);
+
+        $response = $this->actingAs($data['instrutor'])->deleteJson("/api/planos-recuperacao/{$plano->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Plano de Recuperação removido com sucesso.');
+
+        $this->assertSoftDeleted('planos_recuperacao', ['id' => $plano->id]);
+    }
 }
+

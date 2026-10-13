@@ -556,6 +556,12 @@ class OcorrenciaController extends Controller
     {
         $user = $request->user();
 
+        if ($ocorrencia->status === 'assinado' && (! $user || ! $user->hasRole('gestor'))) {
+            return response()->json([
+                'message' => 'Ocorrências com status Assinado só podem ser excluídas pela equipe de gestão.',
+            ], 403);
+        }
+
         if ($user && ! $user->hasRole('gestor') && $ocorrencia->registrado_por !== $user->id) {
             return response()->json([
                 'message' => 'Você só pode excluir ocorrências que foram registradas por você.',
