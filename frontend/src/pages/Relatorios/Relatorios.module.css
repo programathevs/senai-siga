@@ -305,7 +305,7 @@
 }
 
 .tr:hover {
-  background-color: color-mix(in srgb, var(--color-surface) 50%, transparent);
+  background-color: var(--color-surface);
 }
 
 .td {
@@ -325,7 +325,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  background-color: rgba(227, 6, 19, 0.12);
   color: var(--color-primary);
   font-weight: 700;
   font-size: 0.8125rem;
@@ -395,7 +395,7 @@
 }
 
 .actionBtn:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  background-color: rgba(227, 6, 19, 0.12);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
@@ -458,8 +458,9 @@
     visibility: visible !important;
   }
 
+  .container,
   .container * {
-    visibility: visible;
+    visibility: visible !important;
   }
 
   .noPrint,
@@ -589,3 +590,129 @@
     color: #000000;
   }
 }
+
+/* Modo de Exportação Direta para PDF (html2canvas) */
+.container.exportingPdfMode {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  padding: 10px !important;
+}
+
+.exportingPdfMode .pageHeader,
+.exportingPdfMode .filterCard,
+.exportingPdfMode .tabsContainer,
+.exportingPdfMode .actionBtn,
+.exportingPdfMode .noPrint,
+.exportingPdfMode :global([class*="paginationContainer"]) {
+  display: none !important;
+}
+
+.exportingPdfMode .printHeader {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.exportingPdfMode .summaryGrid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 0.75rem !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.exportingPdfMode .summaryCard {
+  background: #ffffff !important;
+  border: 1px solid #cccccc !important;
+  box-shadow: none !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.exportingPdfMode .summaryLabel {
+  font-size: 0.7rem !important;
+  color: #555555 !important;
+}
+
+.exportingPdfMode .summaryValue {
+  color: #000000 !important;
+  font-size: 1.15rem !important;
+}
+
+.exportingPdfMode .summaryIconBox {
+  display: none !important;
+}
+
+.exportingPdfMode .tableCard {
+  border: 1px solid #999999 !important;
+  box-shadow: none !important;
+  background: #ffffff !important;
+}
+
+.exportingPdfMode .table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.exportingPdfMode .th {
+  background-color: #f2f2f2 !important;
+  color: #000000 !important;
+  border-bottom: 1px solid #000000 !important;
+  font-size: 0.75rem !important;
+  padding: 6px 8px !important;
+}
+
+.exportingPdfMode .td {
+  color: #000000 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  font-size: 0.75rem !important;
+  padding: 6px 8px !important;
+}
+
+.exportingPdfMode .avatarMini {
+  display: none !important;
+}
+
+.exportingPdfMode .tipoBadge,
+.exportingPdfMode .statusPill {
+  background: transparent !important;
+  border: 1px solid #888888 !important;
+  color: #000000 !important;
+  padding: 2px 6px !important;
+}
+
+.exportingPdfMode .statusDot {
+  display: none !important;
+}
+
+.exportingPdfMode .printSignatures {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  margin-top: 3rem;
+}
+
+.exportingPdfMode .signatureLine {
+  border-top: 1px solid #000000;
+  padding-top: 0.4rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+/* Aviso para o Consolidado por Turma */
+.consolidadoNotice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(0, 89, 168, 0.08);
+  border: 1px solid rgba(0, 89, 168, 0.25);
+  border-radius: var(--radius);
+  color: #0059a8;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+

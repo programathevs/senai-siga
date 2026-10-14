@@ -125,7 +125,12 @@ class RelatorioController extends Controller
             return response()->json([
                 'data' => $itens,
                 'meta' => [
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => $itens->count(),
                     'total' => $itens->count(),
+                    'from' => $itens->count() > 0 ? 1 : 0,
+                    'to' => $itens->count(),
                     'all' => true,
                     'resumo' => $resumo,
                 ],
@@ -133,7 +138,7 @@ class RelatorioController extends Controller
         }
 
         $perPage = (int) $request->input('per_page', 10);
-        if (! in_array($perPage, [5, 10, 20, 30, 40, 50])) {
+        if (! in_array($perPage, [5, 10, 20, 30, 40, 50, 100])) {
             $perPage = 10;
         }
 

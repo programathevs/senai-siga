@@ -42,6 +42,18 @@ const PROPOSTAS_OPCOES = [
   { id: "outros", label: "Outros" },
 ];
 
+function unidadeUltrapassouLimite(ou: any): boolean {
+  if (!ou) return false;
+  const perc = Number(ou.percentual_atingido || 0);
+  const qtd = Number(ou.quantidade_faltas || 0);
+  const lim = Number(ou.limite_faltas_aulas || 0);
+
+  if (lim > 0) {
+    return qtd > lim || perc > 100;
+  }
+  return perc > 100;
+}
+
 export function PlanoRecuperacaoModal({
   isOpen,
   onClose,
@@ -127,9 +139,14 @@ export function PlanoRecuperacaoModal({
       } else if (planoToEdit.unidade_curricular_id) {
         setSelectedUcIds([planoToEdit.unidade_curricular_id]);
       } else if (planoToEdit.ocorrencia?.unidades && planoToEdit.ocorrencia.unidades.length > 0) {
-        setSelectedUcIds(
-          planoToEdit.ocorrencia.unidades.map((u) => u.unidade_curricular_id).filter(Boolean) as number[]
-        );
+        const eFalta = planoToEdit.ocorrencia.tipo === "falta";
+        const unidadesAlvo = eFalta
+          ? planoToEdit.ocorrencia.unidades.filter(unidadeUltrapassouLimite)
+          : planoToEdit.ocorrencia.unidades;
+        const ucs = (unidadesAlvo.length > 0 ? unidadesAlvo : planoToEdit.ocorrencia.unidades)
+          .map((u) => u.unidade_curricular_id)
+          .filter(Boolean) as number[];
+        setSelectedUcIds(ucs);
       } else {
         setSelectedUcIds([]);
       }
@@ -148,9 +165,15 @@ export function PlanoRecuperacaoModal({
       setRegistroDesempenho("");
       setFrequencias([]);
 
-      const ucIds = (ocorrencia.unidades || [])
+      // Para compensação de ausência (FIAP de falta), inclui apenas as unidades que ultrapassaram o limite de 100%
+      const unidadesAlvo = eFalta && ocorrencia.unidades && ocorrencia.unidades.length > 0
+        ? ocorrencia.unidades.filter(unidadeUltrapassouLimite)
+        : (ocorrencia.unidades || []);
+
+      const ucIds = (unidadesAlvo.length > 0 ? unidadesAlvo : (ocorrencia.unidades || []))
         .map((u) => u.unidade_curricular_id)
         .filter(Boolean) as number[];
+
       if (ucIds.length > 0) {
         setSelectedUcIds(ucIds);
       } else if (ocorrencia.unidade_curricular_id) {
@@ -174,19 +197,74 @@ export function PlanoRecuperacaoModal({
     }
   }, [isOpen, ocorrencia, planoToEdit]);
 
-  if (!isOpen) return null;
-
   const targetOcorrencia = planoToEdit?.ocorrencia || ocorrencia || manualOcorrencia;
   const isOcorrenciaExcluida = Boolean(targetOcorrencia?.deleted_at);
   const targetAluno = targetOcorrencia?.aluno || planoToEdit?.aluno;
   const targetTurma = targetAluno?.turma;
   const targetCurso = targetTurma?.curso;
 
-  // Lista com todas as UCs disponíveis (do curso da turma, da ocorrência e do plano)
+  // Lista com as UCs disponíveis (restringindo estritamente às UCs apontadas na FIAP vinculada)
   const todasUcsDisponiveis = useMemo(() => {
     const list: UnidadeCurricular[] = [];
     const seen = new Set<number>();
 
+    // Sempre que houver uma FIAP vinculada, restringir estritamente às Unidades Curriculares apontadas na FIAP
+    if (targetOcorrencia) {
+      if (targetOcorrencia.unidades && targetOcorrencia.unidades.length > 0) {
+        const unidadesFiltradas = targetOcorrencia.tipo === "falta"
+          ? targetOcorrencia.unidades.filter(unidadeUltrapassouLimite)
+          : targetOcorrencia.unidades;
+
+        const unidadesParaUsar = unidadesFiltradas.length > 0
+          ? unidadesFiltradas
+          : targetOcorrencia.unidades;
+
+        for (const ou of unidadesParaUsar) {
+          const uc = ou.unidade_curricular;
+          if (uc && uc.id != null && !seen.has(uc.id)) {
+            seen.add(uc.id);
+            list.push(uc);
+          } else if (ou.unidade_curricular_id && !seen.has(ou.unidade_curricular_id)) {
+            seen.add(ou.unidade_curricular_id);
+            const foundUc = cursos
+              .flatMap((c) => c.unidades_curriculares || [])
+              .find((u) => u.id === ou.unidade_curricular_id);
+            if (foundUc) {
+              list.push(foundUc);
+            }
+          }
+        }
+      } else if (targetOcorrencia.unidade_curricular_id) {
+        const ucId = targetOcorrencia.unidade_curricular_id;
+        seen.add(ucId);
+        const foundUc =
+          targetOcorrencia.unidade_curricular ||
+          cursos.flatMap((c) => c.unidades_curriculares || []).find((u) => u.id === ucId);
+        if (foundUc) {
+          list.push(foundUc);
+        }
+      }
+
+      if (planoToEdit?.unidades) {
+        for (const pu of planoToEdit.unidades) {
+          if (pu.id != null && !seen.has(pu.id)) {
+            seen.add(pu.id);
+            list.push(pu);
+          }
+        }
+      }
+
+      if (planoToEdit?.unidade_curricular && planoToEdit.unidade_curricular.id != null && !seen.has(planoToEdit.unidade_curricular.id)) {
+        seen.add(planoToEdit.unidade_curricular.id);
+        list.push(planoToEdit.unidade_curricular);
+      }
+
+      if (list.length > 0) {
+        return list;
+      }
+    }
+
+    // Fallback: caso a FIAP não possua nenhuma UC cadastrada previamente
     const foundCurso = cursos.find(
       (c) => c.id === targetTurma?.curso_id || c.id === targetCurso?.id
     );
@@ -203,31 +281,10 @@ export function PlanoRecuperacaoModal({
       }
     }
 
-    if (targetOcorrencia?.unidades) {
-      for (const ou of targetOcorrencia.unidades) {
-        if (ou.unidade_curricular && ou.unidade_curricular.id != null && !seen.has(ou.unidade_curricular.id)) {
-          seen.add(ou.unidade_curricular.id);
-          list.push(ou.unidade_curricular);
-        }
-      }
-    }
-
-    if (planoToEdit?.unidades) {
-      for (const pu of planoToEdit.unidades) {
-        if (pu.id != null && !seen.has(pu.id)) {
-          seen.add(pu.id);
-          list.push(pu);
-        }
-      }
-    }
-
-    if (planoToEdit?.unidade_curricular && planoToEdit.unidade_curricular.id != null && !seen.has(planoToEdit.unidade_curricular.id)) {
-      seen.add(planoToEdit.unidade_curricular.id);
-      list.push(planoToEdit.unidade_curricular);
-    }
-
     return list;
   }, [cursos, targetTurma, targetCurso, targetOcorrencia, planoToEdit]);
+
+  if (!isOpen) return null;
 
   function handleAddUc(ucId?: number) {
     if (ucId != null) {
@@ -300,7 +357,7 @@ export function PlanoRecuperacaoModal({
     }
 
     if (selectedUcIds.length === 0) {
-      setErrorMsg("É obrigatório vincular ao menos uma Unidade Curricular ao Plano de Recuperação.");
+      setErrorMsg("É obrigatório vincular ao menos uma Unidade Curricular referente à FIAP ao Plano de Recuperação.");
       return;
     }
 
@@ -416,9 +473,15 @@ export function PlanoRecuperacaoModal({
                       const isFalta = found.tipo === "falta";
                       setTipoPrograma(isFalta ? "compensacao_ausencia" : "recuperacao_paralela");
 
-                      const ucIds = (found.unidades || [])
+                      // Para compensação de ausência (FIAP de falta), inclui apenas as unidades que ultrapassaram o limite de 100%
+                      const unidadesAlvo = isFalta && found.unidades && found.unidades.length > 0
+                        ? found.unidades.filter(unidadeUltrapassouLimite)
+                        : (found.unidades || []);
+
+                      const ucIds = (unidadesAlvo.length > 0 ? unidadesAlvo : (found.unidades || []))
                         .map((u) => u.unidade_curricular_id)
                         .filter(Boolean) as number[];
+
                       if (ucIds.length > 0) {
                         setSelectedUcIds(ucIds);
                       } else if (found.unidade_curricular_id) {
@@ -481,7 +544,9 @@ export function PlanoRecuperacaoModal({
             </div>
 
             <p style={{ fontSize: "0.825rem", color: "var(--color-text-secondary)", marginBottom: "0.75rem" }}>
-              As Unidades Curriculares são pré-carregadas automaticamente da FIAP vinculada. Você pode vincular componentes adicionais se necessário.
+              {targetOcorrencia?.tipo === "falta"
+                ? "Para Compensação de Ausência, apenas as Unidades Curriculares que ultrapassaram o limite de 100% de faltas são incluídas no Plano de Recuperação."
+                : "Apenas as Unidades Curriculares apontadas na FIAP vinculada podem ser incluídas no Plano de Recuperação (ao menos uma obrigatória)."}
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>

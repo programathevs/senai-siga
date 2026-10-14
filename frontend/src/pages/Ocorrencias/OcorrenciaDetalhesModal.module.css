@@ -400,7 +400,7 @@
     width: 100% !important;
   }
 
-  body * {
+  :global(body:has([data-print-modal="true"])) * {
     visibility: hidden !important;
   }
 

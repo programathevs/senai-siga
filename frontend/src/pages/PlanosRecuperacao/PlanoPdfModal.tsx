@@ -102,7 +102,7 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
   }
 
   return (
-    <div className={styles.overlay}>
+    <div className={styles.overlay} data-print-modal="true">
       <div className={styles.modal}>
         {/* TopBar */}
         <div className={styles.topBar}>

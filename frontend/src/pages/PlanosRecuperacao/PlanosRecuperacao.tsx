@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   Edit2,
   Trash2,
-  Printer,
+  Eye,
   Loader2,
   RotateCcw,
 } from "lucide-react";
@@ -357,9 +357,9 @@ export function PlanosRecuperacao() {
                           type="button"
                           className={`${styles.actionBtn} ${styles.actionBtnPdf}`}
                           onClick={() => handleViewPdf(plano)}
-                          title="Visualizar e Imprimir PDF"
+                          title="Visualizar Plano de Recuperação (Imprimir ou Baixar PDF)"
                         >
-                          <Printer size={16} />
+                          <Eye size={16} />
                         </button>
 
                         {!isDeleted && (

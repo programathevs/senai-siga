@@ -62,6 +62,7 @@ interface OcorrenciaModalProps {
   onSuccess: () => void;
   ocorrenciaToEdit?: Ocorrencia | null;
   onOpenPlanoModal?: (createdOcorrencia: Ocorrencia) => void;
+  initialTurmas?: Turma[];
 }
 
 export function OcorrenciaModal({
@@ -70,11 +71,20 @@ export function OcorrenciaModal({
   onSuccess,
   ocorrenciaToEdit,
   onOpenPlanoModal,
+  initialTurmas,
 }: OcorrenciaModalProps) {
   // Dados auxiliares para seleção
-  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [turmas, setTurmas] = useState<Turma[]>(initialTurmas || []);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [cursos, setCursos] = useState<Curso[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+
+  // Sincroniza turmas pré-carregadas pelo componente pai
+  useEffect(() => {
+    if (initialTurmas && initialTurmas.length > 0 && turmas.length === 0) {
+      setTurmas(initialTurmas);
+    }
+  }, [initialTurmas]);
 
   // Estados do Formulário
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>("");
@@ -106,12 +116,26 @@ export function OcorrenciaModal({
 
   const isEditing = !!ocorrenciaToEdit;
 
-  // Carrega turmas e cursos ao abrir o modal
+  // Carrega turmas, alunos e cursos ao abrir o modal
   useEffect(() => {
     if (isOpen) {
-      turmaService.getTurmas({ all: true }).then((res) => setTurmas(res.data)).catch(() => setTurmas([]));
-      alunoService.getAlunos({ all: true }).then((res) => setAlunos(res.data)).catch(() => setAlunos([]));
-      cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => setCursos([]));
+      setIsLoadingData(true);
+      Promise.allSettled([
+        turmaService.getTurmas({ all: true }),
+        alunoService.getAlunos({ all: true }),
+        cursoService.getCursos({ all: true }),
+      ]).then(([resTurmas, resAlunos, resCursos]) => {
+        if (resTurmas.status === "fulfilled") {
+          setTurmas(resTurmas.value.data);
+        }
+        if (resAlunos.status === "fulfilled") {
+          setAlunos(resAlunos.value.data);
+        }
+        if (resCursos.status === "fulfilled") {
+          setCursos(resCursos.value.data);
+        }
+        setIsLoadingData(false);
+      });
     }
   }, [isOpen]);
 
@@ -736,6 +760,11 @@ export function OcorrenciaModal({
                 <label className={styles.label}>
                   Turma
                   <span className={styles.required}>*</span>
+                  {isLoadingData && turmas.length === 0 && (
+                    <span style={{ fontSize: "0.75rem", color: "var(--color-primary)", display: "inline-flex", alignItems: "center", gap: "4px", marginLeft: "8px" }}>
+                      <Loader2 size={12} className="animate-spin" /> Carregando turmas...
+                    </span>
+                  )}
                 </label>
                 <select
                   className={styles.select}
@@ -746,9 +775,14 @@ export function OcorrenciaModal({
                     setSelectedUcId("");
                     setUnidadesList([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
                   }}
+                  disabled={isLoadingData && turmas.length === 0}
                   required
                 >
-                  <option value="">Selecione a turma...</option>
+                  <option value="">
+                    {isLoadingData && turmas.length === 0
+                      ? "Carregando turmas..."
+                      : "Selecione a turma..."}
+                  </option>
                   {turmas.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.nome} ({t.curso?.nome}) - {t.turno}
@@ -762,16 +796,27 @@ export function OcorrenciaModal({
                 <label className={styles.label}>
                   Estudante
                   <span className={styles.required}>*</span>
+                  {isLoadingData && alunos.length === 0 && (
+                    <span style={{ fontSize: "0.75rem", color: "var(--color-primary)", display: "inline-flex", alignItems: "center", gap: "4px", marginLeft: "8px" }}>
+                      <Loader2 size={12} className="animate-spin" /> Carregando alunos...
+                    </span>
+                  )}
                 </label>
                 <select
                   className={styles.select}
                   value={selectedAlunoId}
                   onChange={(e) => setSelectedAlunoId(e.target.value)}
-                  disabled={!selectedTurmaId}
+                  disabled={!selectedTurmaId || (isLoadingData && alunos.length === 0)}
                   required
                 >
                   <option value="">
-                    {selectedTurmaId ? "Selecione o estudante..." : "Selecione uma turma primeiro"}
+                    {isLoadingData && alunos.length === 0
+                      ? "Carregando estudantes..."
+                      : !selectedTurmaId
+                        ? "Selecione uma turma primeiro"
+                        : alunosFiltrados.length === 0
+                          ? "Nenhum estudante matriculado nesta turma"
+                          : "Selecione o estudante..."}
                   </option>
                   {alunosFiltrados.map((a) => (
                     <option key={a.id} value={a.id}>

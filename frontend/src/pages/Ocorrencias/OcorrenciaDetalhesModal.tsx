@@ -310,7 +310,13 @@ export function OcorrenciaDetalhesModal({
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
+    <div
+      className={styles.overlay}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      data-print-modal="true"
+    >
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* Cabeçalho do Modal */}
         <div className={styles.modalHeader}>

@@ -120,7 +120,20 @@ class PlanoRecuperacaoController extends Controller
                 $unidadeIds = [(int) $data['unidade_curricular_id']];
             } elseif ($ocorrencia) {
                 // Herda as unidades da ocorrência caso não fornecidas explicitamente
-                $unidadeIds = $ocorrencia->unidades()->pluck('unidade_curricular_id')->toArray();
+                if ($ocorrencia->tipo === 'falta') {
+                    $unidadesFalta = $ocorrencia->unidades
+                        ->filter(function ($u) {
+                            if ($u->limite_faltas_aulas > 0) {
+                                return $u->quantidade_faltas > $u->limite_faltas_aulas;
+                            }
+                            return $u->percentual_atingido > 100.0;
+                        })
+                        ->pluck('unidade_curricular_id')
+                        ->toArray();
+                    $unidadeIds = !empty($unidadesFalta) ? $unidadesFalta : $ocorrencia->unidades->pluck('unidade_curricular_id')->toArray();
+                } else {
+                    $unidadeIds = $ocorrencia->unidades()->pluck('unidade_curricular_id')->toArray();
+                }
             }
 
             unset($data['unidade_curricular_ids'], $data['unidades']);

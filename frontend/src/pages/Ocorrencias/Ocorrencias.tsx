@@ -798,6 +798,7 @@ export function Ocorrencias() {
         }}
         ocorrenciaToEdit={editingOcorrencia}
         onOpenPlanoModal={handleOpenPlanoModal}
+        initialTurmas={turmas}
       />
 
       {/* Modal do Plano de Recuperação (Ideia 2 & 3) */}
