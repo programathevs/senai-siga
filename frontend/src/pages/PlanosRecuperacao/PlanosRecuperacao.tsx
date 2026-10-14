@@ -256,6 +256,10 @@ export function PlanosRecuperacao() {
                     creatorId !== undefined &&
                     plano.status_processo !== "concluido");
 
+                const ucsText = plano.unidades && plano.unidades.length > 0
+                  ? plano.unidades.map((u) => u.sigla || u.nome).join(", ")
+                  : plano.unidade_curricular?.sigla || plano.unidade_curricular?.nome || "";
+
                 return (
                   <tr key={plano.id} className={`${styles.tr} ${isDeleted ? styles.trDeleted : ""}`}>
                     {/* FIAP */}
@@ -277,6 +281,7 @@ export function PlanosRecuperacao() {
                           <span className={styles.alunoNome}>{aluno?.nome || "Estudante"}</span>
                           <span className={styles.alunoSub}>
                             RA: {aluno?.matricula || "—"} | {aluno?.turma?.nome || "Sem Turma"}
+                            {ucsText ? ` • UC: ${ucsText}` : ""}
                           </span>
                         </div>
                       </div>

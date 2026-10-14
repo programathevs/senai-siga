@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Aluno;
+use App\Models\Curso;
 use App\Models\Ocorrencia;
 use App\Models\PlanoRecuperacao;
+use App\Models\UnidadeCurricular;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -154,6 +156,115 @@ class PlanoRecuperacaoControllerTest extends TestCase
             ->assertJsonPath('message', 'Plano de Recuperação removido com sucesso.');
 
         $this->assertSoftDeleted('planos_recuperacao', ['id' => $plano->id]);
+    }
+
+    public function test_instrutor_pode_criar_plano_com_multiplas_ucs(): void
+    {
+        $data = $this->criarEstruturaBase();
+        $curso = Curso::factory()->create();
+
+        $uc1 = UnidadeCurricular::create([
+            'curso_id' => $curso->id,
+            'nome' => 'Banco de Dados',
+            'sigla' => 'BD',
+            'carga_horaria' => 60,
+        ]);
+
+        $uc2 = UnidadeCurricular::create([
+            'curso_id' => $curso->id,
+            'nome' => 'Programação Orientada a Objetos',
+            'sigla' => 'POO',
+            'carga_horaria' => 80,
+        ]);
+
+        $payload = [
+            'ocorrencia_id' => $data['ocorrencia']->id,
+            'aluno_id' => $data['aluno']->id,
+            'unidade_curricular_ids' => [$uc1->id, $uc2->id],
+            'tipo_programa' => 'recuperacao_paralela',
+            'ciclo_avaliacao' => '1º',
+            'conteudo_programatico' => 'Recuperação de POO e BD',
+        ];
+
+        $response = $this->actingAs($data['instrutor'])
+            ->postJson('/api/planos-recuperacao', $payload);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.unidades.0.id', $uc1->id)
+            ->assertJsonPath('data.unidades.1.id', $uc2->id);
+
+        $planoId = $response->json('data.id');
+
+        $this->assertDatabaseHas('plano_recuperacao_unidades', [
+            'plano_recuperacao_id' => $planoId,
+            'unidade_curricular_id' => $uc1->id,
+        ]);
+        $this->assertDatabaseHas('plano_recuperacao_unidades', [
+            'plano_recuperacao_id' => $planoId,
+            'unidade_curricular_id' => $uc2->id,
+        ]);
+    }
+
+    public function test_plano_herda_multiplas_ucs_da_ocorrencia_automaticamente(): void
+    {
+        $data = $this->criarEstruturaBase();
+        $curso = Curso::factory()->create();
+
+        $uc1 = UnidadeCurricular::create([
+            'curso_id' => $curso->id,
+            'nome' => 'Front-End',
+            'sigla' => 'FE',
+            'carga_horaria' => 80,
+        ]);
+
+        $uc2 = UnidadeCurricular::create([
+            'curso_id' => $curso->id,
+            'nome' => 'Back-End',
+            'sigla' => 'BE',
+            'carga_horaria' => 80,
+        ]);
+
+        // Associa as UCs à ocorrência
+        $data['ocorrencia']->unidades()->createMany([
+            [
+                'unidade_curricular_id' => $uc1->id,
+                'total_aulas_dadas' => 0,
+                'quantidade_faltas' => 0,
+                'limite_percentual' => 25.0,
+                'limite_faltas_aulas' => 27,
+                'percentual_atingido' => 0.0,
+            ],
+            [
+                'unidade_curricular_id' => $uc2->id,
+                'total_aulas_dadas' => 0,
+                'quantidade_faltas' => 0,
+                'limite_percentual' => 25.0,
+                'limite_faltas_aulas' => 27,
+                'percentual_atingido' => 0.0,
+            ],
+        ]);
+
+        $payload = [
+            'ocorrencia_id' => $data['ocorrencia']->id,
+            'aluno_id' => $data['aluno']->id,
+            'tipo_programa' => 'recuperacao_paralela',
+            'ciclo_avaliacao' => '1º',
+        ];
+
+        $response = $this->actingAs($data['instrutor'])
+            ->postJson('/api/planos-recuperacao', $payload);
+
+        $response->assertCreated();
+        $planoId = $response->json('data.id');
+
+        $this->assertDatabaseHas('plano_recuperacao_unidades', [
+            'plano_recuperacao_id' => $planoId,
+            'unidade_curricular_id' => $uc1->id,
+        ]);
+        $this->assertDatabaseHas('plano_recuperacao_unidades', [
+            'plano_recuperacao_id' => $planoId,
+            'unidade_curricular_id' => $uc2->id,
+        ]);
     }
 }
 

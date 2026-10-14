@@ -120,13 +120,13 @@ export function OcorrenciaDetalhesModal({
       : "Não informada";
   })();
 
-  const faltasDisplay = ocorrencia.tipo === "comportamento"
+  const faltasDisplay = ocorrencia.tipo !== "falta"
     ? "----"
     : unidades.length > 0
     ? unidades.map((u) => `${u.quantidade_faltas} (${u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC"})`).join(" / ")
     : `${quantidadeFaltas} faltas`;
 
-  const limiteFaltasDisplay = ocorrencia.tipo === "comportamento"
+  const limiteFaltasDisplay = ocorrencia.tipo !== "falta"
     ? "----"
     : unidades.length > 0
     ? unidades.map((u) => {

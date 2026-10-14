@@ -29,6 +29,7 @@ export interface PlanoRecuperacao {
   turma_uc_id?: number | null;
   unidade_curricular_id?: number | null;
   unidade_curricular?: UnidadeCurricular | null;
+  unidades?: UnidadeCurricular[];
   registrado_por: number | { id: number; name: string; email: string };
   registrado_por_user?: { id: number; name: string; email: string };
   tipo_programa: PlanoTipoPrograma;
@@ -55,6 +56,8 @@ export interface PlanoRecuperacaoPayload {
   aluno_id: number;
   turma_uc_id?: number | null;
   unidade_curricular_id?: number | null;
+  unidade_curricular_ids?: number[];
+  unidades?: number[] | { unidade_curricular_id: number }[];
   tipo_programa: PlanoTipoPrograma;
   ciclo_avaliacao?: string;
   conteudo_programatico?: string;

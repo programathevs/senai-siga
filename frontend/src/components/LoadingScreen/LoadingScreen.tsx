@@ -9,7 +9,7 @@ export function LoadingScreen() {
         <img src={senaiLogo} alt="SENAI" className={styles.logo} />
         <div className={styles.spinnerWrapper}>
           <Loader2 size={24} className="animate-spin" color="var(--color-primary)" />
-          <span className={styles.text}>Carregando SENAI SIGA...</span>
+          <span className={styles.text}>Carregando SENAI SIGA</span>
         </div>
       </div>
     </div>

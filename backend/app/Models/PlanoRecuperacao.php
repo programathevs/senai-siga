@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PlanoRecuperacao extends Model
@@ -67,6 +68,16 @@ class PlanoRecuperacao extends Model
     public function unidadeCurricular(): BelongsTo
     {
         return $this->belongsTo(UnidadeCurricular::class, 'unidade_curricular_id');
+    }
+
+    public function unidades(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            UnidadeCurricular::class,
+            'plano_recuperacao_unidades',
+            'plano_recuperacao_id',
+            'unidade_curricular_id'
+        )->withTimestamps();
     }
 
     public function registradoPor(): BelongsTo

@@ -46,6 +46,13 @@ class OcorrenciaRequest extends FormRequest
             $rules['limite_percentual'] = ['nullable', 'numeric', 'min:1', 'max:100'];
         }
 
+        // Se for tipo DESEMPENHO ou APROVEITAMENTO, exige ao menos uma Unidade Curricular vinculada
+        if ($this->input('tipo') === 'desempenho' || $this->input('tipo') === 'aproveitamento') {
+            if (! $this->has('unidades') || empty($this->input('unidades'))) {
+                $rules['unidade_curricular_id'] = ['required', 'exists:unidades_curriculares,id'];
+            }
+        }
+
         // Se for tipo DESEMPENHO, COMPORTAMENTO ou APROVEITAMENTO, relato é obrigatório
         if ($this->input('tipo') === 'desempenho' || $this->input('tipo') === 'comportamento' || $this->input('tipo') === 'aproveitamento') {
             $rules['relato_dificuldades'] = ['required', 'string', 'min:5'];
@@ -67,7 +74,7 @@ class OcorrenciaRequest extends FormRequest
             'tipo.required' => 'Informe a motivação da FIAP (Falta, Comportamento ou Desempenho).',
             'tipo.in' => 'O tipo informado deve ser Falta, Comportamento ou Desempenho.',
             'data_ocorrencia.required' => 'A data da ocorrência é obrigatória.',
-            'unidade_curricular_id.required' => 'Para FIAPs de falta, selecione a Unidade Curricular correspondente.',
+            'unidade_curricular_id.required' => 'Selecione ao menos uma Unidade Curricular correspondente para a FIAP.',
             'quantidade_faltas.required' => 'Informe o total de horas/aulas de faltas acumuladas.',
             'quantidade_faltas.min' => 'A quantidade de faltas deve ser de ao menos 1 aula.',
             'relato_dificuldades.required' => 'O relato circunstanciado dos fatos ou dificuldades pedagógicas é obrigatório.',

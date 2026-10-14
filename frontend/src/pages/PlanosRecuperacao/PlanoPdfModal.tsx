@@ -199,8 +199,10 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
                   <span className={styles.labelBold}>Docente:</span> {docente}
                 </td>
                 <td colSpan={2}>
-                  <span className={styles.labelBold}>Unidade Curricular:</span>{" "}
-                  {plano.unidade_curricular?.nome || plano.unidade_curricular?.sigla || "Desenvolvimento de Sistemas"}
+                  <span className={styles.labelBold}>Unidade(s) Curricular(es):</span>{" "}
+                  {plano.unidades && plano.unidades.length > 0
+                    ? plano.unidades.map((u) => u.sigla ? `${u.nome} (${u.sigla})` : u.nome).join(" / ")
+                    : plano.unidade_curricular?.nome || plano.unidade_curricular?.sigla || "Desenvolvimento de Sistemas"}
                 </td>
               </tr>
               <tr>

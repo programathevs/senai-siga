@@ -211,7 +211,10 @@ export function OcorrenciaModal({
 
     setUnidadesList((prev) => [
       ...prev,
-      { unidade_curricular_id: proximaUc ? String(proximaUc.id) : "", quantidade_faltas: 4 },
+      {
+        unidade_curricular_id: proximaUc ? String(proximaUc.id) : "",
+        quantidade_faltas: tipo === "falta" ? 4 : 0,
+      },
     ]);
   }
 
@@ -277,12 +280,15 @@ export function OcorrenciaModal({
     if (!isEditing && selectedTurmaId && unidadesCurricularesFiltradas.length > 0) {
       setUnidadesList((prev) => {
         if (prev.length === 1 && !prev[0].unidade_curricular_id) {
-          return [{ unidade_curricular_id: String(unidadesCurricularesFiltradas[0].id), quantidade_faltas: 4 }];
+          return [{
+            unidade_curricular_id: String(unidadesCurricularesFiltradas[0].id),
+            quantidade_faltas: tipo === "falta" ? 4 : 0,
+          }];
         }
         return prev;
       });
     }
-  }, [selectedTurmaId, unidadesCurricularesFiltradas, isEditing]);
+  }, [selectedTurmaId, unidadesCurricularesFiltradas, isEditing, tipo]);
 
   const isTipoChangedByEdit = isEditing && ocorrenciaToEdit?.tipo !== tipo;
   const shouldUpdateDefaults = !isEditing || isTipoChangedByEdit;
@@ -490,7 +496,7 @@ export function OcorrenciaModal({
     if (norm(outrasObservacoes) !== norm(ocorrenciaToEdit.outras_observacoes)) return true;
 
     // 5. Unidades Curriculares e Faltas
-    if (tipo === "falta") {
+    if (tipo === "falta" || tipo === "desempenho") {
       if (!areUnidadesEqual(unidadesList, origUnidades)) return true;
     } else {
       const origUcId = ocorrenciaToEdit.unidade_curricular_id
@@ -535,15 +541,27 @@ export function OcorrenciaModal({
       return;
     }
 
-    const validUnidades = unidadesList
+    const validUnidadesFalta = unidadesList
       .filter((u) => Boolean(u.unidade_curricular_id))
       .map((u) => ({
         unidade_curricular_id: Number(u.unidade_curricular_id),
         quantidade_faltas: Math.max(1, Number(u.quantidade_faltas) || 1),
       }));
 
-    if (tipo === "falta" && validUnidades.length === 0) {
+    const validUnidadesDesempenho = unidadesList
+      .filter((u) => Boolean(u.unidade_curricular_id))
+      .map((u) => ({
+        unidade_curricular_id: Number(u.unidade_curricular_id),
+        quantidade_faltas: 0,
+      }));
+
+    if (tipo === "falta" && validUnidadesFalta.length === 0) {
       setErrorMessage("Para FIAPs de falta, selecione ao menos uma Unidade Curricular.");
+      return;
+    }
+
+    if (tipo === "desempenho" && validUnidadesDesempenho.length === 0) {
+      setErrorMessage("Para FIAPs de aproveitamento, selecione ao menos uma Unidade Curricular.");
       return;
     }
 
@@ -561,13 +579,17 @@ export function OcorrenciaModal({
         tipo,
         data_ocorrencia: dataOcorrencia,
         unidades: tipo === "falta"
-          ? validUnidades
-          : (selectedUcNum ? [{ unidade_curricular_id: selectedUcNum, quantidade_faltas: 0 }] : undefined),
+          ? validUnidadesFalta
+          : tipo === "desempenho"
+            ? validUnidadesDesempenho
+            : (selectedUcNum ? [{ unidade_curricular_id: selectedUcNum, quantidade_faltas: 0 }] : undefined),
         unidade_curricular_id: tipo === "falta"
-          ? (validUnidades.length > 0 ? validUnidades[0].unidade_curricular_id : undefined)
-          : selectedUcNum,
+          ? (validUnidadesFalta.length > 0 ? validUnidadesFalta[0].unidade_curricular_id : undefined)
+          : tipo === "desempenho"
+            ? (validUnidadesDesempenho.length > 0 ? validUnidadesDesempenho[0].unidade_curricular_id : undefined)
+            : selectedUcNum,
         quantidade_faltas: tipo === "falta"
-          ? (validUnidades.length > 0 ? validUnidades[0].quantidade_faltas : Number(quantidadeFaltas))
+          ? (validUnidadesFalta.length > 0 ? validUnidadesFalta[0].quantidade_faltas : Number(quantidadeFaltas))
           : 0,
         limite_percentual: 25.0,
         relato_dificuldades: relatoDificuldades.trim() || undefined,
@@ -774,8 +796,8 @@ export function OcorrenciaModal({
                 />
               </div>
 
-              {/* Unidade Curricular para Desempenho e Comportamento */}
-              {(tipo === "desempenho" || tipo === "comportamento") && (
+              {/* Unidade Curricular para Comportamento (Opcional) */}
+              {tipo === "comportamento" && (
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>Unidade Curricular (Opcional)</label>
                   <select
@@ -978,6 +1000,89 @@ export function OcorrenciaModal({
             </div>
           )}
 
+          {/* 3. UNIDADES CURRICULARES (Se for tipo DESEMPENHO / APROVEITAMENTO) */}
+          {tipo === "desempenho" && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeaderBetween}>
+                <span className={styles.sectionHeaderTitle}>
+                  3. Unidades Curriculares com Aproveitamento Insatisfatório
+                </span>
+
+                {unidadesList.length < unidadesCurricularesFiltradas.length && (
+                  <button
+                    type="button"
+                    className={styles.headerAddBtn}
+                    onClick={handleAddUcLine}
+                    title="Adicionar mais uma Unidade Curricular nesta FIAP"
+                  >
+                    <Plus size={14} />
+                    <span>Adicionar matéria</span>
+                  </button>
+                )}
+              </div>
+
+              {unidadesList.map((item, index) => (
+                <div key={index} className={styles.calculadoraFaltasCard} style={{ padding: "0.85rem 1rem" }}>
+                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
+                    <div style={{ flex: 1 }} className={styles.fieldGroup}>
+                      <label className={styles.label}>
+                        Unidade Curricular #{index + 1}
+                        <span className={styles.required}>*</span>
+                      </label>
+                      <select
+                        className={styles.select}
+                        value={item.unidade_curricular_id}
+                        onChange={(e) =>
+                          handleUpdateUcLine(index, "unidade_curricular_id", e.target.value)
+                        }
+                        disabled={!selectedTurmaId}
+                        required
+                      >
+                        <option value="">
+                          {selectedTurmaId
+                            ? unidadesCurricularesFiltradas.length > 0
+                              ? "Selecione a unidade curricular..."
+                              : "Nenhuma UC cadastrada para este semestre"
+                            : "Selecione uma turma primeiro"}
+                        </option>
+                        {unidadesCurricularesFiltradas
+                          .filter(
+                            (uc) =>
+                              String(uc.id) === String(item.unidade_curricular_id) ||
+                              !unidadesList.some(
+                                (other, oIdx) =>
+                                  oIdx !== index && String(other.unidade_curricular_id) === String(uc.id)
+                              )
+                          )
+                          .map((uc) => {
+                            const sem = uc.semestre_plano_3 || uc.semestre_plano_4;
+                            const semBadge = sem ? ` (${sem}º Sem)` : "";
+                            return (
+                              <option key={uc.id} value={uc.id}>
+                                {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome}{semBadge} — {uc.carga_horaria}h
+                              </option>
+                            );
+                          })}
+                      </select>
+                    </div>
+
+                    {unidadesList.length > 1 && (
+                      <button
+                        type="button"
+                        className={styles.removeUcBtn}
+                        onClick={() => handleRemoveUcLine(index)}
+                        title="Remover esta matéria"
+                        style={{ marginBottom: "2px" }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* 4. RELATO DOS FATOS OU DIFICULDADES */}
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
@@ -986,7 +1091,7 @@ export function OcorrenciaModal({
                   ? "4. Justificativa & Recomendações"
                   : tipo === "comportamento"
                     ? "3. Relato da Ocorrência Disciplinar"
-                    : "3. Diagnóstico de Aproveitamento Pedagógico"}
+                    : "4. Diagnóstico de Aproveitamento Pedagógico"}
               </span>
             </div>
 
