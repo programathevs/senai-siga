@@ -71,16 +71,24 @@ class Ocorrencia extends Model
             return false;
         }
 
-        if ($this->planosRecuperacao()->count() > 0) {
+        $temPlano = $this->relationLoaded('planosRecuperacao')
+            ? $this->planosRecuperacao->isNotEmpty()
+            : $this->planosRecuperacao()->exists();
+
+        if ($temPlano) {
             return false;
         }
 
         if ($this->tipo === 'falta') {
-            if ($this->unidades->isEmpty()) {
+            $unidades = $this->relationLoaded('unidades')
+                ? $this->unidades
+                : $this->unidades()->get();
+
+            if ($unidades->isEmpty()) {
                 return false;
             }
 
-            return $this->unidades->contains(function ($unidade) {
+            return $unidades->contains(function ($unidade) {
                 if ($unidade->limite_faltas_aulas > 0) {
                     return $unidade->quantidade_faltas > $unidade->limite_faltas_aulas;
                 }

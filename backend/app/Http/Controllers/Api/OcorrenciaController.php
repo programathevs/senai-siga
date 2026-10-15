@@ -126,15 +126,27 @@ class OcorrenciaController extends Controller
             });
         }
 
+        $startOfMonth = $now->copy()->startOfMonth()->format('Y-m-d');
+        $endOfMonth = $now->copy()->endOfMonth()->format('Y-m-d');
+
+        $statsRaw = (clone $statsBaseQuery)
+            ->selectRaw('
+                COUNT(CASE WHEN data_ocorrencia BETWEEN ? AND ? THEN 1 END) as total_mes,
+                COUNT(CASE WHEN tipo = "falta" THEN 1 END) as total_falta,
+                COUNT(CASE WHEN tipo = "comportamento" THEN 1 END) as total_comportamento,
+                COUNT(CASE WHEN tipo = "desempenho" THEN 1 END) as total_desempenho,
+                COUNT(CASE WHEN status = "enviado_aqv" THEN 1 END) as total_aqv,
+                COUNT(CASE WHEN status = "pendente" THEN 1 END) as total_pendente
+            ', [$startOfMonth, $endOfMonth])
+            ->first();
+
         $stats = [
-            'total_mes' => (clone $statsBaseQuery)->whereMonth('data_ocorrencia', $now->month)
-                ->whereYear('data_ocorrencia', $now->year)
-                ->count(),
-            'total_falta' => (clone $statsBaseQuery)->where('tipo', 'falta')->count(),
-            'total_comportamento' => (clone $statsBaseQuery)->where('tipo', 'comportamento')->count(),
-            'total_desempenho' => (clone $statsBaseQuery)->where('tipo', 'desempenho')->count(),
-            'total_aqv' => (clone $statsBaseQuery)->where('status', 'enviado_aqv')->count(),
-            'total_pendente' => (clone $statsBaseQuery)->where('status', 'pendente')->count(),
+            'total_mes' => (int) ($statsRaw?->total_mes ?? 0),
+            'total_falta' => (int) ($statsRaw?->total_falta ?? 0),
+            'total_comportamento' => (int) ($statsRaw?->total_comportamento ?? 0),
+            'total_desempenho' => (int) ($statsRaw?->total_desempenho ?? 0),
+            'total_aqv' => (int) ($statsRaw?->total_aqv ?? 0),
+            'total_pendente' => (int) ($statsRaw?->total_pendente ?? 0),
         ];
 
         $query->orderBy('data_ocorrencia', 'desc')

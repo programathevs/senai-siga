@@ -78,6 +78,7 @@ export function OcorrenciaModal({
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isLoadingAlunos, setIsLoadingAlunos] = useState(false);
 
   // Sincroniza turmas pré-carregadas pelo componente pai
   useEffect(() => {
@@ -116,20 +117,16 @@ export function OcorrenciaModal({
 
   const isEditing = !!ocorrenciaToEdit;
 
-  // Carrega turmas, alunos e cursos ao abrir o modal
+  // Carrega turmas e cursos leves ao abrir o modal (alunos são carregados sob demanda por turma)
   useEffect(() => {
     if (isOpen) {
       setIsLoadingData(true);
       Promise.allSettled([
         turmaService.getTurmas({ all: true }),
-        alunoService.getAlunos({ all: true }),
         cursoService.getCursos({ all: true }),
-      ]).then(([resTurmas, resAlunos, resCursos]) => {
+      ]).then(([resTurmas, resCursos]) => {
         if (resTurmas.status === "fulfilled") {
           setTurmas(resTurmas.value.data);
-        }
-        if (resAlunos.status === "fulfilled") {
-          setAlunos(resAlunos.value.data);
         }
         if (resCursos.status === "fulfilled") {
           setCursos(resCursos.value.data);
@@ -138,6 +135,36 @@ export function OcorrenciaModal({
       });
     }
   }, [isOpen]);
+
+  // Carrega estudantes sob demanda apenas da turma selecionada
+  useEffect(() => {
+    if (!isOpen || !selectedTurmaId) {
+      if (!isEditing) {
+        setAlunos([]);
+      }
+      return;
+    }
+
+    setIsLoadingAlunos(true);
+    alunoService
+      .getAlunos({ turma_id: Number(selectedTurmaId), all: true })
+      .then((res) => {
+        let loaded = res.data;
+        if (
+          isEditing &&
+          ocorrenciaToEdit?.aluno &&
+          String(ocorrenciaToEdit.aluno.turma_id) === String(selectedTurmaId) &&
+          !loaded.some((a) => a.id === ocorrenciaToEdit.aluno!.id)
+        ) {
+          loaded = [ocorrenciaToEdit.aluno, ...loaded];
+        }
+        setAlunos(loaded);
+      })
+      .catch(() => {})
+      .finally(() => {
+        setIsLoadingAlunos(false);
+      });
+  }, [isOpen, selectedTurmaId, isEditing, ocorrenciaToEdit]);
 
   // Preenche dados ao editar
   useEffect(() => {
@@ -796,9 +823,9 @@ export function OcorrenciaModal({
                 <label className={styles.label}>
                   Estudante
                   <span className={styles.required}>*</span>
-                  {isLoadingData && alunos.length === 0 && (
+                  {isLoadingAlunos && (
                     <span style={{ fontSize: "0.75rem", color: "var(--color-primary)", display: "inline-flex", alignItems: "center", gap: "4px", marginLeft: "8px" }}>
-                      <Loader2 size={12} className="animate-spin" /> Carregando alunos...
+                      <Loader2 size={12} className="animate-spin" /> Carregando alunos da turma...
                     </span>
                   )}
                 </label>
@@ -806,12 +833,12 @@ export function OcorrenciaModal({
                   className={styles.select}
                   value={selectedAlunoId}
                   onChange={(e) => setSelectedAlunoId(e.target.value)}
-                  disabled={!selectedTurmaId || (isLoadingData && alunos.length === 0)}
+                  disabled={!selectedTurmaId || isLoadingAlunos}
                   required
                 >
                   <option value="">
-                    {isLoadingData && alunos.length === 0
-                      ? "Carregando estudantes..."
+                    {isLoadingAlunos
+                      ? "Carregando estudantes da turma..."
                       : !selectedTurmaId
                         ? "Selecione uma turma primeiro"
                         : alunosFiltrados.length === 0
