@@ -1,3 +1,41 @@
+.bgDecoration {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--color-surface);
+}
+
+.bgAmbientOrb {
+  position: absolute;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.6;
+}
+
+.bgAmbientOrbTopLeft {
+  top: -8rem;
+  left: -8rem;
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.bgAmbientOrbBottomRight {
+  bottom: -8rem;
+  right: -8rem;
+  background-color: color-mix(in srgb, var(--color-border) 60%, transparent);
+}
+
+.bgDotPattern {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.38;
+}
+
 .pageWrapper {
   min-height: 100vh;
   width: 100%;
@@ -5,9 +43,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem 1rem;
-  background-color: var(--color-surface);
+  justify-content: center;
 }
 
 .contentCenter {
@@ -16,12 +52,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 0;
 }
 
 .containerBox {
   width: 100%;
-  max-width: 560px;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,17 +70,18 @@
   text-align: center;
 }
 
-.brandLogoBox {
-  height: 3rem;
+.brandLogoWrapper {
+  height: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.brandLogoBox img {
-  height: 100%;
+.brandLogo {
+  height: 3rem;
   width: auto;
+  max-width: 170px;
   object-fit: contain;
 }
 
@@ -79,35 +115,33 @@
   background-color: var(--color-primary);
 }
 
-.statusHeaderRow {
+.headerArea {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--color-border);
+  text-align: center;
   margin-bottom: 1.25rem;
-  flex-wrap: wrap;
 }
 
-.statusPill {
+.badgePill {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.25rem 0.65rem;
-  border-radius: 4px;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  margin-bottom: 0.75rem;
 }
 
-.pulseDot {
-  width: 0.45rem;
-  height: 0.45rem;
+.badgeDot {
+  width: 0.375rem;
+  height: 0.375rem;
   border-radius: 50%;
   background-color: var(--color-primary);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -116,29 +150,31 @@
 .timerBadge {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.35rem;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text-secondary);
-}
-
-.cardHeading {
-  margin-bottom: 1.25rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  margin-top: 0.65rem;
 }
 
 .cardTitle {
-  font-size: 1.375rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: -0.015em;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.35rem 0;
 }
 
 .cardDescription {
   font-size: 0.8125rem;
-  line-height: 1.3rem;
+  line-height: 1.25rem;
   color: var(--color-text-secondary);
   margin: 0;
+  max-width: 360px;
 }
 
 .targetEmailBadge {
@@ -526,31 +562,55 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.9); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 540px) {
   .resetCard {
     padding: 1.75rem 1.25rem;
   }
+
   .criteriaGrid {
     grid-template-columns: 1fr;
   }
+
   .supportHelpBlock {
     flex-direction: column;
     text-align: center;
   }
+
   .supportLeft {
     flex-direction: column;
   }

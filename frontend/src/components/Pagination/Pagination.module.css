@@ -1,0 +1,139 @@
+.paginationContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+}
+
+.paginationLeft {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.recordsInfo {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.highlight {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.perPageWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.perPageSelect {
+  height: 2rem;
+  padding: 0 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.perPageSelect:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+}
+
+.perPageSelect:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.paginationRight {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.4rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.pageBtn:hover:not(:disabled):not(.active) {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--color-border);
+  background-color: var(--color-background);
+}
+
+.ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 2rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  user-select: none;
+}
+
+/* Responsividade Mobile */
+@media (max-width: 640px) {
+  .paginationContainer {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
+  }
+
+  .paginationLeft {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .paginationRight {
+    justify-content: center;
+    width: 100%;
+  }
+}

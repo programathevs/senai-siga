@@ -1,40 +1,65 @@
 import senaiLogo from "../../assets/senai-logo.jpg";
 
 import { useState, useEffect, type FormEvent } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link, useSearchParams } from "react-router";
 import axios from "axios";
 import {
   AtSign,
   Lock,
   Eye,
   EyeOff,
-  ShieldCheck,
-  Headphones,
   LogIn,
   AlertCircle,
+  CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { ThemeToggle } from "../../components/ThemeToggle/ThemeToggle";
+import { api } from "../../services/api";
 import styles from "./Login.module.css";
 
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Pré-carrega o cookie CSRF do Sanctum em background enquanto o usuário preenche o formulário
+  useEffect(() => {
+    if (!document.cookie.includes("XSRF-TOKEN")) {
+      api.get("/sanctum/csrf-cookie").catch(() => {});
+    }
+  }, []);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Faz a mensagem de erro desaparecer automaticamente após 3 segundos
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    const errorParam = searchParams.get("error");
+
+    if (verified === "1") {
+      setSuccessMessage(
+        "E-mail confirmado com sucesso! Utilize seu e-mail institucional e a senha temporária recebida para acessar."
+      );
+    } else if (verified === "already") {
+      setSuccessMessage("Seu e-mail já foi confirmado anteriormente. Efetue login para continuar.");
+    } else if (errorParam === "invalid_link") {
+      setErrorMessage("O link de confirmação é inválido ou já expirou. Contate a coordenação.");
+    }
+  }, [searchParams]);
+
+  // Faz a mensagem de erro desaparecer automaticamente após 4 segundos
   useEffect(() => {
     if (!errorMessage) return;
 
     const timer = setTimeout(() => {
       setErrorMessage("");
-    }, 3000);
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [errorMessage]);
@@ -79,6 +104,8 @@ export function Login() {
 
   return (
     <>
+      <ThemeToggle variant="floating" />
+
       <div className={styles.bgDecoration} aria-hidden="true">
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbTopLeft}`}></div>
         <div className={`${styles.bgAmbientOrb} ${styles.bgAmbientOrbBottomRight}`}></div>
@@ -90,7 +117,7 @@ export function Login() {
               height="32"
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="2" cy="2" r="1.2" fill="#dcdcdc"></circle>
+              <circle cx="2" cy="2" r="1.2" fill="var(--color-dot-pattern)"></circle>
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#dot-grid-pattern)"></rect>
@@ -100,6 +127,8 @@ export function Login() {
       <main className={styles.pageWrapper}>
         <div className={styles.loginContainer}>
           <article className={styles.loginCard}>
+            <div className={styles.cardAccentBar} />
+
             {/* Cabeçalho */}
             <header className={styles.cardHeader}>
               <div className={styles.brandLogoWrapper}>
@@ -210,6 +239,14 @@ export function Login() {
                 </Link>
               </div>
 
+              {/* Alerta de Sucesso (ex: e-mail confirmado) */}
+              {successMessage && (
+                <div className={styles.alertSuccess} role="status">
+                  <CheckCircle2 size={18} aria-hidden="true" />
+                  <span>{successMessage}</span>
+                </div>
+              )}
+
               {/* Alerta de Erro posicionado abaixo dos inputs */}
               {errorMessage && (
                 <div className={styles.alertError} role="alert">
@@ -237,35 +274,7 @@ export function Login() {
                 )}
               </button>
             </form>
-
-            {/* Aviso Institucional de Segurança */}
-            <footer className={styles.securityNoticeCard}>
-              <div className={styles.securityHeader}>
-                <div className={styles.securityBadgeItem}>
-                  <ShieldCheck className={styles.securityIcon} size={18} aria-hidden="true" />
-                  <span>Criptografia SSL 256-bit</span>
-                </div>
-                <span className={styles.versionTag}>v2.4 LTS</span>
-              </div>
-            </footer>
           </article>
-
-          {/* Informações de Rodapé  */}
-          <footer className={styles.pageFooter}>
-            <div className={styles.supportChannel}>
-              <Headphones size={16} aria-hidden="true" />
-              <span>
-                Suporte Técnico TI:{" "}
-                <a href="https://github.com/programathevs" target="_blank" rel="noreferrer">
-                  Profº Matheus Luiz
-                </a>
-              </span>
-            </div>
-            <p className={styles.copyrightText}>
-              © 2026 SENAI Sumaré — Serviço Nacional de Aprendizagem Industrial. Todos os
-              direitos reservados.
-            </p>
-          </footer>
         </div>
       </main>
     </>

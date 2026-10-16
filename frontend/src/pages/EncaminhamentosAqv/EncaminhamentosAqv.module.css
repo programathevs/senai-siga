@@ -1,0 +1,415 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* KPI Cards Grid */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.kpiCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.kpiCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.kpiIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.kpiContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.kpiLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.kpiValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+/* Barra de Filtros */
+.filtersCard {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.filtersRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.searchBox {
+  flex: 1;
+  min-width: 240px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 2.375rem;
+  padding: 0 0.85rem 0 2.35rem;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  transition: all 0.15s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #6366f1 18%, transparent);
+}
+
+.select {
+  height: 2.375rem;
+  padding: 0 2rem 0 0.85rem;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #6366f1 18%, transparent);
+}
+
+.clearFiltersBtn {
+  height: 2.375rem;
+  padding: 0 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.15s ease;
+}
+
+.clearFiltersBtn:hover {
+  background-color: color-mix(in srgb, var(--color-border) 35%, transparent);
+  color: var(--color-text-primary);
+}
+
+/* Tabela */
+.tableContainer {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.table th {
+  padding: 0.875rem 1rem;
+  background-color: color-mix(in srgb, var(--color-border) 25%, transparent);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.table tbody tr:hover {
+  background-color: color-mix(in srgb, var(--color-border) 15%, transparent);
+}
+
+/* Células customizadas */
+.fiapTag {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 0.8125rem;
+  letter-spacing: 0.03em;
+}
+
+.studentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.studentName {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.studentDetails {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.typeFalta {
+  background-color: color-mix(in srgb, #f59e0b 14%, transparent);
+  color: #d97706;
+}
+
+.typeComportamento {
+  background-color: color-mix(in srgb, #ef4444 14%, transparent);
+  color: #dc2626;
+}
+
+.typeDesempenho {
+  background-color: color-mix(in srgb, #3b82f6 14%, transparent);
+  color: #2563eb;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.statusPendente {
+  background-color: color-mix(in srgb, #f59e0b 14%, transparent);
+  color: #d97706;
+  border: 1px solid color-mix(in srgb, #f59e0b 30%, transparent);
+}
+
+.statusEmAtendimento {
+  background-color: color-mix(in srgb, #6366f1 14%, transparent);
+  color: #6366f1;
+  border: 1px solid color-mix(in srgb, #6366f1 30%, transparent);
+}
+
+.statusConcluido {
+  background-color: color-mix(in srgb, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
+.actionsCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.actionBtn:hover {
+  background-color: color-mix(in srgb, var(--color-border) 40%, transparent);
+  color: var(--color-text-primary);
+  border-color: var(--color-text-secondary);
+}
+
+.actionBtnPrimary {
+  color: #6366f1;
+  border-color: color-mix(in srgb, #6366f1 40%, transparent);
+  background-color: color-mix(in srgb, #6366f1 8%, transparent);
+}
+
+.actionBtnPrimary:hover {
+  background-color: color-mix(in srgb, #6366f1 20%, transparent);
+  color: #4f46e5;
+  border-color: #6366f1;
+}
+
+.actionBtnSuccess {
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+  background-color: color-mix(in srgb, var(--color-success) 8%, transparent);
+}
+
+.actionBtnSuccess:hover {
+  background-color: color-mix(in srgb, var(--color-success) 20%, transparent);
+  border-color: var(--color-success);
+}
+
+/* Empty State & Loading */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1.5rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+  gap: 0.75rem;
+}
+
+.emptyIcon {
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+}
+
+.emptyTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.emptyDesc {
+  font-size: 0.875rem;
+  margin: 0;
+  max-width: 24rem;
+}
+
+.loadingWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  color: var(--color-text-secondary);
+  gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  .filtersRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .searchBox,
+  .select,
+  .clearFiltersBtn {
+    width: 100%;
+  }
+}

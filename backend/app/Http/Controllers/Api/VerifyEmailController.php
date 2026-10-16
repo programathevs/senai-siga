@@ -11,21 +11,28 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyEmailController extends Controller
 {
-    public function __invoke(Request $request, int|string $id, string $hash): JsonResponse
+    public function __invoke(Request $request, int|string $id, string $hash)
     {
+        $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
         $user = User::findOrFail($id);
 
         // Valida se o hash da URL corresponde ao hash sha1 do e-mail do usuário
         if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
-            return response()->json([
-                'message' => 'Link de verificação inválido.',
-            ], Response::HTTP_FORBIDDEN);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Link de verificação inválido.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+            return redirect()->away("{$frontendUrl}/login?error=invalid_link");
         }
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json([
-                'message' => 'E-mail já verificado anteriormente.',
-            ], Response::HTTP_OK);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'E-mail já verificado anteriormente.',
+                ], Response::HTTP_OK);
+            }
+            return redirect()->away("{$frontendUrl}/login?verified=already");
         }
 
         // Marca a data/hora atual na coluna email_verified_at
@@ -33,8 +40,12 @@ class VerifyEmailController extends Controller
             event(new Verified($user));
         }
 
-        return response()->json([
-            'message' => 'E-mail confirmado com sucesso!',
-        ], Response::HTTP_OK);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'E-mail confirmado com sucesso!',
+            ], Response::HTTP_OK);
+        }
+
+        return redirect()->away("{$frontendUrl}/login?verified=1");
     }
 }

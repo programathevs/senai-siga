@@ -1,12 +1,13 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
+import { LoadingScreen } from "../components/LoadingScreen/LoadingScreen";
 
 export function PrivateRoute() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
-    return null; // Aguarda a verificação de sessão do Laravel Sanctum
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {

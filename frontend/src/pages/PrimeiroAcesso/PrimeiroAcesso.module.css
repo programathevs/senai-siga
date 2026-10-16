@@ -1,3 +1,41 @@
+.bgDecoration {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--color-surface);
+}
+
+.bgAmbientOrb {
+  position: absolute;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.6;
+}
+
+.bgAmbientOrbTopLeft {
+  top: -8rem;
+  left: -8rem;
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.bgAmbientOrbBottomRight {
+  bottom: -8rem;
+  right: -8rem;
+  background-color: color-mix(in srgb, var(--color-border) 60%, transparent);
+}
+
+.bgDotPattern {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.38;
+}
+
 .pageWrapper {
   min-height: 100vh;
   width: 100%;
@@ -5,9 +43,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem 1rem;
-  background-color: var(--color-surface);
+  justify-content: center;
 }
 
 .topBar {
@@ -56,12 +92,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 0;
 }
 
 .containerBox {
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -86,13 +121,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 5px;
-  background: linear-gradient(
-    90deg,
-    var(--color-primary) 0%,
-    var(--color-primary-hover) 50%,
-    color-mix(in srgb, var(--color-primary) 30%, transparent) 100%
-  );
+  height: 4px;
+  background-color: var(--color-primary);
 }
 
 .headerArea {
@@ -126,17 +156,18 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.logoIconBox {
-  height: 2.75rem;
+.brandLogoWrapper {
+  height: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0.25rem 0;
+  margin-bottom: 0.75rem;
 }
 
-.logoIconBox img {
-  height: 100%;
+.brandLogo {
+  height: 3rem;
   width: auto;
+  max-width: 170px;
   object-fit: contain;
 }
 
@@ -505,24 +536,46 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.9); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 540px) {
   .accessCard {
     padding: 1.75rem 1.25rem;
   }
+
   .pageBottomFooter {
     flex-direction: column;
     text-align: center;
