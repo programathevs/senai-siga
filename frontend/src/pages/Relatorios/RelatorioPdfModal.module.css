@@ -1,99 +1,88 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.7);
+  background-color: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1200;
-  padding: 1.5rem;
+  padding: 1rem;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal {
-  background: #ffffff;
-  border-radius: 12px;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   width: 100%;
   max-width: 1100px;
   max-height: 94vh;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-.topBar {
-  padding: 0.85rem 1.25rem;
-  background: #0f172a;
-  color: #ffffff;
+.modalHeader {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-shrink: 0;
+  background-color: var(--color-surface);
 }
 
-.topTitle {
-  font-size: 1rem;
-  font-weight: 600;
+.headerTitleGroup {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
-.topActions {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
+.title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
 }
 
-.downloadBtn {
-  padding: 0.45rem 0.9rem;
-  background: #2563eb;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
+.subtitle {
   font-size: 0.8125rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  transition: all 0.15s ease;
+  color: var(--color-text-secondary);
 }
-
-.downloadBtn:hover {
-  background: #1d4ed8;
-}
-
-.downloadBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 
 .closeBtn {
-  background: transparent;
+  background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--color-text-secondary);
   cursor: pointer;
-  padding: 0.35rem;
-  border-radius: 4px;
+  padding: 0.4rem;
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
 }
 
 .closeBtn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
+  background-color: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+  color: var(--color-text-primary);
 }
 
 .modalBody {
   flex: 1;
   overflow-y: auto;
-  background: #f1f5f9;
-  padding: 1.5rem;
+  background-color: color-mix(in srgb, var(--color-border) 25%, transparent);
+  padding: 1.25rem;
   display: flex;
   justify-content: center;
 }
@@ -101,10 +90,10 @@
 .documentBody {
   background: #ffffff;
   width: 100%;
-  height: 100%;
   max-width: 1020px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: 1px solid #cbd5e1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
   padding: 8mm 10mm;
   box-sizing: border-box;
   color: #0f172a;
@@ -274,6 +263,63 @@
   color: #000000;
 }
 
+/* Rodapé de Ações Padronizado */
+.modalFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background-color: var(--color-surface);
+  flex-wrap: wrap;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btnAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 1rem;
+  height: 2.375rem;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+.btnAction:hover {
+  background-color: color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+
+.btnPrimary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.btnPrimary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
 /* Regras de Impressão (@media print) */
 @media print {
   @page {
@@ -328,7 +374,8 @@
     background: transparent !important;
   }
 
-  .topBar {
+  .modalHeader,
+  .modalFooter {
     display: none !important;
   }
 

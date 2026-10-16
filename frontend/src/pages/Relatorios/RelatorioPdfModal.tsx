@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { X, Download, Loader2, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Download, Loader2, Printer } from "lucide-react";
 import html2pdf from "html2pdf.js";
+import { printElementAsPdf } from "../../utils/printPdf";
 import type { Ocorrencia } from "../../services/ocorrenciaService";
 import type { RelatorioResumo, RelatorioTurmaResumoItem } from "../../services/relatorioService";
 import { showAvatarToast } from "../../utils/toast";
@@ -47,11 +48,46 @@ export function RelatorioPdfModal({
   user,
 }: RelatorioPdfModalProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   const dataIso = new Date().toISOString().slice(0, 10);
   const defaultFilename = `Relatorio_SENAI_${activeTab === "analitico" ? "Ocorrencias" : "Turmas"}_${dataIso}`;
+
+  async function handlePrint() {
+    const element = document.getElementById("content-to-pdf-relatorio");
+    if (!element) return;
+
+    setIsPrinting(true);
+    try {
+      await printElementAsPdf(element, {
+        margin: [6, 6, 6, 6] as [number, number, number, number],
+        jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+      });
+    } catch (err) {
+      console.error("Erro ao imprimir relatório:", err);
+      showAvatarToast("Não foi possível preparar a impressão. Tente novamente.", "Aviso", "warning");
+    } finally {
+      setIsPrinting(false);
+      window.focus();
+    }
+  }
 
   async function handleDownloadPdf() {
     const element = document.getElementById("content-to-pdf-relatorio");
@@ -98,40 +134,31 @@ export function RelatorioPdfModal({
   }
 
   return (
-    <div className={styles.overlay} data-print-modal="true" onClick={onClose}>
+    <div
+      className={styles.overlay}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      data-print-modal="true"
+    >
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        {/* TopBar */}
-        <div className={styles.topBar}>
-          <span className={styles.topTitle}>
-            <FileText size={18} />
-            Visualização do Relatório Oficial — Padrão SENAI
-          </span>
-
-          <div className={styles.topActions}>
-            <button
-              type="button"
-              className={styles.downloadBtn}
-              onClick={handleDownloadPdf}
-              disabled={isGeneratingPdf}
-              title="Baixar arquivo PDF formatado para A4 Paisagem"
-            >
-              {isGeneratingPdf ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Download size={16} />
-              )}
-              <span>{isGeneratingPdf ? "Gerando PDF..." : "Baixar PDF"}</span>
-            </button>
-
-            <button
-              type="button"
-              className={styles.closeBtn}
-              onClick={onClose}
-              title="Fechar visualização"
-            >
-              <X size={20} />
-            </button>
+        {/* Cabeçalho do Modal Padronizado */}
+        <div className={styles.modalHeader}>
+          <div className={styles.headerTitleGroup}>
+            <h2 className={styles.title}>Visualização do Relatório Oficial</h2>
+            <span className={styles.subtitle}>
+              Demonstrativo Analítico de Ocorrências e FIAPs — Padrão SENAI Unidade Sumaré
+            </span>
           </div>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Fechar"
+            title="Fechar visualização"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Corpo com o documento em folha A4 Paisagem */}
@@ -312,6 +339,56 @@ export function RelatorioPdfModal({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Rodapé de Ações Padronizado */}
+        <div className={styles.modalFooter}>
+          <div className={styles.footerLeft} />
+
+          <div className={styles.footerRight}>
+            <button
+              type="button"
+              className={`${styles.btnAction} ${styles.btnPrimary}`}
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingPdf || isPrinting}
+            >
+              {isGeneratingPdf ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Gerando PDF...
+                </>
+              ) : (
+                <>
+                  <Download size={15} />
+                  Baixar PDF (A4 Oficial)
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              className={styles.btnAction}
+              onClick={handlePrint}
+              disabled={isPrinting || isGeneratingPdf}
+              title="Imprimir Relatório Oficial"
+            >
+              {isPrinting ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Preparando...
+                </>
+              ) : (
+                <>
+                  <Printer size={15} />
+                  Imprimir
+                </>
+              )}
+            </button>
+
+            <button type="button" className={styles.btnAction} onClick={onClose}>
+              Fechar
+            </button>
           </div>
         </div>
       </div>
