@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   X,
   ClipboardCheck,
@@ -22,6 +22,8 @@ import {
   type PlanoFrequencia,
 } from "../../services/planoRecuperacaoService";
 import { ocorrenciaService, type Ocorrencia } from "../../services/ocorrenciaService";
+import { cursoService, type Curso, type UnidadeCurricular } from "../../services/cursoService";
+import { clearApiCache } from "../../services/api";
 import styles from "./PlanoRecuperacaoModal.module.css";
 
 interface PlanoRecuperacaoModalProps {
@@ -41,6 +43,18 @@ const PROPOSTAS_OPCOES = [
   { id: "outros", label: "Outros" },
 ];
 
+function unidadeUltrapassouLimite(ou: any): boolean {
+  if (!ou) return false;
+  const perc = Number(ou.percentual_atingido || 0);
+  const qtd = Number(ou.quantidade_faltas || 0);
+  const lim = Number(ou.limite_faltas_aulas || 0);
+
+  if (lim > 0) {
+    return qtd > lim || perc > 100;
+  }
+  return perc > 100;
+}
+
 export function PlanoRecuperacaoModal({
   isOpen,
   onClose,
@@ -59,6 +73,10 @@ export function PlanoRecuperacaoModal({
   const [statusProcesso, setStatusProcesso] = useState<PlanoStatusProcesso>("rascunho");
   const [registroDesempenho, setRegistroDesempenho] = useState("");
 
+  // Cursos e Múltiplas Unidades Curriculares Vinculadas
+  const [cursos, setCursos] = useState<Curso[]>([]);
+  const [selectedUcIds, setSelectedUcIds] = useState<number[]>([]);
+
   // Frequências para compensação de ausências
   const [frequencias, setFrequencias] = useState<PlanoFrequencia[]>([]);
 
@@ -74,6 +92,7 @@ export function PlanoRecuperacaoModal({
     if (!isOpen) return;
 
     setErrorMsg(null);
+    cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => setCursos([]));
 
     if (!ocorrencia && !planoToEdit) {
       Promise.all([
@@ -111,6 +130,27 @@ export function PlanoRecuperacaoModal({
       setStatusProcesso(planoToEdit.status_processo || "rascunho");
       setRegistroDesempenho(planoToEdit.registro_desempenho || "");
       setFrequencias(planoToEdit.frequencias || []);
+
+      if (planoToEdit.unidades && planoToEdit.unidades.length > 0) {
+        setSelectedUcIds(
+          planoToEdit.unidades
+            .map((u) => u.id)
+            .filter((id): id is number => typeof id === "number")
+        );
+      } else if (planoToEdit.unidade_curricular_id) {
+        setSelectedUcIds([planoToEdit.unidade_curricular_id]);
+      } else if (planoToEdit.ocorrencia?.unidades && planoToEdit.ocorrencia.unidades.length > 0) {
+        const eFalta = planoToEdit.ocorrencia.tipo === "falta";
+        const unidadesAlvo = eFalta
+          ? planoToEdit.ocorrencia.unidades.filter(unidadeUltrapassouLimite)
+          : planoToEdit.ocorrencia.unidades;
+        const ucs = (unidadesAlvo.length > 0 ? unidadesAlvo : planoToEdit.ocorrencia.unidades)
+          .map((u) => u.unidade_curricular_id)
+          .filter(Boolean) as number[];
+        setSelectedUcIds(ucs);
+      } else {
+        setSelectedUcIds([]);
+      }
     } else if (ocorrencia) {
       // Sugere tipo de acordo com a FIAP
       const eFalta = ocorrencia.tipo === "falta";
@@ -125,6 +165,23 @@ export function PlanoRecuperacaoModal({
       setStatusProcesso("rascunho");
       setRegistroDesempenho("");
       setFrequencias([]);
+
+      // Para compensação de ausência (FIAP de falta), inclui apenas as unidades que ultrapassaram o limite de 100%
+      const unidadesAlvo = eFalta && ocorrencia.unidades && ocorrencia.unidades.length > 0
+        ? ocorrencia.unidades.filter(unidadeUltrapassouLimite)
+        : (ocorrencia.unidades || []);
+
+      const ucIds = (unidadesAlvo.length > 0 ? unidadesAlvo : (ocorrencia.unidades || []))
+        .map((u) => u.unidade_curricular_id)
+        .filter(Boolean) as number[];
+
+      if (ucIds.length > 0) {
+        setSelectedUcIds(ucIds);
+      } else if (ocorrencia.unidade_curricular_id) {
+        setSelectedUcIds([ocorrencia.unidade_curricular_id]);
+      } else {
+        setSelectedUcIds([]);
+      }
     } else {
       setSelectedOcorrenciaId("");
       setManualOcorrencia(null);
@@ -137,16 +194,122 @@ export function PlanoRecuperacaoModal({
       setStatusProcesso("rascunho");
       setRegistroDesempenho("");
       setFrequencias([]);
+      setSelectedUcIds([]);
     }
   }, [isOpen, ocorrencia, planoToEdit]);
-
-  if (!isOpen) return null;
 
   const targetOcorrencia = planoToEdit?.ocorrencia || ocorrencia || manualOcorrencia;
   const isOcorrenciaExcluida = Boolean(targetOcorrencia?.deleted_at);
   const targetAluno = targetOcorrencia?.aluno || planoToEdit?.aluno;
   const targetTurma = targetAluno?.turma;
   const targetCurso = targetTurma?.curso;
+
+  // Lista com as UCs disponíveis (restringindo estritamente às UCs apontadas na FIAP vinculada)
+  const todasUcsDisponiveis = useMemo(() => {
+    const list: UnidadeCurricular[] = [];
+    const seen = new Set<number>();
+
+    // Sempre que houver uma FIAP vinculada, restringir estritamente às Unidades Curriculares apontadas na FIAP
+    if (targetOcorrencia) {
+      if (targetOcorrencia.unidades && targetOcorrencia.unidades.length > 0) {
+        const unidadesFiltradas = targetOcorrencia.tipo === "falta"
+          ? targetOcorrencia.unidades.filter(unidadeUltrapassouLimite)
+          : targetOcorrencia.unidades;
+
+        const unidadesParaUsar = unidadesFiltradas.length > 0
+          ? unidadesFiltradas
+          : targetOcorrencia.unidades;
+
+        for (const ou of unidadesParaUsar) {
+          const uc = ou.unidade_curricular;
+          if (uc && uc.id != null && !seen.has(uc.id)) {
+            seen.add(uc.id);
+            list.push(uc);
+          } else if (ou.unidade_curricular_id && !seen.has(ou.unidade_curricular_id)) {
+            seen.add(ou.unidade_curricular_id);
+            const foundUc = cursos
+              .flatMap((c) => c.unidades_curriculares || [])
+              .find((u) => u.id === ou.unidade_curricular_id);
+            if (foundUc) {
+              list.push(foundUc);
+            }
+          }
+        }
+      } else if (targetOcorrencia.unidade_curricular_id) {
+        const ucId = targetOcorrencia.unidade_curricular_id;
+        seen.add(ucId);
+        const foundUc =
+          targetOcorrencia.unidade_curricular ||
+          cursos.flatMap((c) => c.unidades_curriculares || []).find((u) => u.id === ucId);
+        if (foundUc) {
+          list.push(foundUc);
+        }
+      }
+
+      if (planoToEdit?.unidades) {
+        for (const pu of planoToEdit.unidades) {
+          if (pu.id != null && !seen.has(pu.id)) {
+            seen.add(pu.id);
+            list.push(pu);
+          }
+        }
+      }
+
+      if (planoToEdit?.unidade_curricular && planoToEdit.unidade_curricular.id != null && !seen.has(planoToEdit.unidade_curricular.id)) {
+        seen.add(planoToEdit.unidade_curricular.id);
+        list.push(planoToEdit.unidade_curricular);
+      }
+
+      if (list.length > 0) {
+        return list;
+      }
+    }
+
+    // Fallback: caso a FIAP não possua nenhuma UC cadastrada previamente
+    const foundCurso = cursos.find(
+      (c) => c.id === targetTurma?.curso_id || c.id === targetCurso?.id
+    );
+    const ucsCurso =
+      foundCurso?.unidades_curriculares ||
+      targetTurma?.curso?.unidades_curriculares ||
+      targetCurso?.unidades_curriculares ||
+      [];
+
+    for (const uc of ucsCurso) {
+      if (uc.id != null && !seen.has(uc.id)) {
+        seen.add(uc.id);
+        list.push(uc);
+      }
+    }
+
+    return list;
+  }, [cursos, targetTurma, targetCurso, targetOcorrencia, planoToEdit]);
+
+  if (!isOpen) return null;
+
+  function handleAddUc(ucId?: number) {
+    if (ucId != null) {
+      if (!selectedUcIds.includes(ucId)) {
+        setSelectedUcIds((prev) => [...prev, ucId]);
+      }
+      return;
+    }
+    const proxima = todasUcsDisponiveis.find((uc) => uc.id != null && !selectedUcIds.includes(uc.id));
+    if (proxima && proxima.id != null) {
+      setSelectedUcIds((prev) => [...prev, proxima.id!]);
+    }
+  }
+
+  function handleRemoveUc(index: number) {
+    if (selectedUcIds.length > 1) {
+      setSelectedUcIds((prev) => prev.filter((_, i) => i !== index));
+    }
+  }
+
+  function handleUpdateUc(index: number, newId: number) {
+    if (!newId) return;
+    setSelectedUcIds((prev) => prev.map((id, i) => (i === index ? newId : id)));
+  }
 
   function toggleProposta(id: string) {
     setPropostasSelecionadas((prev) =>
@@ -194,6 +357,11 @@ export function PlanoRecuperacaoModal({
       return;
     }
 
+    if (selectedUcIds.length === 0) {
+      setErrorMsg("É obrigatório vincular ao menos uma Unidade Curricular referente à FIAP ao Plano de Recuperação.");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg(null);
 
@@ -201,7 +369,8 @@ export function PlanoRecuperacaoModal({
       const payload = {
         ocorrencia_id: finalOcorrenciaId,
         aluno_id: finalAlunoId,
-        unidade_curricular_id: targetOcorrencia?.unidades?.[0]?.unidade_curricular_id || planoToEdit?.unidade_curricular_id || undefined,
+        unidade_curricular_id: selectedUcIds[0],
+        unidade_curricular_ids: selectedUcIds,
         tipo_programa: tipoPrograma,
         ciclo_avaliacao: cicloAvaliacao,
         conteudo_programatico: conteudoProgramatico.trim(),
@@ -221,6 +390,7 @@ export function PlanoRecuperacaoModal({
         await planoRecuperacaoService.create(payload);
       }
 
+      clearApiCache();
       onSaveSuccess();
       onClose();
     } catch (err: unknown) {
@@ -304,6 +474,21 @@ export function PlanoRecuperacaoModal({
                     if (found) {
                       const isFalta = found.tipo === "falta";
                       setTipoPrograma(isFalta ? "compensacao_ausencia" : "recuperacao_paralela");
+
+                      // Para compensação de ausência (FIAP de falta), inclui apenas as unidades que ultrapassaram o limite de 100%
+                      const unidadesAlvo = isFalta && found.unidades && found.unidades.length > 0
+                        ? found.unidades.filter(unidadeUltrapassouLimite)
+                        : (found.unidades || []);
+
+                      const ucIds = (unidadesAlvo.length > 0 ? unidadesAlvo : (found.unidades || []))
+                        .map((u) => u.unidade_curricular_id)
+                        .filter(Boolean) as number[];
+
+                      if (ucIds.length > 0) {
+                        setSelectedUcIds(ucIds);
+                      } else if (found.unidade_curricular_id) {
+                        setSelectedUcIds([found.unidade_curricular_id]);
+                      }
                     }
                   }}
                   required
@@ -335,6 +520,97 @@ export function PlanoRecuperacaoModal({
                   {targetCurso?.nome ? `${targetCurso.nome} (${targetTurma?.nome || ''})` : targetTurma?.nome || "SENAI"}
                 </span>
               </div>
+            </div>
+          </div>
+
+          {/* Unidades Curriculares Vinculadas ao Plano */}
+          <div className={styles.section}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+              <h3 className={styles.sectionTitle} style={{ margin: 0 }}>
+                <BookOpen size={18} color="var(--color-primary)" />
+                Unidades Curriculares Vinculadas ao Plano
+                <span className={styles.required}>*</span>
+              </h3>
+
+              {selectedUcIds.length < todasUcsDisponiveis.length && (
+                <button
+                  type="button"
+                  className={styles.addUcBtn}
+                  onClick={() => handleAddUc()}
+                  title="Adicionar mais uma Unidade Curricular a este Plano"
+                >
+                  <Plus size={14} />
+                  <span>Adicionar UC</span>
+                </button>
+              )}
+            </div>
+
+            <p style={{ fontSize: "0.825rem", color: "var(--color-text-secondary)", marginBottom: "0.75rem" }}>
+              {targetOcorrencia?.tipo === "falta"
+                ? "Para Compensação de Ausência, apenas as Unidades Curriculares que ultrapassaram o limite de 100% de faltas são incluídas no Plano de Recuperação."
+                : "Apenas as Unidades Curriculares apontadas na FIAP vinculada podem ser incluídas no Plano de Recuperação (ao menos uma obrigatória)."}
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {selectedUcIds.length === 0 ? (
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <button
+                    type="button"
+                    className={styles.addUcBtn}
+                    onClick={() => handleAddUc()}
+                  >
+                    <Plus size={14} />
+                    <span>Selecionar primeira UC</span>
+                  </button>
+                </div>
+              ) : (
+                selectedUcIds.map((ucId, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      gap: "0.75rem",
+                      alignItems: "center",
+                      backgroundColor: "var(--color-surface)",
+                      padding: "0.6rem 0.85rem",
+                      borderRadius: "8px",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-text-secondary)", minWidth: "55px" }}>
+                      UC #{index + 1}:
+                    </span>
+
+                    <select
+                      className={styles.select}
+                      style={{ flex: 1 }}
+                      value={ucId}
+                      onChange={(e) => handleUpdateUc(index, Number(e.target.value))}
+                      required
+                    >
+                      <option value="">Selecione a Unidade Curricular...</option>
+                      {todasUcsDisponiveis
+                        .filter((uc) => uc.id != null && (uc.id === ucId || !selectedUcIds.includes(uc.id)))
+                        .map((uc) => (
+                          <option key={uc.id} value={uc.id}>
+                            {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome} — {uc.carga_horaria}h
+                          </option>
+                        ))}
+                    </select>
+
+                    {selectedUcIds.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveUc(index)}
+                        className={styles.removeUcBtn}
+                        title="Remover Unidade Curricular do plano"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

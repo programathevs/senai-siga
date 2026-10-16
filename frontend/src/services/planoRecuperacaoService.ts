@@ -29,6 +29,7 @@ export interface PlanoRecuperacao {
   turma_uc_id?: number | null;
   unidade_curricular_id?: number | null;
   unidade_curricular?: UnidadeCurricular | null;
+  unidades?: UnidadeCurricular[];
   registrado_por: number | { id: number; name: string; email: string };
   registrado_por_user?: { id: number; name: string; email: string };
   tipo_programa: PlanoTipoPrograma;
@@ -55,6 +56,8 @@ export interface PlanoRecuperacaoPayload {
   aluno_id: number;
   turma_uc_id?: number | null;
   unidade_curricular_id?: number | null;
+  unidade_curricular_ids?: number[];
+  unidades?: number[] | { unidade_curricular_id: number }[];
   tipo_programa: PlanoTipoPrograma;
   ciclo_avaliacao?: string;
   conteudo_programatico?: string;
@@ -80,7 +83,7 @@ export interface PlanoFiltros {
 }
 
 export const planoRecuperacaoService = {
-  async getAll(filtros?: PlanoFiltros): Promise<PlanoRecuperacao[]> {
+  async getAll(filtros?: PlanoFiltros, bypassCache?: boolean): Promise<PlanoRecuperacao[]> {
     const params = new URLSearchParams();
     if (filtros?.search) params.append("search", filtros.search);
     if (filtros?.tipo_programa) params.append("tipo_programa", filtros.tipo_programa);
@@ -89,7 +92,10 @@ export const planoRecuperacaoService = {
     if (filtros?.ocorrencia_id) params.append("ocorrencia_id", String(filtros.ocorrencia_id));
 
     const response = await api.get<{ data: PlanoRecuperacao[] }>(
-      `/api/planos-recuperacao?${params.toString()}`
+      `/api/planos-recuperacao?${params.toString()}`,
+      {
+        headers: bypassCache ? { "x-no-cache": "true" } : undefined,
+      }
     );
     return response.data.data;
   },

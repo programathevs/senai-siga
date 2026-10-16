@@ -214,5 +214,150 @@ class OcorrenciaControllerTest extends TestCase
 
         $this->assertSoftDeleted('ocorrencias', ['id' => $ocorrencia->id]);
     }
+
+    public function test_instrutor_can_create_fiap_desempenho_with_multiple_ucs(): void
+    {
+        $instrutorUser = User::factory()->create(['role' => UserRole::INSTRUTOR]);
+        $aluno = Aluno::factory()->create();
+        $curso = Curso::factory()->create();
+
+        $uc1 = UnidadeCurricular::create([
+            'curso_id' => $curso->id,
+            'nome' => 'Programação Web',
+            'sigla' => 'PW',
+            'carga_horaria' => 80,
+        ]);
+
+        $uc2 = UnidadeCurricular::create([
+            'curso_id' => $curso->id,
+            'nome' => 'Modelagem de Sistemas',
+            'sigla' => 'MS',
+            'carga_horaria' => 60,
+        ]);
+
+        $payload = [
+            'aluno_id' => $aluno->id,
+            'tipo' => 'desempenho',
+            'data_ocorrencia' => '2026-10-13',
+            'unidades' => [
+                ['unidade_curricular_id' => $uc1->id],
+                ['unidade_curricular_id' => $uc2->id],
+            ],
+            'relato_dificuldades' => 'Dificuldade de aproveitamento nas matérias de Web e Modelagem',
+        ];
+
+        $response = $this->actingAs($instrutorUser)->postJson('/api/ocorrencias', $payload);
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('ocorrencia_unidades', [
+            'unidade_curricular_id' => $uc1->id,
+        ]);
+        $this->assertDatabaseHas('ocorrencia_unidades', [
+            'unidade_curricular_id' => $uc2->id,
+        ]);
+    }
+
+    public function test_fiap_desempenho_requires_at_least_one_uc(): void
+    {
+        $instrutorUser = User::factory()->create(['role' => UserRole::INSTRUTOR]);
+        $aluno = Aluno::factory()->create();
+
+        $payload = [
+            'aluno_id' => $aluno->id,
+            'tipo' => 'desempenho',
+            'data_ocorrencia' => '2026-10-13',
+            'relato_dificuldades' => 'Tentando criar FIAP aproveitamento sem nenhuma UC vinculada',
+        ];
+
+        $response = $this->actingAs($instrutorUser)->postJson('/api/ocorrencias', $payload);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['unidade_curricular_id']);
+    }
+
+    public function test_editing_enviado_aqv_fiap_resets_status_to_pendente_and_clears_aqv_receipt(): void
+    {
+        $instrutorUser = User::factory()->create(['role' => UserRole::INSTRUTOR]);
+        $aluno = Aluno::factory()->create();
+
+        $ocorrencia = Ocorrencia::create([
+            'aluno_id' => $aluno->id,
+            'registrado_por' => $instrutorUser->id,
+            'numero_sequencial' => 'FIAP-2026-0099',
+            'versao' => 1,
+            'tipo' => 'comportamento',
+            'data_ocorrencia' => '2026-10-10',
+            'relato_dificuldades' => 'Comportamento inadequado inicial',
+            'status' => 'enviado_aqv',
+        ]);
+
+        \App\Models\AqvRecebimento::create([
+            'ocorrencia_id' => $ocorrencia->id,
+            'enviado_em' => now(),
+            'status_atendimento' => 'pendente',
+        ]);
+
+        $updatePayload = [
+            'aluno_id' => $aluno->id,
+            'tipo' => 'comportamento',
+            'data_ocorrencia' => '2026-10-10',
+            'relato_dificuldades' => 'Comportamento inadequado detalhado com alteração',
+            'motivo_edicao' => 'Ajuste do relato docente',
+        ];
+
+        $response = $this->actingAs($instrutorUser)->putJson("/api/ocorrencias/{$ocorrencia->id}", $updatePayload);
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'pendente')
+            ->assertJsonPath('data.versao', 2);
+
+        $this->assertEquals('pendente', $ocorrencia->fresh()->status);
+        $this->assertNull($ocorrencia->fresh()->aqvRecebimento);
+        $this->assertDatabaseMissing('aqv_recebimentos', [
+            'ocorrencia_id' => $ocorrencia->id,
+        ]);
+    }
+
+    public function test_editing_assinado_fiap_resets_status_to_pendente_and_clears_aqv_receipt(): void
+    {
+        $instrutorUser = User::factory()->create(['role' => UserRole::INSTRUTOR]);
+        $aluno = Aluno::factory()->create();
+
+        $ocorrencia = Ocorrencia::create([
+            'aluno_id' => $aluno->id,
+            'registrado_por' => $instrutorUser->id,
+            'numero_sequencial' => 'FIAP-2026-0100',
+            'versao' => 1,
+            'tipo' => 'comportamento',
+            'data_ocorrencia' => '2026-10-10',
+            'relato_dificuldades' => 'Relato original antes da assinatura',
+            'status' => 'assinado',
+        ]);
+
+        \App\Models\AqvRecebimento::create([
+            'ocorrencia_id' => $ocorrencia->id,
+            'enviado_em' => now(),
+            'confirmado_em' => now(),
+            'status_atendimento' => 'concluido',
+        ]);
+
+        $updatePayload = [
+            'aluno_id' => $aluno->id,
+            'tipo' => 'comportamento',
+            'data_ocorrencia' => '2026-10-10',
+            'relato_dificuldades' => 'Relato modificado após a assinatura',
+            'motivo_edicao' => 'Correção de termos',
+        ];
+
+        $response = $this->actingAs($instrutorUser)->putJson("/api/ocorrencias/{$ocorrencia->id}", $updatePayload);
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'pendente')
+            ->assertJsonPath('data.versao', 2);
+
+        $this->assertEquals('pendente', $ocorrencia->fresh()->status);
+        $this->assertNull($ocorrencia->fresh()->aqvRecebimento);
+    }
 }
 

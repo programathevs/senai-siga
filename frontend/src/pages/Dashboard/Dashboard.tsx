@@ -209,7 +209,7 @@ export function Dashboard() {
               onClick={() => setIsCreateModalOpen(true)}
             >
               <PlusCircle size={18} />
-              <span>+ Nova FIAP</span>
+              <span>Nova FIAP</span>
             </button>
           )}
         </div>

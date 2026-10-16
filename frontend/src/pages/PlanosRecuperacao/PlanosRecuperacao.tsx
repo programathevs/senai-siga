@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   Edit2,
   Trash2,
-  Printer,
+  Eye,
   Loader2,
   RotateCcw,
 } from "lucide-react";
@@ -62,14 +62,14 @@ export function PlanosRecuperacao() {
     loadPlanos();
   }, [search, selectedTipo, selectedStatus]);
 
-  async function loadPlanos() {
+  async function loadPlanos(bypassCache = false) {
     try {
       setIsLoading(true);
       const data = await planoRecuperacaoService.getAll({
         search: search.trim() || undefined,
         tipo_programa: selectedTipo || undefined,
         status_processo: selectedStatus || undefined,
-      });
+      }, bypassCache);
       setPlanos(data);
     } catch (err) {
       console.error("Erro ao carregar planos de recuperação:", err);
@@ -256,6 +256,16 @@ export function PlanosRecuperacao() {
                     creatorId !== undefined &&
                     plano.status_processo !== "concluido");
 
+                const canEdit =
+                  !isDeleted &&
+                  user?.role !== "aqv" &&
+                  (user?.role === "gestor" ||
+                    (user?.role === "instrutor" && plano.status_processo !== "concluido"));
+
+                const ucsText = plano.unidades && plano.unidades.length > 0
+                  ? plano.unidades.map((u) => u.sigla || u.nome).join(", ")
+                  : plano.unidade_curricular?.sigla || plano.unidade_curricular?.nome || "";
+
                 return (
                   <tr key={plano.id} className={`${styles.tr} ${isDeleted ? styles.trDeleted : ""}`}>
                     {/* FIAP */}
@@ -277,6 +287,7 @@ export function PlanosRecuperacao() {
                           <span className={styles.alunoNome}>{aluno?.nome || "Estudante"}</span>
                           <span className={styles.alunoSub}>
                             RA: {aluno?.matricula || "—"} | {aluno?.turma?.nome || "Sem Turma"}
+                            {ucsText ? ` • UC: ${ucsText}` : ""}
                           </span>
                         </div>
                       </div>
@@ -352,12 +363,12 @@ export function PlanosRecuperacao() {
                           type="button"
                           className={`${styles.actionBtn} ${styles.actionBtnPdf}`}
                           onClick={() => handleViewPdf(plano)}
-                          title="Visualizar e Imprimir PDF"
+                          title="Visualizar Plano de Recuperação (Imprimir ou Baixar PDF)"
                         >
-                          <Printer size={16} />
+                          <Eye size={16} />
                         </button>
 
-                        {!isDeleted && (
+                        {canEdit && (
                           <button
                             type="button"
                             className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
@@ -420,7 +431,7 @@ export function PlanosRecuperacao() {
       <PlanoRecuperacaoModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSaveSuccess={loadPlanos}
+        onSaveSuccess={() => loadPlanos(true)}
         planoToEdit={planoToEdit}
       />
 
@@ -429,6 +440,17 @@ export function PlanosRecuperacao() {
         isOpen={isPdfModalOpen}
         onClose={() => setIsPdfModalOpen(false)}
         plano={selectedPlanoPdf}
+        onEdit={(plano) => {
+          setIsPdfModalOpen(false);
+          handleEdit(plano);
+        }}
+        canEdit={Boolean(
+          selectedPlanoPdf &&
+            !selectedPlanoPdf.deleted_at &&
+            user?.role !== "aqv" &&
+            (user?.role === "gestor" ||
+              (user?.role === "instrutor" && selectedPlanoPdf.status_processo !== "concluido"))
+        )}
       />
 
       {/* Modal Institucional de Confirmação de Exclusão */}

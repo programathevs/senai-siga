@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X, Printer, Download, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Printer, Download, Loader2, Edit2 } from "lucide-react";
 import html2pdf from "html2pdf.js";
 import { printElementAsPdf } from "../../utils/printPdf";
 import type { PlanoRecuperacao } from "../../services/planoRecuperacaoService";
@@ -9,11 +9,34 @@ interface PlanoPdfModalProps {
   isOpen: boolean;
   onClose: () => void;
   plano: PlanoRecuperacao | null;
+  onEdit?: (plano: PlanoRecuperacao) => void;
+  canEdit?: boolean;
 }
 
-export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
+export function PlanoPdfModal({
+  isOpen,
+  onClose,
+  plano,
+  onEdit,
+  canEdit,
+}: PlanoPdfModalProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen || !plano) return null;
 
@@ -31,6 +54,21 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
   const nomeAlunoSanitizado = (aluno?.nome || "Aluno").replace(/\s+/g, "_");
   const numFiapSanitizado = (ocorrencia?.numero_sequencial || `FIAP_${plano.id}`).replace(/[\/\s]/g, "_");
   const defaultFilename = `Plano_Recuperacao_${nomeAlunoSanitizado}_FIAP_${numFiapSanitizado}`;
+
+  const formatPeriodo = (val?: string | null) => {
+    if (!val) return "—";
+    if (val.includes("T")) {
+      const [datePart] = val.split("T");
+      const parts = datePart.split("-");
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    const clean = val.split(" ")[0];
+    const parts = clean.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return val;
+  };
 
   async function handlePrint() {
     const element = document.getElementById("content-to-pdf-plano");
@@ -102,50 +140,36 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
   }
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        {/* TopBar */}
-        <div className={styles.topBar}>
-          <span className={styles.topTitle}>Visualização de Impressão — Plano de Recuperação</span>
-          <div className={styles.topActions}>
-            <button
-              type="button"
-              className={styles.downloadBtn}
-              onClick={handleDownloadPdf}
-              disabled={isGeneratingPdf || isPrinting}
-              title="Baixar arquivo PDF com nome específico do estudante e FIAP"
-            >
-              {isGeneratingPdf ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Download size={16} />
-              )}
-              <span>Baixar PDF</span>
-            </button>
-
-            <button
-              type="button"
-              className={styles.printBtn}
-              onClick={handlePrint}
-              disabled={isPrinting || isGeneratingPdf}
-              title="Imprimir Plano de Recuperação Oficial"
-            >
-              {isPrinting ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Printer size={16} />
-              )}
-              <span>{isPrinting ? "Preparando..." : "Imprimir"}</span>
-            </button>
-
-            <button type="button" className={styles.closeBtn} onClick={onClose}>
-              <X size={20} />
-            </button>
+    <div
+      className={styles.overlay}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      data-print-modal="true"
+    >
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        {/* Cabeçalho do Modal Padronizado */}
+        <div className={styles.modalHeader}>
+          <div className={styles.headerTitleGroup}>
+            <h2 className={styles.title}>Visualização do Plano de Recuperação</h2>
+            <span className={styles.subtitle}>
+              Plano de Recuperação e Compensação de Ausência — Padrão SENAI Unidade Sumaré
+            </span>
           </div>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Fechar"
+            title="Fechar"
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        {/* Document Body (Layout Fiel SENAI Sumaré) */}
-        <div className={styles.documentBody} id="content-to-pdf-plano">
+        {/* Corpo com a Folha A4 Oficial */}
+        <div className={styles.modalBody}>
+          <div className={styles.documentBody} id="content-to-pdf-plano">
           {/* Header */}
           <table className={styles.headerTable}>
             <tbody>
@@ -199,8 +223,10 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
                   <span className={styles.labelBold}>Docente:</span> {docente}
                 </td>
                 <td colSpan={2}>
-                  <span className={styles.labelBold}>Unidade Curricular:</span>{" "}
-                  {plano.unidade_curricular?.nome || plano.unidade_curricular?.sigla || "Desenvolvimento de Sistemas"}
+                  <span className={styles.labelBold}>Unidade(s) Curricular(es):</span>{" "}
+                  {plano.unidades && plano.unidades.length > 0
+                    ? plano.unidades.map((u) => u.sigla ? `${u.nome} (${u.sigla})` : u.nome).join(" / ")
+                    : plano.unidade_curricular?.nome || plano.unidade_curricular?.sigla || "Desenvolvimento de Sistemas"}
                 </td>
               </tr>
               <tr>
@@ -260,7 +286,7 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
               3. PERÍODO PREVISTO À REALIZAÇÃO DAS ATIVIDADES
             </div>
             <div style={{ padding: "6px 8px" }}>
-              Dia / Período: <strong>{plano.periodo_previsto || "10/12/2025"}</strong>
+              Dia / Período: <strong>{formatPeriodo(plano.periodo_previsto)}</strong>
             </div>
           </div>
 
@@ -374,6 +400,81 @@ export function PlanoPdfModal({ isOpen, onClose, plano }: PlanoPdfModalProps) {
           </ul>
         </div>
       </div>
+
+      {/* Rodapé de Ações Padronizado */}
+      <div className={styles.modalFooter}>
+        <div className={styles.footerLeft}>
+          {canEdit && onEdit && (
+            <button
+              type="button"
+              className={styles.btnAction}
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
+                color: "var(--color-primary)",
+                borderColor: "color-mix(in srgb, var(--color-primary) 30%, transparent)",
+                fontWeight: 600,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.35rem",
+              }}
+              onClick={() => {
+                onClose();
+                onEdit(plano);
+              }}
+              title="Editar dados deste Plano"
+            >
+              <Edit2 size={15} />
+              Editar Plano
+            </button>
+          )}
+        </div>
+
+        <div className={styles.footerRight}>
+          <button
+            type="button"
+            className={`${styles.btnAction} ${styles.btnPrimary}`}
+            onClick={handleDownloadPdf}
+            disabled={isGeneratingPdf || isPrinting}
+          >
+            {isGeneratingPdf ? (
+              <>
+                <Loader2 size={15} className="animate-spin" />
+                Gerando PDF...
+              </>
+            ) : (
+              <>
+                <Download size={15} />
+                Baixar PDF (A4 Oficial)
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className={styles.btnAction}
+            onClick={handlePrint}
+            disabled={isPrinting || isGeneratingPdf}
+            title="Imprimir Plano de Recuperação Oficial"
+          >
+            {isPrinting ? (
+              <>
+                <Loader2 size={15} className="animate-spin" />
+                Preparando...
+              </>
+            ) : (
+              <>
+                <Printer size={15} />
+                Imprimir
+              </>
+            )}
+          </button>
+
+          <button type="button" className={styles.btnAction} onClick={onClose}>
+            Fechar
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
   );
 }

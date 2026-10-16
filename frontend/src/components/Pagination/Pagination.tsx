@@ -14,6 +14,7 @@ export interface PaginationProps {
   from?: number | null;
   to?: number | null;
   perPageOptions?: number[];
+  showAllOption?: boolean;
   onPageChange: (page: number) => void;
   onPerPageChange?: (perPage: number) => void;
   isLoading?: boolean;
@@ -27,6 +28,7 @@ export function Pagination({
   from,
   to,
   perPageOptions = [5, 10, 20, 30, 40, 50],
+  showAllOption = false,
   onPageChange,
   onPerPageChange,
   isLoading = false,
@@ -35,8 +37,9 @@ export function Pagination({
     return null;
   }
 
-  const fromDisplay = from ?? (total > 0 ? (currentPage - 1) * perPage + 1 : 0);
-  const toDisplay = to ?? Math.min(currentPage * perPage, total);
+  const isAll = perPage === -1;
+  const fromDisplay = isAll ? 1 : from ?? (total > 0 ? (currentPage - 1) * perPage + 1 : 0);
+  const toDisplay = isAll ? total : to ?? Math.min(currentPage * perPage, total);
 
   // Gera a lista de páginas com reticências inteligentes
   function getPageNumbers(): (number | string)[] {
@@ -98,13 +101,19 @@ export function Pagination({
                   {opt}
                 </option>
               ))}
+              {showAllOption && (
+                <option value={-1}>
+                  Todos ({total})
+                </option>
+              )}
             </select>
           </div>
         )}
       </div>
 
-      {/* Lado Direito: Botões de Navegação */}
-      <div className={styles.paginationRight}>
+      {/* Lado Direito: Botões de Navegação (ocultos quando há apenas 1 página) */}
+      {lastPage > 1 && (
+        <div className={styles.paginationRight}>
         {/* Primeira Página */}
         <button
           type="button"
@@ -180,6 +189,7 @@ export function Pagination({
           <ChevronsRight size={16} />
         </button>
       </div>
+      )}
     </nav>
   );
 }

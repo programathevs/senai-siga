@@ -62,6 +62,7 @@ interface OcorrenciaModalProps {
   onSuccess: () => void;
   ocorrenciaToEdit?: Ocorrencia | null;
   onOpenPlanoModal?: (createdOcorrencia: Ocorrencia) => void;
+  initialTurmas?: Turma[];
 }
 
 export function OcorrenciaModal({
@@ -70,11 +71,21 @@ export function OcorrenciaModal({
   onSuccess,
   ocorrenciaToEdit,
   onOpenPlanoModal,
+  initialTurmas,
 }: OcorrenciaModalProps) {
   // Dados auxiliares para seleção
-  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [turmas, setTurmas] = useState<Turma[]>(initialTurmas || []);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [cursos, setCursos] = useState<Curso[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isLoadingAlunos, setIsLoadingAlunos] = useState(false);
+
+  // Sincroniza turmas pré-carregadas pelo componente pai
+  useEffect(() => {
+    if (initialTurmas && initialTurmas.length > 0 && turmas.length === 0) {
+      setTurmas(initialTurmas);
+    }
+  }, [initialTurmas]);
 
   // Estados do Formulário
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>("");
@@ -106,14 +117,54 @@ export function OcorrenciaModal({
 
   const isEditing = !!ocorrenciaToEdit;
 
-  // Carrega turmas e cursos ao abrir o modal
+  // Carrega turmas e cursos leves ao abrir o modal (alunos são carregados sob demanda por turma)
   useEffect(() => {
     if (isOpen) {
-      turmaService.getTurmas({ all: true }).then((res) => setTurmas(res.data)).catch(() => setTurmas([]));
-      alunoService.getAlunos({ all: true }).then((res) => setAlunos(res.data)).catch(() => setAlunos([]));
-      cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => setCursos([]));
+      setIsLoadingData(true);
+      Promise.allSettled([
+        turmaService.getTurmas({ all: true }),
+        cursoService.getCursos({ all: true }),
+      ]).then(([resTurmas, resCursos]) => {
+        if (resTurmas.status === "fulfilled") {
+          setTurmas(resTurmas.value.data);
+        }
+        if (resCursos.status === "fulfilled") {
+          setCursos(resCursos.value.data);
+        }
+        setIsLoadingData(false);
+      });
     }
   }, [isOpen]);
+
+  // Carrega estudantes sob demanda apenas da turma selecionada
+  useEffect(() => {
+    if (!isOpen || !selectedTurmaId) {
+      if (!isEditing) {
+        setAlunos([]);
+      }
+      return;
+    }
+
+    setIsLoadingAlunos(true);
+    alunoService
+      .getAlunos({ turma_id: Number(selectedTurmaId), all: true })
+      .then((res) => {
+        let loaded = res.data;
+        if (
+          isEditing &&
+          ocorrenciaToEdit?.aluno &&
+          String(ocorrenciaToEdit.aluno.turma_id) === String(selectedTurmaId) &&
+          !loaded.some((a) => a.id === ocorrenciaToEdit.aluno!.id)
+        ) {
+          loaded = [ocorrenciaToEdit.aluno, ...loaded];
+        }
+        setAlunos(loaded);
+      })
+      .catch(() => {})
+      .finally(() => {
+        setIsLoadingAlunos(false);
+      });
+  }, [isOpen, selectedTurmaId, isEditing, ocorrenciaToEdit]);
 
   // Preenche dados ao editar
   useEffect(() => {
@@ -211,7 +262,10 @@ export function OcorrenciaModal({
 
     setUnidadesList((prev) => [
       ...prev,
-      { unidade_curricular_id: proximaUc ? String(proximaUc.id) : "", quantidade_faltas: 4 },
+      {
+        unidade_curricular_id: proximaUc ? String(proximaUc.id) : "",
+        quantidade_faltas: tipo === "falta" ? 4 : 0,
+      },
     ]);
   }
 
@@ -277,12 +331,15 @@ export function OcorrenciaModal({
     if (!isEditing && selectedTurmaId && unidadesCurricularesFiltradas.length > 0) {
       setUnidadesList((prev) => {
         if (prev.length === 1 && !prev[0].unidade_curricular_id) {
-          return [{ unidade_curricular_id: String(unidadesCurricularesFiltradas[0].id), quantidade_faltas: 4 }];
+          return [{
+            unidade_curricular_id: String(unidadesCurricularesFiltradas[0].id),
+            quantidade_faltas: tipo === "falta" ? 4 : 0,
+          }];
         }
         return prev;
       });
     }
-  }, [selectedTurmaId, unidadesCurricularesFiltradas, isEditing]);
+  }, [selectedTurmaId, unidadesCurricularesFiltradas, isEditing, tipo]);
 
   const isTipoChangedByEdit = isEditing && ocorrenciaToEdit?.tipo !== tipo;
   const shouldUpdateDefaults = !isEditing || isTipoChangedByEdit;
@@ -490,7 +547,7 @@ export function OcorrenciaModal({
     if (norm(outrasObservacoes) !== norm(ocorrenciaToEdit.outras_observacoes)) return true;
 
     // 5. Unidades Curriculares e Faltas
-    if (tipo === "falta") {
+    if (tipo === "falta" || tipo === "desempenho") {
       if (!areUnidadesEqual(unidadesList, origUnidades)) return true;
     } else {
       const origUcId = ocorrenciaToEdit.unidade_curricular_id
@@ -535,15 +592,27 @@ export function OcorrenciaModal({
       return;
     }
 
-    const validUnidades = unidadesList
+    const validUnidadesFalta = unidadesList
       .filter((u) => Boolean(u.unidade_curricular_id))
       .map((u) => ({
         unidade_curricular_id: Number(u.unidade_curricular_id),
         quantidade_faltas: Math.max(1, Number(u.quantidade_faltas) || 1),
       }));
 
-    if (tipo === "falta" && validUnidades.length === 0) {
+    const validUnidadesDesempenho = unidadesList
+      .filter((u) => Boolean(u.unidade_curricular_id))
+      .map((u) => ({
+        unidade_curricular_id: Number(u.unidade_curricular_id),
+        quantidade_faltas: 0,
+      }));
+
+    if (tipo === "falta" && validUnidadesFalta.length === 0) {
       setErrorMessage("Para FIAPs de falta, selecione ao menos uma Unidade Curricular.");
+      return;
+    }
+
+    if (tipo === "desempenho" && validUnidadesDesempenho.length === 0) {
+      setErrorMessage("Para FIAPs de aproveitamento, selecione ao menos uma Unidade Curricular.");
       return;
     }
 
@@ -561,13 +630,17 @@ export function OcorrenciaModal({
         tipo,
         data_ocorrencia: dataOcorrencia,
         unidades: tipo === "falta"
-          ? validUnidades
-          : (selectedUcNum ? [{ unidade_curricular_id: selectedUcNum, quantidade_faltas: 0 }] : undefined),
+          ? validUnidadesFalta
+          : tipo === "desempenho"
+            ? validUnidadesDesempenho
+            : (selectedUcNum ? [{ unidade_curricular_id: selectedUcNum, quantidade_faltas: 0 }] : undefined),
         unidade_curricular_id: tipo === "falta"
-          ? (validUnidades.length > 0 ? validUnidades[0].unidade_curricular_id : undefined)
-          : selectedUcNum,
+          ? (validUnidadesFalta.length > 0 ? validUnidadesFalta[0].unidade_curricular_id : undefined)
+          : tipo === "desempenho"
+            ? (validUnidadesDesempenho.length > 0 ? validUnidadesDesempenho[0].unidade_curricular_id : undefined)
+            : selectedUcNum,
         quantidade_faltas: tipo === "falta"
-          ? (validUnidades.length > 0 ? validUnidades[0].quantidade_faltas : Number(quantidadeFaltas))
+          ? (validUnidadesFalta.length > 0 ? validUnidadesFalta[0].quantidade_faltas : Number(quantidadeFaltas))
           : 0,
         limite_percentual: 25.0,
         relato_dificuldades: relatoDificuldades.trim() || undefined,
@@ -579,6 +652,11 @@ export function OcorrenciaModal({
       };
 
       if (isEditing && ocorrenciaToEdit) {
+        const hadAqvFlow =
+          ocorrenciaToEdit.status === "enviado_aqv" ||
+          ocorrenciaToEdit.status === "assinado" ||
+          Boolean((ocorrenciaToEdit as any).aqv_recebimento);
+
         const updated = await ocorrenciaService.updateOcorrencia(ocorrenciaToEdit.id, payload);
         if (updated.sem_alteracoes) {
           showAvatarToast("Nenhuma alteração foi realizada na FIAP.", "Sem alterações", "warning");
@@ -586,6 +664,12 @@ export function OcorrenciaModal({
           showAvatarToast(
             "FIAP atualizada! Como as faltas voltaram para o limite permitido (≤100%), o Plano de Recuperação vinculado foi movido para a Lixeira.",
             "Plano Arquivado",
+            "warning"
+          );
+        } else if (hadAqvFlow) {
+          showAvatarToast(
+            "FIAP atualizada com sucesso! O status retornou para Pendente para que você possa revisá-la e reenviá-la ao AQV.",
+            "Processo Reiniciado",
             "warning"
           );
         } else {
@@ -714,6 +798,11 @@ export function OcorrenciaModal({
                 <label className={styles.label}>
                   Turma
                   <span className={styles.required}>*</span>
+                  {isLoadingData && turmas.length === 0 && (
+                    <span style={{ fontSize: "0.75rem", color: "var(--color-primary)", display: "inline-flex", alignItems: "center", gap: "4px", marginLeft: "8px" }}>
+                      <Loader2 size={12} className="animate-spin" /> Carregando turmas...
+                    </span>
+                  )}
                 </label>
                 <select
                   className={styles.select}
@@ -724,9 +813,14 @@ export function OcorrenciaModal({
                     setSelectedUcId("");
                     setUnidadesList([{ unidade_curricular_id: "", quantidade_faltas: 4 }]);
                   }}
+                  disabled={isLoadingData && turmas.length === 0}
                   required
                 >
-                  <option value="">Selecione a turma...</option>
+                  <option value="">
+                    {isLoadingData && turmas.length === 0
+                      ? "Carregando turmas..."
+                      : "Selecione a turma..."}
+                  </option>
                   {turmas.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.nome} ({t.curso?.nome}) - {t.turno}
@@ -740,16 +834,27 @@ export function OcorrenciaModal({
                 <label className={styles.label}>
                   Estudante
                   <span className={styles.required}>*</span>
+                  {isLoadingAlunos && (
+                    <span style={{ fontSize: "0.75rem", color: "var(--color-primary)", display: "inline-flex", alignItems: "center", gap: "4px", marginLeft: "8px" }}>
+                      <Loader2 size={12} className="animate-spin" /> Carregando alunos da turma...
+                    </span>
+                  )}
                 </label>
                 <select
                   className={styles.select}
                   value={selectedAlunoId}
                   onChange={(e) => setSelectedAlunoId(e.target.value)}
-                  disabled={!selectedTurmaId}
+                  disabled={!selectedTurmaId || isLoadingAlunos}
                   required
                 >
                   <option value="">
-                    {selectedTurmaId ? "Selecione o estudante..." : "Selecione uma turma primeiro"}
+                    {isLoadingAlunos
+                      ? "Carregando estudantes da turma..."
+                      : !selectedTurmaId
+                        ? "Selecione uma turma primeiro"
+                        : alunosFiltrados.length === 0
+                          ? "Nenhum estudante matriculado nesta turma"
+                          : "Selecione o estudante..."}
                   </option>
                   {alunosFiltrados.map((a) => (
                     <option key={a.id} value={a.id}>
@@ -774,8 +879,8 @@ export function OcorrenciaModal({
                 />
               </div>
 
-              {/* Unidade Curricular para Desempenho e Comportamento */}
-              {(tipo === "desempenho" || tipo === "comportamento") && (
+              {/* Unidade Curricular para Comportamento (Opcional) */}
+              {tipo === "comportamento" && (
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>Unidade Curricular (Opcional)</label>
                   <select
@@ -978,6 +1083,89 @@ export function OcorrenciaModal({
             </div>
           )}
 
+          {/* 3. UNIDADES CURRICULARES (Se for tipo DESEMPENHO / APROVEITAMENTO) */}
+          {tipo === "desempenho" && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeaderBetween}>
+                <span className={styles.sectionHeaderTitle}>
+                  3. Unidades Curriculares com Aproveitamento Insatisfatório
+                </span>
+
+                {unidadesList.length < unidadesCurricularesFiltradas.length && (
+                  <button
+                    type="button"
+                    className={styles.headerAddBtn}
+                    onClick={handleAddUcLine}
+                    title="Adicionar mais uma Unidade Curricular nesta FIAP"
+                  >
+                    <Plus size={14} />
+                    <span>Adicionar matéria</span>
+                  </button>
+                )}
+              </div>
+
+              {unidadesList.map((item, index) => (
+                <div key={index} className={styles.calculadoraFaltasCard} style={{ padding: "0.85rem 1rem" }}>
+                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
+                    <div style={{ flex: 1 }} className={styles.fieldGroup}>
+                      <label className={styles.label}>
+                        Unidade Curricular #{index + 1}
+                        <span className={styles.required}>*</span>
+                      </label>
+                      <select
+                        className={styles.select}
+                        value={item.unidade_curricular_id}
+                        onChange={(e) =>
+                          handleUpdateUcLine(index, "unidade_curricular_id", e.target.value)
+                        }
+                        disabled={!selectedTurmaId}
+                        required
+                      >
+                        <option value="">
+                          {selectedTurmaId
+                            ? unidadesCurricularesFiltradas.length > 0
+                              ? "Selecione a unidade curricular..."
+                              : "Nenhuma UC cadastrada para este semestre"
+                            : "Selecione uma turma primeiro"}
+                        </option>
+                        {unidadesCurricularesFiltradas
+                          .filter(
+                            (uc) =>
+                              String(uc.id) === String(item.unidade_curricular_id) ||
+                              !unidadesList.some(
+                                (other, oIdx) =>
+                                  oIdx !== index && String(other.unidade_curricular_id) === String(uc.id)
+                              )
+                          )
+                          .map((uc) => {
+                            const sem = uc.semestre_plano_3 || uc.semestre_plano_4;
+                            const semBadge = sem ? ` (${sem}º Sem)` : "";
+                            return (
+                              <option key={uc.id} value={uc.id}>
+                                {uc.sigla ? `[${uc.sigla}] ` : ""}{uc.nome}{semBadge} — {uc.carga_horaria}h
+                              </option>
+                            );
+                          })}
+                      </select>
+                    </div>
+
+                    {unidadesList.length > 1 && (
+                      <button
+                        type="button"
+                        className={styles.removeUcBtn}
+                        onClick={() => handleRemoveUcLine(index)}
+                        title="Remover esta matéria"
+                        style={{ marginBottom: "2px" }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* 4. RELATO DOS FATOS OU DIFICULDADES */}
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
@@ -986,7 +1174,7 @@ export function OcorrenciaModal({
                   ? "4. Justificativa & Recomendações"
                   : tipo === "comportamento"
                     ? "3. Relato da Ocorrência Disciplinar"
-                    : "3. Diagnóstico de Aproveitamento Pedagógico"}
+                    : "4. Diagnóstico de Aproveitamento Pedagógico"}
               </span>
             </div>
 

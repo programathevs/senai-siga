@@ -14,8 +14,8 @@ import {
   RotateCcw,
   Eye,
 } from "lucide-react";
-import html2pdf from "html2pdf.js";
 import { useAuth } from "../../contexts/AuthContext";
+import { RelatorioPdfModal } from "./RelatorioPdfModal";
 import {
   relatorioService,
   type RelatorioFiltros,
@@ -66,7 +66,9 @@ export function Relatorios() {
 
   // Modal
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
-  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [allOcorrenciasPdf, setAllOcorrenciasPdf] = useState<Ocorrencia[]>([]);
+  const [isPreparingPdf, setIsPreparingPdf] = useState(false);
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -74,7 +76,12 @@ export function Relatorios() {
   // Atalhos rápidos de data
   function applyDateShortcut(type: "mes_atual" | "ultimos_30" | "semestre" | "tudo") {
     const today = new Date();
-    const toISO = (d: Date) => d.toISOString().split("T")[0];
+    const formatYmd = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
 
     if (type === "tudo") {
       setDataInicio("");
@@ -84,24 +91,24 @@ export function Relatorios() {
 
     if (type === "mes_atual") {
       const start = new Date(today.getFullYear(), today.getMonth(), 1);
-      setDataInicio(toISO(start));
-      setDataFim(toISO(today));
+      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Primeiro e último dia do mês corrente
+      setDataInicio(formatYmd(start));
+      setDataFim(formatYmd(end));
       return;
     }
 
     if (type === "ultimos_30") {
-      const start = new Date();
-      start.setDate(today.getDate() - 30);
-      setDataInicio(toISO(start));
-      setDataFim(toISO(today));
+      const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
+      setDataInicio(formatYmd(start));
+      setDataFim(formatYmd(today));
       return;
     }
 
     if (type === "semestre") {
       const isSecondHalf = today.getMonth() >= 6;
       const start = new Date(today.getFullYear(), isSecondHalf ? 6 : 0, 1);
-      setDataInicio(toISO(start));
-      setDataFim(toISO(today));
+      setDataInicio(formatYmd(start));
+      setDataFim(formatYmd(today)); // Mantém preenchido com a data atual conforme solicitado
       return;
     }
   }
@@ -118,6 +125,7 @@ export function Relatorios() {
     try {
       setIsLoading(true);
 
+      const isAll = targetPerPage === -1;
       const filtros: RelatorioFiltros = {
         search: search.trim() || undefined,
         turma_id: selectedTurmaId || undefined,
@@ -125,8 +133,9 @@ export function Relatorios() {
         status: (selectedStatus as any) || undefined,
         data_inicio: dataInicio || undefined,
         data_fim: dataFim || undefined,
-        page: targetPage,
-        per_page: targetPerPage,
+        page: isAll ? 1 : targetPage,
+        per_page: isAll ? undefined : targetPerPage,
+        all: isAll ? true : undefined,
       };
 
       if (activeTab === "analitico") {
@@ -146,6 +155,40 @@ export function Relatorios() {
       setMeta(null);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleOpenPdfModal() {
+    if (activeTab === "analitico") {
+      // Se a tabela já está exibindo todos os registros do filtro
+      if (perPage === -1 || (meta && ocorrencias.length >= meta.total)) {
+        setAllOcorrenciasPdf(ocorrencias);
+        setIsPdfModalOpen(true);
+        return;
+      }
+
+      try {
+        setIsPreparingPdf(true);
+        const res = await relatorioService.getOcorrencias({
+          search: search.trim() || undefined,
+          turma_id: selectedTurmaId || undefined,
+          tipo: (selectedTipo as any) || undefined,
+          status: (selectedStatus as any) || undefined,
+          data_inicio: dataInicio || undefined,
+          data_fim: dataFim || undefined,
+          all: true,
+        });
+        setAllOcorrenciasPdf(res.data);
+        setIsPdfModalOpen(true);
+      } catch (err) {
+        console.error("Erro ao buscar registros completos para o PDF:", err);
+        setAllOcorrenciasPdf(ocorrencias);
+        setIsPdfModalOpen(true);
+      } finally {
+        setIsPreparingPdf(false);
+      }
+    } else {
+      setIsPdfModalOpen(true);
     }
   }
 
@@ -196,46 +239,30 @@ export function Relatorios() {
     return () => window.removeEventListener("afterprint", handleAfterPrint);
   }, []);
 
-  function handlePrint() {
-    setTimeout(() => {
-      window.print();
-      window.focus();
-    }, 150);
+  function handleTabChange(tab: "analitico" | "turmas") {
+    setActiveTab(tab);
+    if (tab === "turmas") {
+      setSearch("");
+      setSelectedTurmaId("");
+      setSelectedTipo("");
+      setSelectedStatus("");
+    }
   }
 
-  async function handleExportPdf() {
-    const element = document.getElementById("printable-relatorio");
-    if (!element) return;
+  function handlePrint() {
+    const dataIso = new Date().toISOString().slice(0, 10);
+    const defaultFilename = `Relatorio_SENAI_${activeTab === "analitico" ? "Ocorrencias" : "Turmas"}_${dataIso}`;
+    const previousTitle = document.title;
+    document.title = defaultFilename;
 
-    setIsExportingPdf(true);
-    try {
-      const dataIso = new Date().toISOString().slice(0, 10);
-      const options = {
-        margin: [6, 6, 6, 6] as [number, number, number, number],
-        filename: `Relatorio_SENAI_Ocorrencias_${dataIso}.pdf`,
-        image: { type: "jpeg" as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          scrollY: 0,
-          scrollX: 0,
-        },
-        jsPDF: { unit: "mm", format: "a4", orientation: "landscape" as const },
-      };
+    const restoreTitle = () => {
+      document.title = previousTitle;
+      window.removeEventListener("afterprint", restoreTitle);
+    };
+    window.addEventListener("afterprint", restoreTitle, { once: true });
 
-      await html2pdf().set(options).from(element).save();
-    } catch (err) {
-      console.error("Erro ao gerar PDF:", err);
-      window.print();
-    } finally {
-      setIsExportingPdf(false);
-      window.focus();
-      document.body.style.pointerEvents = "";
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-    }
+    window.print();
+    setTimeout(restoreTitle, 3000);
   }
 
   return (
@@ -281,12 +308,12 @@ export function Relatorios() {
           <button
             type="button"
             className={styles.exportBtn}
-            onClick={handleExportPdf}
-            disabled={isExportingPdf || isLoading}
-            title="Baixar arquivo PDF consolidado"
+            onClick={handleOpenPdfModal}
+            disabled={isLoading || isPreparingPdf}
+            title="Abrir pré-visualização e exportar PDF com relatório completo"
           >
-            {isExportingPdf ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            <span>Exportar PDF</span>
+            {isPreparingPdf ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            <span>{isPreparingPdf ? "Carregando..." : "Exportar PDF"}</span>
           </button>
 
           <button
@@ -313,7 +340,7 @@ export function Relatorios() {
             </div>
             <div
               className={styles.summaryIconBox}
-              style={{ backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)", color: "var(--color-primary)" }}
+              style={{ backgroundColor: "rgba(227, 6, 19, 0.1)", color: "var(--color-primary)" }}
             >
               <FileText size={22} />
             </div>
@@ -328,7 +355,7 @@ export function Relatorios() {
             </div>
             <div
               className={styles.summaryIconBox}
-              style={{ backgroundColor: "color-mix(in srgb, var(--color-warning) 12%, transparent)", color: "var(--color-warning)" }}
+              style={{ backgroundColor: "rgba(217, 119, 6, 0.12)", color: "var(--color-warning)" }}
             >
               <Clock size={22} />
             </div>
@@ -343,7 +370,7 @@ export function Relatorios() {
             </div>
             <div
               className={styles.summaryIconBox}
-              style={{ backgroundColor: "color-mix(in srgb, #0059a8 12%, transparent)", color: "#0059a8" }}
+              style={{ backgroundColor: "rgba(0, 89, 168, 0.12)", color: "#0059a8" }}
             >
               <Headphones size={22} />
             </div>
@@ -368,57 +395,66 @@ export function Relatorios() {
 
       {/* Barra de Filtros */}
       <div className={styles.filterCard}>
-        <div className={styles.filterRow}>
-          <div className={styles.searchWrapper}>
-            <Search size={18} className={styles.searchIcon} />
-            <input
-              type="text"
-              className={styles.searchInput}
-              placeholder="Buscar por estudante, RA ou nº da FIAP..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+        {activeTab === "analitico" ? (
+          <div className={styles.filterRow}>
+            <div className={styles.searchWrapper}>
+              <Search size={18} className={styles.searchIcon} />
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Buscar por estudante, RA ou nº da FIAP..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
 
-          <select
-            className={styles.selectInput}
-            value={selectedTurmaId}
-            onChange={(e) => setSelectedTurmaId(e.target.value)}
-          >
-            <option value="">
-              {user?.role === "instrutor" ? "Todas as minhas turmas" : "Todas as turmas"}
-            </option>
-            {turmasList.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nome}
+            <select
+              className={styles.selectInput}
+              value={selectedTurmaId}
+              onChange={(e) => setSelectedTurmaId(e.target.value)}
+            >
+              <option value="">
+                {user?.role === "instrutor" ? "Todas as minhas turmas" : "Todas as turmas"}
               </option>
-            ))}
-          </select>
+              {turmasList.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nome}
+                </option>
+              ))}
+            </select>
 
-          <select
-            className={styles.selectInput}
-            value={selectedTipo}
-            onChange={(e) => setSelectedTipo(e.target.value)}
-          >
-            <option value="">Todas as Modalidades</option>
-            <option value="falta">Falta</option>
-            <option value="comportamento">Comportamento</option>
-            <option value="desempenho">Desempenho</option>
-          </select>
+            <select
+              className={styles.selectInput}
+              value={selectedTipo}
+              onChange={(e) => setSelectedTipo(e.target.value)}
+            >
+              <option value="">Todas as Modalidades</option>
+              <option value="falta">Falta</option>
+              <option value="comportamento">Comportamento</option>
+              <option value="desempenho">Desempenho</option>
+            </select>
 
-          <select
-            className={styles.selectInput}
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-          >
-            <option value="">Todos os Status</option>
-            <option value="pendente">Pendente de Envio</option>
-            <option value="enviado_aqv">Encaminhado AQV</option>
-            <option value="pdf_gerado">PDF Gerado</option>
-            <option value="impresso">Impresso</option>
-            <option value="assinado">Assinado</option>
-          </select>
-        </div>
+            <select
+              className={styles.selectInput}
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="">Todos os Status</option>
+              <option value="pendente">Pendente de Envio</option>
+              <option value="enviado_aqv">Encaminhado AQV</option>
+              <option value="pdf_gerado">PDF Gerado</option>
+              <option value="impresso">Impresso</option>
+              <option value="assinado">Assinado</option>
+            </select>
+          </div>
+        ) : (
+          <div className={styles.consolidadoNotice}>
+            <BookOpen size={18} />
+            <span>
+              Visão Consolidada: Comparativo de todas as turmas lado a lado. Filtros individuais não se aplicam; ajuste o período desejado abaixo.
+            </span>
+          </div>
+        )}
 
         {/* Linha de Datas e Atalhos */}
         <div className={styles.filterRow} style={{ borderTop: "1px solid var(--color-border)", paddingTop: "0.75rem" }}>
@@ -485,7 +521,7 @@ export function Relatorios() {
         <button
           type="button"
           className={`${styles.tabBtn} ${activeTab === "analitico" ? styles.tabBtnActive : ""}`}
-          onClick={() => setActiveTab("analitico")}
+          onClick={() => handleTabChange("analitico")}
         >
           <FileText size={16} />
           <span>Ocorrências Detalhadas</span>
@@ -494,7 +530,7 @@ export function Relatorios() {
         <button
           type="button"
           className={`${styles.tabBtn} ${activeTab === "turmas" ? styles.tabBtnActive : ""}`}
-          onClick={() => setActiveTab("turmas")}
+          onClick={() => handleTabChange("turmas")}
         >
           <Users size={16} />
           <span>Consolidado por Turma</span>
@@ -564,9 +600,9 @@ export function Relatorios() {
                             style={{
                               backgroundColor:
                                 oc.tipo === "falta"
-                                  ? "color-mix(in srgb, var(--color-warning) 12%, transparent)"
+                                  ? "rgba(217, 119, 6, 0.12)"
                                   : oc.tipo === "comportamento"
-                                  ? "color-mix(in srgb, var(--color-primary) 10%, transparent)"
+                                  ? "rgba(227, 6, 19, 0.1)"
                                   : "var(--color-surface)",
                               color:
                                 oc.tipo === "falta"
@@ -593,10 +629,10 @@ export function Relatorios() {
                             style={{
                               backgroundColor:
                                 oc.status === "enviado_aqv"
-                                  ? "color-mix(in srgb, var(--color-primary) 10%, transparent)"
+                                  ? "rgba(0, 89, 168, 0.12)"
                                   : oc.status === "pendente"
-                                  ? "color-mix(in srgb, var(--color-warning) 12%, transparent)"
-                                  : "color-mix(in srgb, var(--color-success) 12%, transparent)",
+                                  ? "rgba(217, 119, 6, 0.12)"
+                                  : "rgba(16, 185, 129, 0.12)",
                               color:
                                 oc.status === "enviado_aqv"
                                   ? "var(--color-primary)"
@@ -653,6 +689,8 @@ export function Relatorios() {
                 perPage={perPage}
                 from={meta.from}
                 to={meta.to}
+                perPageOptions={[10, 20, 50, 100]}
+                showAllOption={true}
                 onPageChange={(newPage) => setPage(newPage)}
                 onPerPageChange={(newPerPage) => {
                   setPerPage(newPerPage);
@@ -748,6 +786,22 @@ export function Relatorios() {
         isOpen={Boolean(selectedDetalhes)}
         onClose={() => setSelectedDetalhes(null)}
         ocorrencia={selectedDetalhes}
+      />
+
+      {/* Modal de Pré-visualização e Exportação do Relatório em PDF */}
+      <RelatorioPdfModal
+        isOpen={isPdfModalOpen}
+        onClose={() => setIsPdfModalOpen(false)}
+        activeTab={activeTab}
+        ocorrencias={allOcorrenciasPdf.length > 0 ? allOcorrenciasPdf : ocorrencias}
+        turmasResumo={turmasResumo}
+        resumoGeral={resumoGeral}
+        turmaNome={turmasList.find((t) => String(t.id) === selectedTurmaId)?.nome}
+        dataInicio={dataInicio}
+        dataFim={dataFim}
+        selectedTipo={selectedTipo}
+        selectedStatus={selectedStatus}
+        user={user}
       />
     </div>
   );

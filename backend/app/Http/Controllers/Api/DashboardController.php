@@ -48,14 +48,37 @@ class DashboardController extends Controller
         $startOfLastMonth = $now->copy()->subMonth()->startOfMonth();
         $endOfLastMonth = $now->copy()->subMonth()->endOfMonth();
 
-        // 1. KPIs
-        $totalMes = (clone $baseQuery)->whereBetween('data_ocorrencia', [$startOfMonth, $endOfMonth])->count();
-        $totalMesAnterior = (clone $baseQuery)->whereBetween('data_ocorrencia', [$startOfLastMonth, $endOfLastMonth])->count();
-        $diferencaMes = $totalMes - $totalMesAnterior;
+        $startOfMonthStr = $startOfMonth->format('Y-m-d');
+        $endOfMonthStr = $endOfMonth->format('Y-m-d');
+        $startOfLastMonthStr = $startOfLastMonth->format('Y-m-d');
+        $endOfLastMonthStr = $endOfLastMonth->format('Y-m-d');
 
-        $pendentes = (clone $baseQuery)->where('status', 'pendente')->count();
-        $encaminhadasAqv = (clone $baseQuery)->where('status', 'enviado_aqv')->count();
-        $resolvidas = (clone $baseQuery)->whereIn('status', ['assinado', 'impresso'])->count();
+        // 1. KPIs consolidados em query única
+        $kpisRaw = (clone $baseQuery)
+            ->selectRaw('
+                COUNT(CASE WHEN data_ocorrencia BETWEEN ? AND ? THEN 1 END) as total_mes,
+                COUNT(CASE WHEN data_ocorrencia BETWEEN ? AND ? THEN 1 END) as total_mes_anterior,
+                COUNT(CASE WHEN status = "pendente" THEN 1 END) as pendentes,
+                COUNT(CASE WHEN status = "enviado_aqv" THEN 1 END) as encaminhadas_aqv,
+                COUNT(CASE WHEN status IN ("assinado", "impresso") THEN 1 END) as resolvidas,
+                COUNT(CASE WHEN tipo = "falta" THEN 1 END) as tipo_falta,
+                COUNT(CASE WHEN tipo = "comportamento" THEN 1 END) as tipo_comportamento,
+                COUNT(CASE WHEN tipo = "desempenho" THEN 1 END) as tipo_desempenho,
+                COUNT(CASE WHEN status = "pdf_gerado" THEN 1 END) as status_pdf_gerado,
+                COUNT(CASE WHEN status = "impresso" THEN 1 END) as status_impresso,
+                COUNT(CASE WHEN status = "assinado" THEN 1 END) as status_assinado
+            ', [
+                $startOfMonthStr, $endOfMonthStr,
+                $startOfLastMonthStr, $endOfLastMonthStr,
+            ])
+            ->first();
+
+        $totalMes = (int) ($kpisRaw?->total_mes ?? 0);
+        $totalMesAnterior = (int) ($kpisRaw?->total_mes_anterior ?? 0);
+        $diferencaMes = $totalMes - $totalMesAnterior;
+        $pendentes = (int) ($kpisRaw?->pendentes ?? 0);
+        $encaminhadasAqv = (int) ($kpisRaw?->encaminhadas_aqv ?? 0);
+        $resolvidas = (int) ($kpisRaw?->resolvidas ?? 0);
 
         // Alunos em situação de alerta (reincidentes ou com faltas severas)
         $alunosEmAlerta = (clone $baseQuery)
@@ -67,18 +90,18 @@ class DashboardController extends Controller
 
         // 2. Distribuição por tipo de ocorrência
         $distribuicaoTipo = [
-            'falta' => (clone $baseQuery)->where('tipo', 'falta')->count(),
-            'comportamento' => (clone $baseQuery)->where('tipo', 'comportamento')->count(),
-            'desempenho' => (clone $baseQuery)->where('tipo', 'desempenho')->count(),
+            'falta' => (int) ($kpisRaw?->tipo_falta ?? 0),
+            'comportamento' => (int) ($kpisRaw?->tipo_comportamento ?? 0),
+            'desempenho' => (int) ($kpisRaw?->tipo_desempenho ?? 0),
         ];
 
         // 3. Distribuição por status
         $distribuicaoStatus = [
             'pendente' => $pendentes,
             'enviado_aqv' => $encaminhadasAqv,
-            'pdf_gerado' => (clone $baseQuery)->where('status', 'pdf_gerado')->count(),
-            'impresso' => (clone $baseQuery)->where('status', 'impresso')->count(),
-            'assinado' => (clone $baseQuery)->where('status', 'assinado')->count(),
+            'pdf_gerado' => (int) ($kpisRaw?->status_pdf_gerado ?? 0),
+            'impresso' => (int) ($kpisRaw?->status_impresso ?? 0),
+            'assinado' => (int) ($kpisRaw?->status_assinado ?? 0),
         ];
 
         // 4. Ocorrências recentes

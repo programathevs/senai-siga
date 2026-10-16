@@ -129,13 +129,15 @@ export interface CreateOcorrenciaPayload {
 
 export const ocorrenciaService = {
   async getOcorrencias(
-    filtros?: OcorrenciaFiltros
+    filtros?: OcorrenciaFiltros,
+    bypassCache?: boolean
   ): Promise<{ data: Ocorrencia[]; meta?: PaginationMeta & { estatisticas?: OcorrenciaEstatisticas } }> {
     const response = await api.get<{
       data: Ocorrencia[];
       meta?: PaginationMeta & { estatisticas?: OcorrenciaEstatisticas };
     }>("/api/ocorrencias", {
       params: filtros,
+      headers: bypassCache ? { "x-no-cache": "true" } : undefined,
     });
     return response.data;
   },

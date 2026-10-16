@@ -120,13 +120,13 @@ export function OcorrenciaDetalhesModal({
       : "Não informada";
   })();
 
-  const faltasDisplay = ocorrencia.tipo === "comportamento"
+  const faltasDisplay = ocorrencia.tipo !== "falta"
     ? "----"
     : unidades.length > 0
     ? unidades.map((u) => `${u.quantidade_faltas} (${u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC"})`).join(" / ")
     : `${quantidadeFaltas} faltas`;
 
-  const limiteFaltasDisplay = ocorrencia.tipo === "comportamento"
+  const limiteFaltasDisplay = ocorrencia.tipo !== "falta"
     ? "----"
     : unidades.length > 0
     ? unidades.map((u) => {
@@ -310,7 +310,13 @@ export function OcorrenciaDetalhesModal({
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
+    <div
+      className={styles.overlay}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      data-print-modal="true"
+    >
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* Cabeçalho do Modal */}
         <div className={styles.modalHeader}>

@@ -21,22 +21,19 @@ class PlanoRecuperacaoController extends Controller
     {
         $user = $request->user();
 
+        $withRelations = [
+            'ocorrencia.unidades.unidadeCurricular',
+            'aluno.turma.curso',
+            'unidades',
+            'unidadeCurricular',
+            'registradoPor:id,name,email',
+            'frequencias',
+        ];
+
         // Gestores visualizam inclusive Planos excluídos (Soft Delete) na listagem, igual às ocorrências
         $query = $user && $user->hasRole('gestor')
-            ? PlanoRecuperacao::withTrashed()->with([
-                'ocorrencia',
-                'aluno.turma.curso',
-                'unidadeCurricular',
-                'registradoPor:id,name,email',
-                'frequencias',
-            ])
-            : PlanoRecuperacao::with([
-                'ocorrencia',
-                'aluno.turma.curso',
-                'unidadeCurricular',
-                'registradoPor:id,name,email',
-                'frequencias',
-            ]);
+            ? PlanoRecuperacao::withTrashed()->with($withRelations)
+            : PlanoRecuperacao::with($withRelations);
 
         // Filtro por termo de busca (Aluno ou Número da FIAP)
         if ($search = $request->input('search')) {
@@ -101,12 +98,56 @@ class PlanoRecuperacaoController extends Controller
             ], 422);
         }
 
-        return DB::transaction(function () use ($data, $user) {
+        return DB::transaction(function () use ($data, $user, $ocorrencia) {
             $data['registrado_por'] = $user->id;
             $frequencias = $data['frequencias'] ?? [];
             unset($data['frequencias']);
 
+            // Múltiplas Unidades Curriculares
+            $unidadeIds = [];
+            if (!empty($data['unidade_curricular_ids']) && is_array($data['unidade_curricular_ids'])) {
+                $unidadeIds = array_values(array_unique(array_filter(array_map('intval', $data['unidade_curricular_ids']))));
+            } elseif (!empty($data['unidades']) && is_array($data['unidades'])) {
+                foreach ($data['unidades'] as $u) {
+                    if (is_array($u) && !empty($u['unidade_curricular_id'])) {
+                        $unidadeIds[] = (int) $u['unidade_curricular_id'];
+                    } elseif (is_numeric($u)) {
+                        $unidadeIds[] = (int) $u;
+                    }
+                }
+                $unidadeIds = array_values(array_unique(array_filter($unidadeIds)));
+            } elseif (!empty($data['unidade_curricular_id'])) {
+                $unidadeIds = [(int) $data['unidade_curricular_id']];
+            } elseif ($ocorrencia) {
+                // Herda as unidades da ocorrência caso não fornecidas explicitamente
+                if ($ocorrencia->tipo === 'falta') {
+                    $unidadesFalta = $ocorrencia->unidades
+                        ->filter(function ($u) {
+                            if ($u->limite_faltas_aulas > 0) {
+                                return $u->quantidade_faltas > $u->limite_faltas_aulas;
+                            }
+                            return $u->percentual_atingido > 100.0;
+                        })
+                        ->pluck('unidade_curricular_id')
+                        ->toArray();
+                    $unidadeIds = !empty($unidadesFalta) ? $unidadesFalta : $ocorrencia->unidades->pluck('unidade_curricular_id')->toArray();
+                } else {
+                    $unidadeIds = $ocorrencia->unidades()->pluck('unidade_curricular_id')->toArray();
+                }
+            }
+
+            unset($data['unidade_curricular_ids'], $data['unidades']);
+
+            // Retrocompatibilidade para coluna escalar existente
+            if (!empty($unidadeIds)) {
+                $data['unidade_curricular_id'] = $unidadeIds[0];
+            }
+
             $plano = PlanoRecuperacao::create($data);
+
+            if (!empty($unidadeIds)) {
+                $plano->unidades()->sync($unidadeIds);
+            }
 
             if (!empty($frequencias)) {
                 foreach ($frequencias as $freq) {
@@ -125,7 +166,14 @@ class PlanoRecuperacaoController extends Controller
 
             return response()->json([
                 'message' => 'Plano de Recuperação registrado com sucesso.',
-                'data' => $plano->load(['ocorrencia', 'aluno.turma.curso', 'unidadeCurricular', 'registradoPor', 'frequencias']),
+                'data' => $plano->load([
+                    'ocorrencia.unidades.unidadeCurricular',
+                    'aluno.turma.curso',
+                    'unidades',
+                    'unidadeCurricular',
+                    'registradoPor',
+                    'frequencias',
+                ]),
             ], 201);
         });
     }
@@ -136,7 +184,14 @@ class PlanoRecuperacaoController extends Controller
     public function show(PlanoRecuperacao $plano): JsonResponse
     {
         return response()->json([
-            'data' => $plano->load(['ocorrencia', 'aluno.turma.curso', 'unidadeCurricular', 'registradoPor', 'frequencias']),
+            'data' => $plano->load([
+                'ocorrencia.unidades.unidadeCurricular',
+                'aluno.turma.curso',
+                'unidades',
+                'unidadeCurricular',
+                'registradoPor',
+                'frequencias',
+            ]),
         ]);
     }
 
@@ -151,6 +206,31 @@ class PlanoRecuperacaoController extends Controller
         return DB::transaction(function () use ($data, $plano, $dadosAntigos) {
             $frequencias = $data['frequencias'] ?? null;
             unset($data['frequencias']);
+
+            // Múltiplas Unidades Curriculares se informadas
+            $unidadeIds = null;
+            if (isset($data['unidade_curricular_ids']) && is_array($data['unidade_curricular_ids'])) {
+                $unidadeIds = array_values(array_unique(array_filter(array_map('intval', $data['unidade_curricular_ids']))));
+            } elseif (isset($data['unidades']) && is_array($data['unidades'])) {
+                $unidadeIds = [];
+                foreach ($data['unidades'] as $u) {
+                    if (is_array($u) && !empty($u['unidade_curricular_id'])) {
+                        $unidadeIds[] = (int) $u['unidade_curricular_id'];
+                    } elseif (is_numeric($u)) {
+                        $unidadeIds[] = (int) $u;
+                    }
+                }
+                $unidadeIds = array_values(array_unique(array_filter($unidadeIds)));
+            } elseif (isset($data['unidade_curricular_id'])) {
+                $unidadeIds = $data['unidade_curricular_id'] ? [(int) $data['unidade_curricular_id']] : [];
+            }
+
+            unset($data['unidade_curricular_ids'], $data['unidades']);
+
+            if ($unidadeIds !== null) {
+                $plano->unidades()->sync($unidadeIds);
+                $data['unidade_curricular_id'] = !empty($unidadeIds) ? $unidadeIds[0] : null;
+            }
 
             $plano->update($data);
 
@@ -173,7 +253,14 @@ class PlanoRecuperacaoController extends Controller
 
             return response()->json([
                 'message' => 'Plano de Recuperação atualizado com sucesso.',
-                'data' => $plano->fresh(['ocorrencia', 'aluno.turma.curso', 'unidadeCurricular', 'registradoPor', 'frequencias']),
+                'data' => $plano->fresh([
+                    'ocorrencia.unidades.unidadeCurricular',
+                    'aluno.turma.curso',
+                    'unidades',
+                    'unidadeCurricular',
+                    'registradoPor',
+                    'frequencias',
+                ]),
             ]);
         });
     }
@@ -240,7 +327,14 @@ class PlanoRecuperacaoController extends Controller
 
         return response()->json([
             'message' => 'Plano de Recuperação restaurado com sucesso.',
-            'data' => $plano->load(['ocorrencia', 'aluno.turma.curso', 'unidadeCurricular', 'registradoPor', 'frequencias']),
+            'data' => $plano->load([
+                'ocorrencia.unidades.unidadeCurricular',
+                'aluno.turma.curso',
+                'unidades',
+                'unidadeCurricular',
+                'registradoPor',
+                'frequencias',
+            ]),
         ]);
     }
 }

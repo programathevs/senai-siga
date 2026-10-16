@@ -1,25 +1,36 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router";
 
-import { Login } from "../pages/Login/Login";
-import { EsqueciSenha } from "../pages/EsqueciSenha/EsqueciSenha";
-import { RedefinirSenha } from "../pages/RedefinirSenha/RedefinirSenha";
-import { PrimeiroAcesso } from "../pages/PrimeiroAcesso/PrimeiroAcesso";
-import { Dashboard } from "../pages/Dashboard/Dashboard";
 import { DashboardLayout } from "../layouts/DashboardLayout";
 import { PrivateRoute } from "./PrivateRoute";
 import { PublicRoute } from "./PublicRoute";
 import { RoleRoute } from "./RoleRoute";
-import { Cursos } from "../pages/Cursos/Cursos";
-import { Usuarios } from "../pages/Usuarios/Usuarios";
-import { Turmas } from "../pages/Turmas/Turmas";
-import { Alunos } from "../pages/Alunos/Alunos";
-import { Ocorrencias } from "../pages/Ocorrencias/Ocorrencias";
-import { Relatorios } from "../pages/Relatorios/Relatorios";
-import { EncaminhamentosAqv } from "../pages/EncaminhamentosAqv/EncaminhamentosAqv";
-import { PlanosRecuperacao } from "../pages/PlanosRecuperacao/PlanosRecuperacao";
-import { Configuracoes } from "../pages/Configuracoes/Configuracoes";
+import { LoadingScreen } from "../components/LoadingScreen/LoadingScreen";
 
-import { Auditoria } from "../pages/Auditoria/Auditoria";
+// Lazy loading das páginas para Code Splitting otimizado
+const Login = lazy(() => import("../pages/Login/Login").then((m) => ({ default: m.Login })));
+const EsqueciSenha = lazy(() => import("../pages/EsqueciSenha/EsqueciSenha").then((m) => ({ default: m.EsqueciSenha })));
+const RedefinirSenha = lazy(() => import("../pages/RedefinirSenha/RedefinirSenha").then((m) => ({ default: m.RedefinirSenha })));
+const PrimeiroAcesso = lazy(() => import("../pages/PrimeiroAcesso/PrimeiroAcesso").then((m) => ({ default: m.PrimeiroAcesso })));
+const Dashboard = lazy(() => import("../pages/Dashboard/Dashboard").then((m) => ({ default: m.Dashboard })));
+const Cursos = lazy(() => import("../pages/Cursos/Cursos").then((m) => ({ default: m.Cursos })));
+const Usuarios = lazy(() => import("../pages/Usuarios/Usuarios").then((m) => ({ default: m.Usuarios })));
+const Turmas = lazy(() => import("../pages/Turmas/Turmas").then((m) => ({ default: m.Turmas })));
+const Alunos = lazy(() => import("../pages/Alunos/Alunos").then((m) => ({ default: m.Alunos })));
+const Ocorrencias = lazy(() => import("../pages/Ocorrencias/Ocorrencias").then((m) => ({ default: m.Ocorrencias })));
+const Relatorios = lazy(() => import("../pages/Relatorios/Relatorios").then((m) => ({ default: m.Relatorios })));
+const EncaminhamentosAqv = lazy(() => import("../pages/EncaminhamentosAqv/EncaminhamentosAqv").then((m) => ({ default: m.EncaminhamentosAqv })));
+const PlanosRecuperacao = lazy(() => import("../pages/PlanosRecuperacao/PlanosRecuperacao").then((m) => ({ default: m.PlanosRecuperacao })));
+const Configuracoes = lazy(() => import("../pages/Configuracoes/Configuracoes").then((m) => ({ default: m.Configuracoes })));
+const Auditoria = lazy(() => import("../pages/Auditoria/Auditoria").then((m) => ({ default: m.Auditoria })));
+
+function withSuspense(Component: React.ComponentType) {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <Component />
+    </Suspense>
+  );
+}
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Apenas para convidados/deslogados)
@@ -28,15 +39,15 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/login",
-        element: <Login />,
+        element: withSuspense(Login),
       },
       {
         path: "/esqueci-senha",
-        element: <EsqueciSenha />,
+        element: withSuspense(EsqueciSenha),
       },
       {
         path: "/redefinir-senha",
-        element: <RedefinirSenha />,
+        element: withSuspense(RedefinirSenha),
       },
     ],
   },
@@ -47,7 +58,7 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/primeiro-acesso",
-        element: <PrimeiroAcesso />,
+        element: withSuspense(PrimeiroAcesso),
       },
       {
         path: "/",
@@ -55,26 +66,26 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Dashboard />,
+            element: withSuspense(Dashboard),
           },
           {
             element: <RoleRoute allowedRoles={["gestor", "instrutor", "aqv"]} />,
             children: [
               {
                 path: "/ocorrencias",
-                element: <Ocorrencias />,
+                element: withSuspense(Ocorrencias),
               },
               {
                 path: "/planos-recuperacao",
-                element: <PlanosRecuperacao />,
+                element: withSuspense(PlanosRecuperacao),
               },
               {
                 path: "/relatorios",
-                element: <Relatorios />,
+                element: withSuspense(Relatorios),
               },
               {
                 path: "/configuracoes",
-                element: <Configuracoes />,
+                element: withSuspense(Configuracoes),
               },
             ],
           },
@@ -83,7 +94,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: "/encaminhamentos-aqv",
-                element: <EncaminhamentosAqv />,
+                element: withSuspense(EncaminhamentosAqv),
               },
             ],
           },
@@ -92,27 +103,27 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: "/cursos",
-                element: <Cursos />,
+                element: withSuspense(Cursos),
               },
               {
                 path: "/turmas",
-                element: <Turmas />,
+                element: withSuspense(Turmas),
               },
               {
                 path: "/alunos",
-                element: <Alunos />,
+                element: withSuspense(Alunos),
               },
               {
                 path: "/usuarios",
-                element: <Usuarios />,
+                element: withSuspense(Usuarios),
               },
               {
                 path: "/instrutores",
-                element: <Usuarios />,
+                element: withSuspense(Usuarios),
               },
               {
                 path: "/auditoria",
-                element: <Auditoria />,
+                element: withSuspense(Auditoria),
               },
             ],
           },

@@ -107,7 +107,7 @@ export function Ocorrencias() {
   }
 
 
-  async function loadOcorrencias(targetPage = page, targetPerPage = perPage) {
+  async function loadOcorrencias(targetPage = page, targetPerPage = perPage, bypassCache = false) {
     try {
       setIsLoading(true);
       const res = await ocorrenciaService.getOcorrencias({
@@ -117,7 +117,7 @@ export function Ocorrencias() {
         status: selectedStatus || undefined,
         page: targetPage,
         per_page: targetPerPage,
-      });
+      }, bypassCache);
 
       // Se a página atual ficou vazia após exclusão, mas ainda existem registros em páginas anteriores
       if (res.data.length === 0 && res.meta && res.meta.total > 0 && targetPage > 1) {
@@ -480,8 +480,8 @@ export function Ocorrencias() {
 
                   const canEdit =
                     !isDeleted &&
+                    user?.role !== "aqv" &&
                     (user?.role === "gestor" ||
-                      user?.role === "aqv" ||
                       (user?.role === "instrutor" && isOwner));
 
                   const canDelete =
@@ -692,7 +692,7 @@ export function Ocorrencias() {
                             <Eye size={16} />
                           </button>
 
-                          {oc.has_plano_pendente && !isDeleted && (
+                          {oc.has_plano_pendente && !isDeleted && user?.role !== "aqv" && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.planoBtn}`}
@@ -794,10 +794,11 @@ export function Ocorrencias() {
         onClose={() => setIsFormModalOpen(false)}
         onSuccess={() => {
           setIsFormModalOpen(false);
-          loadOcorrencias(page, perPage);
+          loadOcorrencias(page, perPage, true);
         }}
         ocorrenciaToEdit={editingOcorrencia}
         onOpenPlanoModal={handleOpenPlanoModal}
+        initialTurmas={turmas}
       />
 
       {/* Modal do Plano de Recuperação (Ideia 2 & 3) */}
@@ -807,7 +808,7 @@ export function Ocorrencias() {
           setIsPlanoModalOpen(false);
           setOcorrenciaParaPlano(null);
         }}
-        onSaveSuccess={() => loadOcorrencias(page, perPage)}
+        onSaveSuccess={() => loadOcorrencias(page, perPage, true)}
         ocorrencia={ocorrenciaParaPlano}
       />
 
@@ -823,7 +824,8 @@ export function Ocorrencias() {
         }}
         canEdit={(() => {
           if (!selectedDetalhes || !user) return false;
-          if (user.role === "gestor" || user.role === "aqv") return true;
+          if (user.role === "aqv") return false;
+          if (user.role === "gestor") return true;
           const cId =
             typeof selectedDetalhes.registrado_por === "object" && selectedDetalhes.registrado_por !== null
               ? (selectedDetalhes.registrado_por as any).id

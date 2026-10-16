@@ -155,5 +155,25 @@ class TurmaSeeder extends Seeder
                 }
             }
         }
+
+        // 4. Turma I1HSA (1º Termo SESI / Integral)
+        if ($cursoSESI) {
+            $turmaI1HSA = Turma::updateOrCreate(
+                ['nome' => 'I1HSA'],
+                [
+                    'curso_id' => $cursoSESI->id,
+                    'turno' => 'Integral',
+                    'ano_letivo' => '2026',
+                    'semestre_atual' => 1,
+                ]
+            );
+
+            if ($instrutorMatheus) {
+                $turmaI1HSA->instrutores()->syncWithoutDetaching(
+                    array_filter([$instrutorMatheus->id])
+                );
+            }
+        }
     }
 }
+

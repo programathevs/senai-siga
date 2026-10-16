@@ -169,5 +169,57 @@ class AlunoSeeder extends Seeder
                 );
             }
         }
+
+        // 4. Turma I1HSA (30 alunos)
+        $turmaI1HSA = Turma::where('nome', 'I1HSA')->first();
+        $alunosI1HSA = [
+            ['matricula' => '26171001', 'nome' => 'Ana Beatriz Araújo Camargo', 'status' => 'ativo'],
+            ['matricula' => '26171002', 'nome' => 'Andrey Batista de Souza', 'status' => 'ativo'],
+            ['matricula' => '26171003', 'nome' => 'Beatriz Sartor Fortunato', 'status' => 'ativo'],
+            ['matricula' => '26171004', 'nome' => 'Bruno Henrique Rodrigues Mendes', 'status' => 'ativo'],
+            ['matricula' => '26171005', 'nome' => 'Caio Henrique de Oliveira', 'status' => 'ativo'],
+            ['matricula' => '26171006', 'nome' => 'Cauã Trigolo Janoswky', 'status' => 'ativo'],
+            ['matricula' => '26171007', 'nome' => 'Daniel de Campos dos Santos', 'status' => 'ativo'],
+            ['matricula' => '26171008', 'nome' => 'Emilly Nathaly da Silva Lima', 'status' => 'ativo'],
+            ['matricula' => '26171009', 'nome' => 'Esther Oliveira de Jesus', 'status' => 'ativo'],
+            ['matricula' => '26171010', 'nome' => 'Felipe Freitas Dias', 'status' => 'ativo'],
+            ['matricula' => '26171011', 'nome' => 'Felipe Rodrigues Caetano', 'status' => 'ativo'],
+            ['matricula' => '26171012', 'nome' => 'Gabriel Felipe Menuzzo de Siqueira', 'status' => 'ativo'],
+            ['matricula' => '26171013', 'nome' => 'Gabriela Ester Silva Abreu', 'status' => 'ativo'],
+            ['matricula' => '26171014', 'nome' => 'Juliana Santos Garcia', 'status' => 'ativo'],
+            ['matricula' => '26171015', 'nome' => 'Kauã José Anjo da Silva Pragidi', 'status' => 'ativo'],
+            ['matricula' => '26171016', 'nome' => 'Laura Martins Pinto', 'status' => 'ativo'],
+            ['matricula' => '26171017', 'nome' => 'Laura Rodrigues Ferrezin', 'status' => 'ativo'],
+            ['matricula' => '26171018', 'nome' => 'Laura Silva das Neves', 'status' => 'ativo'],
+            ['matricula' => '26171019', 'nome' => 'Leandro Henrique Marinho Lucas Ronchi', 'status' => 'ativo'],
+            ['matricula' => '26171020', 'nome' => 'Leonardo Fernandes Ribeiro', 'status' => 'ativo'],
+            ['matricula' => '26171021', 'nome' => 'Maria Eduarda Viera da Silva', 'status' => 'ativo'],
+            ['matricula' => '26171022', 'nome' => 'Maria Luiza Menuzzo de Siqueira', 'status' => 'ativo'],
+            ['matricula' => '26171023', 'nome' => 'Matheus dos Anjos Souza', 'status' => 'ativo'],
+            ['matricula' => '26171024', 'nome' => 'Miguel da Silva Santos', 'status' => 'ativo'],
+            ['matricula' => '26171025', 'nome' => 'Pedro Henrique Barbosa Mendes', 'status' => 'ativo'],
+            ['matricula' => '26171026', 'nome' => 'Pietra Marson Basso', 'status' => 'ativo'],
+            ['matricula' => '26171027', 'nome' => 'Renan Gabriel Moreira', 'status' => 'ativo'],
+            ['matricula' => '26171028', 'nome' => 'Thaísa Letícia Mattano Panta Leão', 'status' => 'ativo'],
+            ['matricula' => '26171029', 'nome' => 'Victor Hugo França Jesus', 'status' => 'ativo'],
+            ['matricula' => '26171030', 'nome' => 'Vitor Wilkes Lenha Verde Benetazzo', 'status' => 'ativo'],
+        ];
+
+        if ($turmaI1HSA) {
+            foreach ($alunosI1HSA as $alunoData) {
+                // Alunos de 1º ano SESI: 15-16 anos
+                Aluno::updateOrCreate(
+                    ['matricula' => $alunoData['matricula']],
+                    [
+                        'turma_id' => $turmaI1HSA->id,
+                        'nome' => $this->formatarNomeProprio($alunoData['nome']),
+                        'email' => $alunoData['matricula'] . '@aluno.senai.br',
+                        'data_nascimento' => '2009-08-15',
+                        'status' => $alunoData['status'],
+                    ]
+                );
+            }
+        }
     }
 }
+
