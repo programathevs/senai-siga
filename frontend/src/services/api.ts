@@ -54,7 +54,14 @@ api.defaults.adapter = async (config) => {
   // Requisições de mutação (POST, PUT, PATCH, DELETE) limpam o cache imediatamente
   if (!isGet) {
     clearApiCache();
-    return defaultAdapter(config);
+    try {
+      const response = await defaultAdapter(config);
+      clearApiCache();
+      return response;
+    } catch (err) {
+      clearApiCache();
+      throw err;
+    }
   }
 
   // Verifica se endpoint deve ignorar o cache

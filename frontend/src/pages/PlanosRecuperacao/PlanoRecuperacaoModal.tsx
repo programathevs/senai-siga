@@ -23,6 +23,7 @@ import {
 } from "../../services/planoRecuperacaoService";
 import { ocorrenciaService, type Ocorrencia } from "../../services/ocorrenciaService";
 import { cursoService, type Curso, type UnidadeCurricular } from "../../services/cursoService";
+import { clearApiCache } from "../../services/api";
 import styles from "./PlanoRecuperacaoModal.module.css";
 
 interface PlanoRecuperacaoModalProps {
@@ -389,6 +390,7 @@ export function PlanoRecuperacaoModal({
         await planoRecuperacaoService.create(payload);
       }
 
+      clearApiCache();
       onSaveSuccess();
       onClose();
     } catch (err: unknown) {

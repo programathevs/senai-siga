@@ -107,7 +107,7 @@ export function Ocorrencias() {
   }
 
 
-  async function loadOcorrencias(targetPage = page, targetPerPage = perPage) {
+  async function loadOcorrencias(targetPage = page, targetPerPage = perPage, bypassCache = false) {
     try {
       setIsLoading(true);
       const res = await ocorrenciaService.getOcorrencias({
@@ -117,7 +117,7 @@ export function Ocorrencias() {
         status: selectedStatus || undefined,
         page: targetPage,
         per_page: targetPerPage,
-      });
+      }, bypassCache);
 
       // Se a página atual ficou vazia após exclusão, mas ainda existem registros em páginas anteriores
       if (res.data.length === 0 && res.meta && res.meta.total > 0 && targetPage > 1) {
@@ -794,7 +794,7 @@ export function Ocorrencias() {
         onClose={() => setIsFormModalOpen(false)}
         onSuccess={() => {
           setIsFormModalOpen(false);
-          loadOcorrencias(page, perPage);
+          loadOcorrencias(page, perPage, true);
         }}
         ocorrenciaToEdit={editingOcorrencia}
         onOpenPlanoModal={handleOpenPlanoModal}
@@ -808,7 +808,7 @@ export function Ocorrencias() {
           setIsPlanoModalOpen(false);
           setOcorrenciaParaPlano(null);
         }}
-        onSaveSuccess={() => loadOcorrencias(page, perPage)}
+        onSaveSuccess={() => loadOcorrencias(page, perPage, true)}
         ocorrencia={ocorrenciaParaPlano}
       />
 

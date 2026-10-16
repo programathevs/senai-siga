@@ -62,14 +62,14 @@ export function PlanosRecuperacao() {
     loadPlanos();
   }, [search, selectedTipo, selectedStatus]);
 
-  async function loadPlanos() {
+  async function loadPlanos(bypassCache = false) {
     try {
       setIsLoading(true);
       const data = await planoRecuperacaoService.getAll({
         search: search.trim() || undefined,
         tipo_programa: selectedTipo || undefined,
         status_processo: selectedStatus || undefined,
-      });
+      }, bypassCache);
       setPlanos(data);
     } catch (err) {
       console.error("Erro ao carregar planos de recuperação:", err);
@@ -431,7 +431,7 @@ export function PlanosRecuperacao() {
       <PlanoRecuperacaoModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSaveSuccess={loadPlanos}
+        onSaveSuccess={() => loadPlanos(true)}
         planoToEdit={planoToEdit}
       />
 

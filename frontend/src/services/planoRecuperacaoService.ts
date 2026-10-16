@@ -83,7 +83,7 @@ export interface PlanoFiltros {
 }
 
 export const planoRecuperacaoService = {
-  async getAll(filtros?: PlanoFiltros): Promise<PlanoRecuperacao[]> {
+  async getAll(filtros?: PlanoFiltros, bypassCache?: boolean): Promise<PlanoRecuperacao[]> {
     const params = new URLSearchParams();
     if (filtros?.search) params.append("search", filtros.search);
     if (filtros?.tipo_programa) params.append("tipo_programa", filtros.tipo_programa);
@@ -92,7 +92,10 @@ export const planoRecuperacaoService = {
     if (filtros?.ocorrencia_id) params.append("ocorrencia_id", String(filtros.ocorrencia_id));
 
     const response = await api.get<{ data: PlanoRecuperacao[] }>(
-      `/api/planos-recuperacao?${params.toString()}`
+      `/api/planos-recuperacao?${params.toString()}`,
+      {
+        headers: bypassCache ? { "x-no-cache": "true" } : undefined,
+      }
     );
     return response.data.data;
   },
