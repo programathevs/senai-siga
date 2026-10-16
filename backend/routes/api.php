@@ -94,11 +94,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // --- GESTÃO DE OCORRÊNCIAS / FIAPS ---
-    // Leitura e Edição: Gestor, Instrutor e AQV
+    // Leitura: Gestor, Instrutor e AQV
     Route::middleware('role:gestor,instrutor,aqv')->group(function () {
         Route::get('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'index'])->name('ocorrencias.index');
         Route::get('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'show'])->name('ocorrencias.show');
-        Route::put('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'update'])->name('ocorrencias.update');
 
         // Planos de Recuperação (Leitura)
         Route::get('/planos-recuperacao', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'index'])->name('planos-recuperacao.index');
@@ -108,6 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Modificação / Registro / Encaminhamento / Exclusão: Gestor e Instrutor (Docente registra e apaga a própria FIAP)
     Route::middleware('role:gestor,instrutor')->group(function () {
         Route::post('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'store'])->name('ocorrencias.store');
+        Route::put('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'update'])->name('ocorrencias.update');
         Route::delete('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'destroy'])->name('ocorrencias.destroy');
         Route::post('/ocorrencias/{ocorrencia}/encaminhar-aqv', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharAqv'])->name('ocorrencias.encaminhar-aqv');
 

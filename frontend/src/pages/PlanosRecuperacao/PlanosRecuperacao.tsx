@@ -256,6 +256,12 @@ export function PlanosRecuperacao() {
                     creatorId !== undefined &&
                     plano.status_processo !== "concluido");
 
+                const canEdit =
+                  !isDeleted &&
+                  user?.role !== "aqv" &&
+                  (user?.role === "gestor" ||
+                    (user?.role === "instrutor" && plano.status_processo !== "concluido"));
+
                 const ucsText = plano.unidades && plano.unidades.length > 0
                   ? plano.unidades.map((u) => u.sigla || u.nome).join(", ")
                   : plano.unidade_curricular?.sigla || plano.unidade_curricular?.nome || "";
@@ -362,7 +368,7 @@ export function PlanosRecuperacao() {
                           <Eye size={16} />
                         </button>
 
-                        {!isDeleted && (
+                        {canEdit && (
                           <button
                             type="button"
                             className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
@@ -434,6 +440,17 @@ export function PlanosRecuperacao() {
         isOpen={isPdfModalOpen}
         onClose={() => setIsPdfModalOpen(false)}
         plano={selectedPlanoPdf}
+        onEdit={(plano) => {
+          setIsPdfModalOpen(false);
+          handleEdit(plano);
+        }}
+        canEdit={Boolean(
+          selectedPlanoPdf &&
+            !selectedPlanoPdf.deleted_at &&
+            user?.role !== "aqv" &&
+            (user?.role === "gestor" ||
+              (user?.role === "instrutor" && selectedPlanoPdf.status_processo !== "concluido"))
+        )}
       />
 
       {/* Modal Institucional de Confirmação de Exclusão */}

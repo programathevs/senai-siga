@@ -21,6 +21,7 @@ class AqvController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Ocorrencia::query()
+            ->where('status', '!=', 'pendente')
             ->where(function ($q) {
                 $q->where('status', 'enviado_aqv')
                     ->orWhereHas('aqvRecebimento');
@@ -104,6 +105,7 @@ class AqvController extends Controller
     public function stats(): JsonResponse
     {
         $baseQuery = Ocorrencia::query()
+            ->where('status', '!=', 'pendente')
             ->where(function ($q) {
                 $q->where('status', 'enviado_aqv')
                     ->orWhere('status', 'assinado')

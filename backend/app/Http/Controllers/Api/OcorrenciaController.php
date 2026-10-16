@@ -273,6 +273,12 @@ class OcorrenciaController extends Controller
     public function update(OcorrenciaRequest $request, Ocorrencia $ocorrencia): JsonResponse
     {
         $user = $request->user();
+        if ($user && $user->hasRole('aqv')) {
+            return response()->json([
+                'message' => 'O perfil AQV não possui permissão para editar os dados da FIAP.',
+            ], 403);
+        }
+
         if ($user && $user->hasRole('instrutor') && $ocorrencia->registrado_por !== $user->id) {
             return response()->json([
                 'message' => 'Você só pode editar ocorrências que foram registradas por você.',
@@ -312,8 +318,8 @@ class OcorrenciaController extends Controller
                 'motivo' => $validated['motivo_edicao'] ?? 'Atualização dos dados da ocorrência.',
             ]);
 
-            $eraAssinado = $ocorrencia->status === 'assinado';
-
+            // Se a ocorrência foi enviada à AQV, estava aguardando assinatura, assinada ou impressa,
+            // a edição dos dados invalida o estado anterior e reseta o fluxo para 'pendente', permitindo reenvio.
             $ocorrencia->update([
                 'aluno_id' => $validated['aluno_id'],
                 'versao' => $novaVersao,
@@ -324,15 +330,12 @@ class OcorrenciaController extends Controller
                 'providencias_gestao' => $validated['providencias_gestao'] ?? null,
                 'outras_observacoes' => $validated['outras_observacoes'] ?? null,
                 'data_ocorrencia' => $validated['data_ocorrencia'],
-                'status' => $eraAssinado ? 'pendente' : ($validated['status'] ?? $ocorrencia->status),
+                'status' => 'pendente',
             ]);
 
-            // Se era assinada, invalida a assinatura física anterior e reabre atendimento no AQV
-            if ($eraAssinado && $ocorrencia->aqvRecebimento) {
-                $ocorrencia->aqvRecebimento->update([
-                    'status_atendimento' => 'pendente',
-                    'confirmado_em' => null,
-                ]);
+            // Remove o acolhimento anterior no AQV para exigir reenvio formal pelo professor
+            if ($ocorrencia->aqvRecebimento) {
+                $ocorrencia->aqvRecebimento()->delete();
             }
 
             // Processa as unidades curriculares da ocorrência (suporte a N UCs)

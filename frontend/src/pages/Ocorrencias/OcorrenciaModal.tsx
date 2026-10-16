@@ -652,6 +652,11 @@ export function OcorrenciaModal({
       };
 
       if (isEditing && ocorrenciaToEdit) {
+        const hadAqvFlow =
+          ocorrenciaToEdit.status === "enviado_aqv" ||
+          ocorrenciaToEdit.status === "assinado" ||
+          Boolean((ocorrenciaToEdit as any).aqv_recebimento);
+
         const updated = await ocorrenciaService.updateOcorrencia(ocorrenciaToEdit.id, payload);
         if (updated.sem_alteracoes) {
           showAvatarToast("Nenhuma alteração foi realizada na FIAP.", "Sem alterações", "warning");
@@ -659,6 +664,12 @@ export function OcorrenciaModal({
           showAvatarToast(
             "FIAP atualizada! Como as faltas voltaram para o limite permitido (≤100%), o Plano de Recuperação vinculado foi movido para a Lixeira.",
             "Plano Arquivado",
+            "warning"
+          );
+        } else if (hadAqvFlow) {
+          showAvatarToast(
+            "FIAP atualizada com sucesso! O status retornou para Pendente para que você possa revisá-la e reenviá-la ao AQV.",
+            "Processo Reiniciado",
             "warning"
           );
         } else {

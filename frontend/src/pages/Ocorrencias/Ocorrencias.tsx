@@ -480,8 +480,8 @@ export function Ocorrencias() {
 
                   const canEdit =
                     !isDeleted &&
+                    user?.role !== "aqv" &&
                     (user?.role === "gestor" ||
-                      user?.role === "aqv" ||
                       (user?.role === "instrutor" && isOwner));
 
                   const canDelete =
@@ -692,7 +692,7 @@ export function Ocorrencias() {
                             <Eye size={16} />
                           </button>
 
-                          {oc.has_plano_pendente && !isDeleted && (
+                          {oc.has_plano_pendente && !isDeleted && user?.role !== "aqv" && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.planoBtn}`}
@@ -824,7 +824,8 @@ export function Ocorrencias() {
         }}
         canEdit={(() => {
           if (!selectedDetalhes || !user) return false;
-          if (user.role === "gestor" || user.role === "aqv") return true;
+          if (user.role === "aqv") return false;
+          if (user.role === "gestor") return true;
           const cId =
             typeof selectedDetalhes.registrado_por === "object" && selectedDetalhes.registrado_por !== null
               ? (selectedDetalhes.registrado_por as any).id
