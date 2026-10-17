@@ -314,9 +314,9 @@
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background-color: color-mix(in srgb, #6366f1 14%, transparent);
-  color: #4f46e5;
-  border: 1px solid color-mix(in srgb, #6366f1 30%, transparent);
+  background-color: color-mix(in srgb, #ef4444 12%, transparent);
+  color: #dc2626;
+  border: 1px solid color-mix(in srgb, #ef4444 30%, transparent);
   white-space: nowrap;
 }
 
