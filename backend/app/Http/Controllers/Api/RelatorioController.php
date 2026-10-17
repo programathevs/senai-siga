@@ -93,6 +93,17 @@ class RelatorioController extends Controller
             $query->whereDate('data_ocorrencia', '<=', $request->input('data_fim'));
         }
 
+        // Filtro por Alunos Reincidentes (alunos com 2 ou mais ocorrências)
+        if ($request->boolean('reincidentes')) {
+            $alunoIdsReincidentes = Ocorrencia::query()
+                ->select('aluno_id')
+                ->groupBy('aluno_id')
+                ->havingRaw('count(*) > 1')
+                ->pluck('aluno_id');
+
+            $query->whereIn('aluno_id', $alunoIdsReincidentes);
+        }
+
         // Cálculo de totais consolidados para o relatório
         $resumoQuery = clone $query;
         $totalOcorrencias = (clone $resumoQuery)->count();

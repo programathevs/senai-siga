@@ -10,7 +10,7 @@ O sistema possui controle de acesso baseado em papéis (Role-Based Access Contro
 | :--- | :--- |
 | **Admin** | Administrador geral do sistema. Gerencia cadastros base, usuários e parâmetros da aplicação. |
 | **Instrutor** | Docente responsável por turmas e unidades curriculares. Registra advertências e acompanha seus alunos. |
-| **AQV** | Equipe de Apoio ao Quadro de Vida Escolar / Coordenação Pedagógica. Recebe notificações, atende alunos, colhe assinaturas e gerencia justificativas. |
+| **AQV** | Analista de Qualidade de Vida (AQV) / Coordenação Pedagógica. Recebe notificações, atende alunos, colhe assinaturas e gerencia justificativas. |
 
 ---
 

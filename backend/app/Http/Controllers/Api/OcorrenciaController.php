@@ -636,7 +636,7 @@ class OcorrenciaController extends Controller
     }
 
     /**
-     * Encaminha formalmente a ocorrência para a equipe de Apoio e Qualidade de Vida (AQV).
+     * Encaminha formalmente a ocorrência para a equipe de Analista de Qualidade de Vida (AQV).
      */
     public function encaminharAqv(Request $request, Ocorrencia $ocorrencia): JsonResponse
     {

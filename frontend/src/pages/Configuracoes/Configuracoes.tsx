@@ -20,8 +20,8 @@ export function Configuracoes() {
     user?.role === "gestor"
       ? "Gestão Escolar & Direção"
       : user?.role === "aqv"
-      ? "Apoio e Qualidade de Vida (AQV)"
-      : "Docente / Instrutor Acadêmico";
+        ? "Analista de Qualidade de Vida (AQV)"
+        : "Instrutor";
 
   function handleSavePreferences(e: React.FormEvent) {
     e.preventDefault();
@@ -89,7 +89,7 @@ export function Configuracoes() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Perfil de Acesso (RBAC)</label>
+                  <label className={styles.label}>Perfil de Acesso</label>
                   <div className={styles.roleBadgeWrapper}>
                     <ShieldCheck size={16} color="var(--color-primary)" />
                     <span className={styles.roleText}>{roleText}</span>

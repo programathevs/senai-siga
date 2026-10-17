@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router";
 import {
   Plus,
   Search,
@@ -49,6 +50,7 @@ function formatDate(dateStr?: string | null) {
 
 export function Ocorrencias() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [estatisticas, setEstatisticas] = useState<OcorrenciaEstatisticas | null>(null);
@@ -63,7 +65,8 @@ export function Ocorrencias() {
   const [search, setSearch] = useState("");
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>("");
   const [selectedTipo, setSelectedTipo] = useState<OcorrenciaTipo | "">("");
-  const [selectedStatus, setSelectedStatus] = useState<OcorrenciaStatus | "">("");
+  const initialStatus = (searchParams.get("status") as OcorrenciaStatus) || "";
+  const [selectedStatus, setSelectedStatus] = useState<OcorrenciaStatus | "">(initialStatus);
 
   // Modais
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -145,6 +148,12 @@ export function Ocorrencias() {
       .then((res) => setTurmas(res.data))
       .catch(() => setTurmas([]));
   }, []);
+
+  // Sincroniza filtro de status com a URL (ex: drilldown vindo do Dashboard ?status=pendente)
+  useEffect(() => {
+    const statusParam = (searchParams.get("status") as OcorrenciaStatus) || "";
+    setSelectedStatus(statusParam);
+  }, [searchParams]);
 
   // Reseta página para 1 quando filtros mudarem
   useEffect(() => {
@@ -287,7 +296,7 @@ export function Ocorrencias() {
       {/* Cabeçalho da Página */}
       <div className={styles.pageHeader}>
         <div className={styles.titleGroup}>
-          <h1 className={styles.title}>Ocorrências &amp; FIAPs</h1>
+          <h1 className={styles.title}>FIAPs</h1>
           <p className={styles.subtitle}>
             Fichas Individuais de Acompanhamento Periódico: faltas, comportamento disciplinar e
             rendimento acadêmico.
@@ -328,7 +337,7 @@ export function Ocorrencias() {
             <span className={styles.kpiValue} style={{ color: "#d97706" }}>
               {estatisticas?.total_falta ?? ocorrencias.filter((o) => o.tipo === "falta").length}
             </span>
-            <span className={styles.kpiLabel}>Falta (Infrequência)</span>
+            <span className={styles.kpiLabel}>Falta</span>
           </div>
         </div>
 
@@ -410,7 +419,7 @@ export function Ocorrencias() {
           onChange={(e) => setSelectedTipo(e.target.value as OcorrenciaTipo | "")}
         >
           <option value="">Todos os Tipos</option>
-          <option value="falta">Falta (Infrequência)</option>
+          <option value="falta">Falta</option>
           <option value="comportamento">Comportamento Disciplinar</option>
           <option value="desempenho">Desempenho Pedagógico</option>
         </select>

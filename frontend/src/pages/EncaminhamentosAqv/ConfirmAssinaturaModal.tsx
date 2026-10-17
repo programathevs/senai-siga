@@ -65,10 +65,10 @@ export function ConfirmAssinaturaModal({
               <span className={styles.seqBadge}>{item.numero_sequencial}</span>
               <span className={styles.tipoBadge}>
                 {item.tipo === "falta"
-                  ? "Falta (Infrequência)"
+                  ? "Falta"
                   : item.tipo === "comportamento"
-                  ? "Comportamento Disciplinar"
-                  : "Desempenho Pedagógico"}
+                    ? "Comportamento Disciplinar"
+                    : "Desempenho Pedagógico"}
               </span>
             </div>
 

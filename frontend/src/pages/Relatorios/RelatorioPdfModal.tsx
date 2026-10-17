@@ -272,8 +272,8 @@ export function RelatorioPdfModal({
                             {oc.status === "enviado_aqv"
                               ? "Encaminhado AQV"
                               : oc.status === "pendente"
-                              ? "Pendente"
-                              : "Concluído"}
+                                ? "Pendente"
+                                : "Concluído"}
                           </td>
                         </tr>
                       ))
@@ -329,13 +329,13 @@ export function RelatorioPdfModal({
               <div className={styles.signatureBox}>
                 <div className={styles.signatureSpace} />
                 <div className={styles.signatureLine}>
-                  Docente / Instrutor Notificante
+                  Instrutor
                 </div>
               </div>
               <div className={styles.signatureBox}>
                 <div className={styles.signatureSpace} />
                 <div className={styles.signatureLine}>
-                  Coordenação Pedagógica / Direção Escolar
+                  Coordenação Pedagógica
                 </div>
               </div>
             </div>

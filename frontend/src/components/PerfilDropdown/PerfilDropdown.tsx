@@ -77,8 +77,8 @@ export function PerfilDropdown({
     user.role === "gestor"
       ? "Gestão Escolar"
       : user.role === "aqv"
-      ? "Apoio e Qualidade (AQV)"
-      : "Docente / Instrutor";
+        ? "Apoio e Qualidade (AQV)"
+        : "Instrutor";
 
   return (
     <div

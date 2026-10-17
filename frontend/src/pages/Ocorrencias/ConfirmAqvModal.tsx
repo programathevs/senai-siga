@@ -62,7 +62,7 @@ export function ConfirmAqvModal({
               <span className={styles.seqBadge}>{ocorrencia.numero_sequencial}</span>
               <span className={styles.tipoBadge}>
                 {ocorrencia.tipo === "falta"
-                  ? "Falta (Infrequência)"
+                  ? "Falta"
                   : ocorrencia.tipo === "comportamento"
                     ? "Comportamento Disciplinar"
                     : "Desempenho Pedagógico"}
