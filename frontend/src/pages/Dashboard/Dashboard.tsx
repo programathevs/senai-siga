@@ -245,12 +245,16 @@ export function Dashboard() {
                     ? `${stats.metricas_gestao.alunos_sem_turma} pendentes de enturmação`
                     : "100% dos alunos enturmados"}
                 </span>
-                <span
-                  style={{ cursor: "pointer", color: "var(--color-primary)", fontWeight: 600 }}
+                <button
+                  type="button"
+                  className={styles.cardFooterLink}
+                  style={{ color: "var(--color-primary)" }}
                   onClick={() => navigate("/alunos")}
+                  title="Ir para Gestão de Alunos"
                 >
-                  Ver alunos
-                </span>
+                  <span>Ver alunos</span>
+                  <ArrowRight size={13} />
+                </button>
               </div>
             </article>
 
@@ -275,12 +279,16 @@ export function Dashboard() {
               </div>
               <div className={styles.kpiFooter}>
                 <span>{stats.metricas_gestao.total_cursos} cursos técnicos ofertados</span>
-                <span
-                  style={{ cursor: "pointer", color: "#0284c7", fontWeight: 600 }}
+                <button
+                  type="button"
+                  className={styles.cardFooterLink}
+                  style={{ color: "#0284c7" }}
                   onClick={() => navigate("/turmas")}
+                  title="Ir para Gestão de Turmas"
                 >
-                  Ver turmas
-                </span>
+                  <span>Ver turmas</span>
+                  <ArrowRight size={13} />
+                </button>
               </div>
             </article>
 
@@ -305,12 +313,16 @@ export function Dashboard() {
               </div>
               <div className={styles.kpiFooter}>
                 <span>Processos pedagógicos ativos</span>
-                <span
-                  style={{ cursor: "pointer", color: "var(--color-warning)", fontWeight: 600 }}
-                  onClick={() => navigate("/ocorrencias")}
+                <button
+                  type="button"
+                  className={styles.cardFooterLink}
+                  style={{ color: "var(--color-warning)" }}
+                  onClick={() => navigate("/planos-recuperacao")}
+                  title="Ir para Planos de Recuperação"
                 >
-                  Acompanhar
-                </span>
+                  <span>Acompanhar</span>
+                  <ArrowRight size={13} />
+                </button>
               </div>
             </article>
 
@@ -535,7 +547,11 @@ export function Dashboard() {
       {/* 2. Grid de Cards KPI de Resumo */}
       <section className={styles.kpiGrid} aria-label="Indicadores gerais do mês">
         {/* Card 1: Total do Mês */}
-        <article className={styles.kpiCard}>
+        <article
+          className={`${styles.kpiCard} ${styles.kpiCardTotal}`}
+          onClick={() => navigate("/ocorrencias")}
+          title="Ver todas as ocorrências do mês"
+        >
           <div className={styles.kpiTopRow}>
             <div>
               <span className={styles.kpiLabel}>Ocorrências no Mês</span>
@@ -570,7 +586,11 @@ export function Dashboard() {
         </article>
 
         {/* Card 2: Pendentes */}
-        <article className={styles.kpiCard}>
+        <article
+          className={`${styles.kpiCard} ${styles.kpiCardPendentes}`}
+          onClick={() => navigate("/ocorrencias?status=pendente")}
+          title="Ver ocorrências pendentes de envio"
+        >
           <div className={styles.kpiTopRow}>
             <div>
               <span className={styles.kpiLabel}>Pendentes de Envio</span>
@@ -605,7 +625,21 @@ export function Dashboard() {
         </article>
 
         {/* Card 3: Encaminhadas AQV */}
-        <article className={styles.kpiCard}>
+        <article
+          className={`${styles.kpiCard} ${styles.kpiCardAqv}`}
+          onClick={() =>
+            navigate(
+              user?.role === "instrutor"
+                ? "/ocorrencias?status=enviado_aqv"
+                : "/encaminhamentos-aqv"
+            )
+          }
+          title={
+            user?.role === "instrutor"
+              ? "Ver ocorrências encaminhadas à AQV"
+              : "Acessar fila de encaminhamentos da AQV"
+          }
+        >
           <div className={styles.kpiTopRow}>
             <div>
               <span className={styles.kpiLabel}>Encaminhadas à AQV</span>
@@ -634,11 +668,15 @@ export function Dashboard() {
         </article>
 
         {/* Card 4: Alunos em Situação de Atenção */}
-        <article className={styles.kpiCard}>
+        <article
+          className={`${styles.kpiCard} ${styles.kpiCardAlerta}`}
+          onClick={() => navigate("/relatorios?reincidentes=true")}
+          title="Ver relatório de alunos reincidentes"
+        >
           <div className={styles.kpiTopRow}>
             <div>
               <span className={styles.kpiLabel}>Alunos em Alerta</span>
-              <div className={styles.kpiValue} style={{ color: "var(--color-text-primary)" }}>
+              <div className={styles.kpiValue} style={{ color: "var(--color-warning)" }}>
                 {isLoading ? <Loader2 size={24} className="animate-spin" /> : kpis?.alunos_em_alerta ?? 0}
               </div>
             </div>

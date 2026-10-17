@@ -13,6 +13,7 @@ export interface RelatorioFiltros {
   page?: number;
   per_page?: number;
   all?: boolean;
+  reincidentes?: boolean;
 }
 
 export interface RelatorioResumo {

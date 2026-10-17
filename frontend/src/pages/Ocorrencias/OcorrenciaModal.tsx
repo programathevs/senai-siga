@@ -740,7 +740,7 @@ export function OcorrenciaModal({
                 onClick={() => setTipo("falta")}
               >
                 <Clock size={28} />
-                <span className={styles.tipoCardTitle}>Falta (Infrequência)</span>
+                <span className={styles.tipoCardTitle}>Falta</span>
                 <span className={styles.tipoCardDesc}>
                   Cálculo automático de faltas com base na carga horária da UC e teto de 25%
                 </span>
@@ -907,12 +907,12 @@ export function OcorrenciaModal({
             </div>
           </div>
 
-          {/* 3. CALCULADORA DE INFREQUÊNCIA & UNIDADES CURRICULARES (Se for tipo FALTA) */}
+          {/* 3. CALCULADORA DE FALTA & UNIDADES CURRICULARES (Se for tipo FALTA) */}
           {tipo === "falta" && (
             <div className={styles.section}>
               <div className={styles.sectionHeaderBetween}>
                 <span className={styles.sectionHeaderTitle}>
-                  3. Unidades Curriculares &amp; Infrequência (Teto 25%)
+                  3. Unidades Curriculares Falta (Teto 25%)
                 </span>
 
                 {unidadesList.length < unidadesCurricularesFiltradas.length && (

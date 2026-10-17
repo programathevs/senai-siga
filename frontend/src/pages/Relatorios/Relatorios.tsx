@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router";
 import {
   Printer,
   Download,
@@ -13,6 +14,7 @@ import {
   Calendar,
   RotateCcw,
   Eye,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { RelatorioPdfModal } from "./RelatorioPdfModal";
@@ -42,6 +44,7 @@ function formatDate(dateStr?: string | null) {
 
 export function Relatorios() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
 
   // Estados principais
   const [activeTab, setActiveTab] = useState<"analitico" | "turmas">("analitico");
@@ -63,6 +66,9 @@ export function Relatorios() {
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [dataInicio, setDataInicio] = useState<string>("");
   const [dataFim, setDataFim] = useState<string>("");
+  const [apenasReincidentes, setApenasReincidentes] = useState<boolean>(
+    searchParams.get("reincidentes") === "true"
+  );
 
   // Modal
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
@@ -121,6 +127,11 @@ export function Relatorios() {
       .catch(() => setTurmasList([]));
   }, []);
 
+  // Sincroniza filtro de reincidentes com a URL (ex: drilldown vindo do Dashboard ?reincidentes=true)
+  useEffect(() => {
+    setApenasReincidentes(searchParams.get("reincidentes") === "true");
+  }, [searchParams]);
+
   async function loadRelatorio(targetPage = page, targetPerPage = perPage) {
     try {
       setIsLoading(true);
@@ -136,6 +147,7 @@ export function Relatorios() {
         page: isAll ? 1 : targetPage,
         per_page: isAll ? undefined : targetPerPage,
         all: isAll ? true : undefined,
+        reincidentes: apenasReincidentes || undefined,
       };
 
       if (activeTab === "analitico") {
@@ -177,6 +189,7 @@ export function Relatorios() {
           data_inicio: dataInicio || undefined,
           data_fim: dataFim || undefined,
           all: true,
+          reincidentes: apenasReincidentes || undefined,
         });
         setAllOcorrenciasPdf(res.data);
         setIsPdfModalOpen(true);
@@ -195,7 +208,7 @@ export function Relatorios() {
   // Reseta para a página 1 ao alterar filtros
   useEffect(() => {
     setPage(1);
-  }, [search, selectedTurmaId, selectedTipo, selectedStatus, dataInicio, dataFim, activeTab]);
+  }, [search, selectedTurmaId, selectedTipo, selectedStatus, dataInicio, dataFim, activeTab, apenasReincidentes]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -215,7 +228,7 @@ export function Relatorios() {
     }
 
     loadRelatorio(page, perPage);
-  }, [page, perPage, search, selectedTurmaId, selectedTipo, selectedStatus, dataInicio, dataFim, activeTab]);
+  }, [page, perPage, search, selectedTurmaId, selectedTipo, selectedStatus, dataInicio, dataFim, activeTab, apenasReincidentes]);
 
   function handleResetFilters() {
     setSearch("");
@@ -224,6 +237,7 @@ export function Relatorios() {
     setSelectedStatus("");
     setDataInicio("");
     setDataFim("");
+    setApenasReincidentes(false);
   }
 
   useEffect(() => {
@@ -446,6 +460,16 @@ export function Relatorios() {
               <option value="impresso">Impresso</option>
               <option value="assinado">Assinado</option>
             </select>
+
+            <button
+              type="button"
+              className={apenasReincidentes ? styles.reincidentesBtnActive : styles.reincidentesBtn}
+              onClick={() => setApenasReincidentes((prev) => !prev)}
+              title="Filtrar apenas estudantes com 2 ou mais ocorrências registradas"
+            >
+              <AlertTriangle size={15} />
+              <span>Apenas Reincidentes</span>
+            </button>
           </div>
         ) : (
           <div className={styles.consolidadoNotice}>
