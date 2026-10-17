@@ -532,16 +532,7 @@ export function OcorrenciaDetalhesModal({
             {canEdit && onEdit && (
               <button
                 type="button"
-                className={styles.btnAction}
-                style={{
-                  backgroundColor: "color-mix(in srgb, #3b82f6 12%, transparent)",
-                  color: "#3b82f6",
-                  borderColor: "color-mix(in srgb, #3b82f6 30%, transparent)",
-                  fontWeight: 600,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                }}
+                className={`${styles.btnAction} ${styles.btnEdit}`}
                 onClick={() => {
                   onClose();
                   onEdit(ocorrencia);

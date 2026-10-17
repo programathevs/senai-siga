@@ -33,13 +33,14 @@ class AqvController extends Controller
                 'aqvRecebimento.recebidoPor',
             ]);
 
-        // Busca por estudante, RA ou número da FIAP
+        // Busca por estudante, Matrícula/RA ou número da FIAP
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('numero_sequencial', 'like', "%{$search}%")
                     ->orWhereHas('aluno', function ($aq) use ($search) {
                         $aq->where('nome', 'like', "%{$search}%")
-                            ->orWhere('ra', 'like', "%{$search}%");
+                            ->orWhere('matricula', 'like', "%{$search}%")
+                            ->orWhere('cpf', 'like', "%{$search}%");
                     });
             });
         }
@@ -61,9 +62,14 @@ class AqvController extends Controller
         // Filtro por Status do Atendimento AQV
         if ($status = $request->input('status')) {
             if ($status === 'pendente') {
-                $query->whereHas('aqvRecebimento', function ($aq) {
-                    $aq->where('status_atendimento', 'pendente')
-                        ->orWhereNull('status_atendimento');
+                $query->where(function ($q) {
+                    $q->whereHas('aqvRecebimento', function ($aq) {
+                        $aq->where('status_atendimento', 'pendente')
+                            ->orWhereNull('status_atendimento');
+                    })->orWhere(function ($sq) {
+                        $sq->where('status', 'enviado_aqv')
+                            ->whereDoesntHave('aqvRecebimento');
+                    });
                 });
             } elseif ($status === 'em_atendimento') {
                 $query->whereHas('aqvRecebimento', function ($aq) {
