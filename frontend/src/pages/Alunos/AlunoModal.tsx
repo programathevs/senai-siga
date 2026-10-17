@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { X, UserPlus, AlertCircle, Loader2 } from "lucide-react";
+import { X, UserPlus, AlertCircle, Loader2, Camera, Trash2 } from "lucide-react";
 import { alunoService, type Aluno } from "../../services/alunoService";
 import { turmaService, type Turma } from "../../services/turmaService";
 import { formatPhoneNumber, formatCpf } from "../../utils/formatters";
+import { UserAvatar } from "../../components/UserAvatar/UserAvatar";
 import styles from "./AlunoModal.module.css";
 
 interface AlunoModalProps {
@@ -27,6 +28,9 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
   const [telefone, setTelefone] = useState("");
   const [turmaId, setTurmaId] = useState<number | "">("");
   const [status, setStatus] = useState<"ativo" | "inativo" | "transferido">("ativo");
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [removerFoto, setRemoverFoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,6 +46,9 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
         setTelefone(formatPhoneNumber(alunoToEdit.telefone || ""));
         setTurmaId(alunoToEdit.turma_id || "");
         setStatus(alunoToEdit.status);
+        setFotoPreview(alunoToEdit.foto_url || null);
+        setFotoFile(null);
+        setRemoverFoto(false);
       } else {
         setNome("");
         setMatricula("");
@@ -51,6 +58,9 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
         setTelefone("");
         setTurmaId("");
         setStatus("ativo");
+        setFotoPreview(null);
+        setFotoFile(null);
+        setRemoverFoto(false);
       }
       setError(null);
     }
@@ -82,6 +92,8 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
         telefone: telefone.trim() || null,
         turma_id: turmaId ? Number(turmaId) : null,
         status,
+        foto: fotoFile,
+        remover_foto: removerFoto,
       };
 
       if (alunoToEdit) {
@@ -123,6 +135,59 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
               {error}
             </div>
           )}
+
+          {/* Upload de Foto Opcional */}
+          <div className={styles.photoUploadRow}>
+            <UserAvatar
+              name={nome || "Aluno"}
+              fotoUrl={fotoPreview}
+              size="lg"
+            />
+            <div className={styles.photoActions}>
+              <div className={styles.photoButtonRow}>
+                <label className={styles.uploadBtn}>
+                  <Camera size={14} />
+                  <span>{fotoPreview ? "Alterar foto" : "Adicionar foto (opcional)"}</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (!file.type.startsWith("image/")) {
+                        setError("Selecione um arquivo de imagem válido (JPG, PNG, WEBP).");
+                        return;
+                      }
+                      if (file.size > 2 * 1024 * 1024) {
+                        setError("A imagem deve ter no máximo 2MB.");
+                        return;
+                      }
+                      setFotoFile(file);
+                      setFotoPreview(URL.createObjectURL(file));
+                      setRemoverFoto(false);
+                      setError(null);
+                    }}
+                    style={{ display: "none" }}
+                  />
+                </label>
+                {fotoPreview && (
+                  <button
+                    type="button"
+                    className={styles.removePhotoBtn}
+                    onClick={() => {
+                      setFotoFile(null);
+                      setFotoPreview(null);
+                      setRemoverFoto(true);
+                    }}
+                  >
+                    <Trash2 size={13} />
+                    <span>Remover</span>
+                  </button>
+                )}
+              </div>
+              <span className={styles.photoHint}>JPG, PNG ou WEBP de até 2MB</span>
+            </div>
+          </div>
 
           <div className={styles.gridRow}>
             <div className={styles.fieldGroup}>

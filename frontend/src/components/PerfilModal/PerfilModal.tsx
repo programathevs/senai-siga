@@ -1,6 +1,7 @@
 import { X, User, Mail, ShieldCheck, Building2, KeyRound, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router";
+import { UserAvatar } from "../UserAvatar/UserAvatar";
 import styles from "./PerfilModal.module.css";
 
 interface PerfilModalProps {
@@ -68,7 +69,12 @@ export function PerfilModal({ isOpen, onClose, onOpenAlterarSenhaModal }: Perfil
         <div className={styles.body}>
           {/* Topo com Avatar e Nome */}
           <div className={styles.avatarCard}>
-            <div className={styles.avatarCircle}>{initials}</div>
+            <UserAvatar
+              name={user.name}
+              fotoUrl={user.foto_url}
+              fallbackText={initials}
+              className={styles.avatarCircle}
+            />
             <div className={styles.userMainInfo}>
               <h3 className={styles.userName}>{user.name || "Usuário"}</h3>
               <span className={styles.roleBadge}>{roleText}</span>

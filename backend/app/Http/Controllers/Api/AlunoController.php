@@ -7,6 +7,7 @@ use App\Http\Requests\AlunoRequest;
 use App\Models\Aluno;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AlunoController extends Controller
 {
@@ -78,7 +79,13 @@ class AlunoController extends Controller
      */
     public function store(AlunoRequest $request): JsonResponse
     {
-        $aluno = Aluno::create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('foto')) {
+            $data['foto'] = $request->file('foto')->store('avatars/alunos', 'public');
+        }
+
+        $aluno = Aluno::create($data);
 
         return response()->json([
             'message' => 'Aluno cadastrado com sucesso.',
@@ -101,7 +108,21 @@ class AlunoController extends Controller
      */
     public function update(AlunoRequest $request, Aluno $aluno): JsonResponse
     {
-        $aluno->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->boolean('remover_foto')) {
+            if ($aluno->foto && Storage::disk('public')->exists($aluno->foto)) {
+                Storage::disk('public')->delete($aluno->foto);
+            }
+            $data['foto'] = null;
+        } elseif ($request->hasFile('foto')) {
+            if ($aluno->foto && Storage::disk('public')->exists($aluno->foto)) {
+                Storage::disk('public')->delete($aluno->foto);
+            }
+            $data['foto'] = $request->file('foto')->store('avatars/alunos', 'public');
+        }
+
+        $aluno->update($data);
 
         return response()->json([
             'message' => 'Aluno atualizado com sucesso.',
@@ -114,6 +135,10 @@ class AlunoController extends Controller
      */
     public function destroy(Aluno $aluno): JsonResponse
     {
+        if ($aluno->foto && Storage::disk('public')->exists($aluno->foto)) {
+            Storage::disk('public')->delete($aluno->foto);
+        }
+
         $aluno->delete();
 
         return response()->json([

@@ -20,6 +20,7 @@ class Aluno extends Model
         'data_nascimento',
         'email',
         'telefone',
+        'foto',
         'status',
     ];
 
@@ -29,7 +30,13 @@ class Aluno extends Model
 
     protected $appends = [
         'is_maior_de_idade',
+        'foto_url',
     ];
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        return $this->foto ? asset('storage/' . $this->foto) : null;
+    }
 
     /**
      * Determina se o aluno tem 18 anos ou mais.

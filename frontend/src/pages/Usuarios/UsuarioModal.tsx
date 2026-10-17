@@ -8,9 +8,12 @@ import {
   AlertCircle,
   Mail,
   Loader2,
+  Camera,
+  Trash2,
 } from "lucide-react";
 import { usuarioService, type Usuario, type UserRoleType } from "../../services/usuarioService";
 import { formatPhoneNumber } from "../../utils/formatters";
+import { UserAvatar } from "../../components/UserAvatar/UserAvatar";
 import styles from "./UsuarioModal.module.css";
 
 interface UsuarioModalProps {
@@ -30,6 +33,9 @@ export const UsuarioModal: React.FC<UsuarioModalProps> = ({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRoleType>("instrutor");
   const [telefone, setTelefone] = useState("");
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [removerFoto, setRemoverFoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,11 +47,17 @@ export const UsuarioModal: React.FC<UsuarioModalProps> = ({
       setTelefone(
         formatPhoneNumber(usuarioToEdit.telefone || usuarioToEdit.instrutor?.telefone || "")
       );
+      setFotoPreview(usuarioToEdit.foto_url || null);
+      setFotoFile(null);
+      setRemoverFoto(false);
     } else {
       setNome("");
       setEmail("");
       setRole("instrutor");
       setTelefone("");
+      setFotoPreview(null);
+      setFotoFile(null);
+      setRemoverFoto(false);
     }
     setError(null);
   }, [usuarioToEdit, isOpen]);
@@ -72,6 +84,8 @@ export const UsuarioModal: React.FC<UsuarioModalProps> = ({
         email: email.trim(),
         role,
         telefone: telefone.trim() || null,
+        foto: fotoFile,
+        remover_foto: removerFoto,
       };
 
       if (usuarioToEdit) {
@@ -128,6 +142,59 @@ export const UsuarioModal: React.FC<UsuarioModalProps> = ({
               {error}
             </div>
           )}
+
+          {/* Upload de Foto Opcional */}
+          <div className={styles.photoUploadRow}>
+            <UserAvatar
+              name={nome || "Usuário"}
+              fotoUrl={fotoPreview}
+              size="lg"
+            />
+            <div className={styles.photoActions}>
+              <div className={styles.photoButtonRow}>
+                <label className={styles.uploadBtn}>
+                  <Camera size={14} />
+                  <span>{fotoPreview ? "Alterar foto" : "Adicionar foto (opcional)"}</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (!file.type.startsWith("image/")) {
+                        setError("Selecione um arquivo de imagem válido (JPG, PNG, WEBP).");
+                        return;
+                      }
+                      if (file.size > 2 * 1024 * 1024) {
+                        setError("A imagem deve ter no máximo 2MB.");
+                        return;
+                      }
+                      setFotoFile(file);
+                      setFotoPreview(URL.createObjectURL(file));
+                      setRemoverFoto(false);
+                      setError(null);
+                    }}
+                    style={{ display: "none" }}
+                  />
+                </label>
+                {fotoPreview && (
+                  <button
+                    type="button"
+                    className={styles.removePhotoBtn}
+                    onClick={() => {
+                      setFotoFile(null);
+                      setFotoPreview(null);
+                      setRemoverFoto(true);
+                    }}
+                  >
+                    <Trash2 size={13} />
+                    <span>Remover</span>
+                  </button>
+                )}
+              </div>
+              <span className={styles.photoHint}>JPG, PNG ou WEBP de até 2MB</span>
+            </div>
+          </div>
 
           {/* Seleção de Perfil / Função */}
           <div className={styles.roleSection}>
