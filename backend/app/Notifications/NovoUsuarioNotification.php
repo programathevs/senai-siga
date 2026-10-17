@@ -25,7 +25,7 @@ class NovoUsuarioNotification extends Notification
     {
         $roleTitle = match ($this->role) {
             'gestor' => 'Gestor Escolar',
-            'aqv' => 'Apoio e Qualidade de Vida (AQV)',
+            'aqv' => 'Analista de Qualidade de Vida (AQV)',
             default => 'Instrutor / Docente',
         };
 

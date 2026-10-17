@@ -42,7 +42,7 @@ export function PerfilModal({ isOpen, onClose, onOpenAlterarSenhaModal }: Perfil
     user.role === "gestor"
       ? "Gestão Escolar & Direção"
       : user.role === "aqv"
-      ? "Apoio e Qualidade de Vida (AQV)"
+      ? "Analista de Qualidade de Vida (AQV)"
       : "Docente / Instrutor Acadêmico";
 
   return (

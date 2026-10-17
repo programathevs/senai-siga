@@ -20,7 +20,7 @@ export function Configuracoes() {
     user?.role === "gestor"
       ? "Gestão Escolar & Direção"
       : user?.role === "aqv"
-      ? "Apoio e Qualidade de Vida (AQV)"
+      ? "Analista de Qualidade de Vida (AQV)"
       : "Docente / Instrutor Acadêmico";
 
   function handleSavePreferences(e: React.FormEvent) {

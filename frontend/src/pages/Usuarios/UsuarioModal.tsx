@@ -191,7 +191,7 @@ export const UsuarioModal: React.FC<UsuarioModalProps> = ({
                   <span className={styles.roleTitle}>AQV</span>
                 </div>
                 <p className={styles.roleDesc}>
-                  Apoio e Qualidade de Vida, acolhimento e encaminhamentos.
+                  Analista de Qualidade de Vida, acolhimento e encaminhamentos.
                 </p>
               </div>
             </div>

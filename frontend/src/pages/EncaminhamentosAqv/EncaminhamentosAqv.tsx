@@ -245,7 +245,7 @@ export function EncaminhamentosAqv() {
         <div className={styles.titleGroup}>
           <h1 className={styles.title}>Encaminhamentos AQV</h1>
           <p className={styles.subtitle}>
-            Apoio ao Quadro de Vida Escolar • Gestão de Acolhimento e Justificativas de FIAPs
+            Analista de Qualidade de Vida • Gestão de Acolhimento e Justificativas de FIAPs
           </p>
         </div>
       </div>

@@ -117,7 +117,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/planos-recuperacao/{plano}', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'destroy'])->name('planos-recuperacao.destroy');
     });
 
-    // --- MÓDULO AQV (Apoio e Qualidade de Vida / Coordenação Pedagógica) ---
+    // --- MÓDULO AQV (Analista de Qualidade de Vida / Coordenação Pedagógica) ---
     Route::middleware('role:gestor,aqv')->group(function () {
         Route::get('/aqv/encaminhamentos', [\App\Http\Controllers\Api\AqvController::class, 'index'])->name('aqv.encaminhamentos.index');
         Route::get('/aqv/stats', [\App\Http\Controllers\Api\AqvController::class, 'stats'])->name('aqv.stats');

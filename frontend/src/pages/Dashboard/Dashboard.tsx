@@ -162,7 +162,7 @@ export function Dashboard() {
             {user?.role === "gestor"
               ? "Painel de Gestão Escolar"
               : user?.role === "aqv"
-                ? "Painel de Apoio e Qualidade de Vida (AQV)"
+                ? "Painel do Analista de Qualidade de Vida (AQV)"
                 : "Painel do Docente"}
           </h1>
           <p className={styles.pageSubtitle}>
