@@ -848,10 +848,13 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.4;
     transform: scale(0.9);
@@ -931,6 +934,7 @@
   justify-content: space-between;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--color-border);
+  margin-bottom: 10px;
 }
 
 .analyticsTitleGroup {
@@ -1049,5 +1053,3 @@
   color: var(--color-text-secondary);
   font-size: 0.75rem;
 }
-
-
