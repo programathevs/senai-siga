@@ -17,6 +17,7 @@ import { alunoService, type AlunoHistorico } from "../../services/alunoService";
 import type { Ocorrencia } from "../../services/ocorrenciaService";
 import { formatPhoneNumber, formatCpf } from "../../utils/formatters";
 import { OcorrenciaDetalhesModal } from "../Ocorrencias/OcorrenciaDetalhesModal";
+import { UserAvatar } from "../../components/UserAvatar/UserAvatar";
 import styles from "./AlunoHistoricoModal.module.css";
 
 interface AlunoHistoricoModalProps {
@@ -48,7 +49,6 @@ export const AlunoHistoricoModal: React.FC<AlunoHistoricoModalProps> = ({
   if (!isOpen || !alunoId) return null;
 
   const aluno = data?.aluno;
-  const initial = (aluno?.nome || "A").charAt(0).toUpperCase();
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -85,7 +85,12 @@ export const AlunoHistoricoModal: React.FC<AlunoHistoricoModalProps> = ({
             <>
               {/* Card com os dados do estudante */}
               <div className={styles.profileCard}>
-                <div className={styles.avatarBig}>{initial}</div>
+                <UserAvatar
+                  name={aluno.nome}
+                  fotoUrl={aluno.foto_url}
+                  size="lg"
+                  className={styles.avatarBig}
+                />
                 <div className={styles.profileDetails}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
                     <h3 className={styles.alunoNome}>{aluno.nome}</h3>

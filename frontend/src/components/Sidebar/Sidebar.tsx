@@ -18,6 +18,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
 import senaiLogo from "../../assets/senai-logo.jpg";
+import { UserAvatar } from "../UserAvatar/UserAvatar";
 import styles from "./Sidebar.module.css";
 
 function getInitials(name?: string) {
@@ -169,9 +170,13 @@ export function Sidebar() {
       <div className={styles.profileCardWrapper}>
         <div className={styles.profileContent}>
           <div className={styles.avatarWrapper}>
-            <div className={styles.avatarCircle} title={user?.name || "Usuário"}>
-              {initials}
-            </div>
+            <UserAvatar
+              name={user?.name}
+              fotoUrl={user?.foto_url}
+              fallbackText={initials}
+              className={styles.avatarCircle}
+              title={user?.name || "Usuário"}
+            />
             <span className={styles.onlineBadge} title="Sessão ativa" />
           </div>
 

@@ -8,6 +8,8 @@ export interface Usuario {
   name: string;
   email: string;
   role: UserRoleType;
+  foto?: string | null;
+  foto_url?: string | null;
   email_verified_at?: string | null;
   deve_trocar_senha?: boolean;
   telefone?: string | null;
@@ -32,6 +34,8 @@ export interface UsuarioPayload {
   email: string;
   role: UserRoleType;
   telefone?: string | null;
+  foto?: File | null;
+  remover_foto?: boolean;
 }
 
 export const usuarioService = {
@@ -48,6 +52,22 @@ export const usuarioService = {
   },
 
   async createUsuario(data: UsuarioPayload): Promise<Usuario> {
+    if (data.foto instanceof File) {
+      const formData = new FormData();
+      formData.append("nome", data.nome);
+      formData.append("email", data.email);
+      formData.append("role", data.role);
+      if (data.telefone) formData.append("telefone", data.telefone);
+      formData.append("foto", data.foto);
+
+      const response = await api.post<{ message: string; data: Usuario }>(
+        "/api/usuarios",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      return response.data.data;
+    }
+
     const response = await api.post<{ message: string; data: Usuario }>(
       "/api/usuarios",
       data
@@ -56,6 +76,24 @@ export const usuarioService = {
   },
 
   async updateUsuario(id: number, data: UsuarioPayload): Promise<Usuario> {
+    if (data.foto instanceof File || data.remover_foto) {
+      const formData = new FormData();
+      formData.append("_method", "PUT");
+      formData.append("nome", data.nome);
+      formData.append("email", data.email);
+      formData.append("role", data.role);
+      if (data.telefone !== undefined) formData.append("telefone", data.telefone || "");
+      if (data.foto instanceof File) formData.append("foto", data.foto);
+      if (data.remover_foto) formData.append("remover_foto", "1");
+
+      const response = await api.post<{ message: string; data: Usuario }>(
+        `/api/usuarios/${id}`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      return response.data.data;
+    }
+
     const response = await api.put<{ message: string; data: Usuario }>(
       `/api/usuarios/${id}`,
       data

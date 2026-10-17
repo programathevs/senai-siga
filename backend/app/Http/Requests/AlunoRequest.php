@@ -40,6 +40,8 @@ class AlunoRequest extends FormRequest
             'data_nascimento' => ['nullable', 'date'],
             'email' => ['nullable', 'email', 'max:255'],
             'telefone' => ['nullable', 'string', 'max:20'],
+            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'remover_foto' => ['nullable', 'boolean'],
             'status' => ['nullable', 'in:ativo,inativo,transferido'],
         ];
     }
@@ -53,6 +55,9 @@ class AlunoRequest extends FormRequest
             'cpf.unique' => 'Já existe um aluno cadastrado com este CPF.',
             'email.email' => 'Informe um e-mail válido.',
             'turma_id.exists' => 'A turma selecionada é inválida.',
+            'foto.image' => 'O arquivo enviado deve ser uma imagem válida.',
+            'foto.mimes' => 'A foto deve ser nos formatos JPEG, PNG, JPG ou WEBP.',
+            'foto.max' => 'A foto não pode ultrapassar o tamanho de 2MB.',
         ];
     }
 }

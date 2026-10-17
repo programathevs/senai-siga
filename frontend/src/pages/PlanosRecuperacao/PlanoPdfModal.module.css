@@ -329,14 +329,14 @@
 }
 
 .btnEdit {
-  background-color: color-mix(in srgb, #2563eb 12%, transparent);
-  border-color: color-mix(in srgb, #2563eb 30%, transparent);
-  color: #2563eb;
+  background-color: color-mix(in srgb, #3b82f6 12%, transparent);
+  border-color: color-mix(in srgb, #3b82f6 30%, transparent);
+  color: #3b82f6;
 }
 
 .btnEdit:hover {
-  background-color: color-mix(in srgb, #2563eb 20%, transparent);
-  border-color: #2563eb;
+  background-color: color-mix(in srgb, #3b82f6 20%, transparent);
+  border-color: #3b82f6;
 }
 
 /* Regras de Impressão (@media print) */
