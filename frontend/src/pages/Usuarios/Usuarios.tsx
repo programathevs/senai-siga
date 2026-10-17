@@ -17,6 +17,7 @@ import type { PaginationMeta } from "../../types/pagination";
 import { formatPhoneNumber } from "../../utils/formatters";
 import { UsuarioModal } from "./UsuarioModal";
 import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
+import { UserAvatar } from "../../components/UserAvatar/UserAvatar";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./Usuarios.module.css";
 
@@ -221,7 +222,6 @@ export function Usuarios() {
             </thead>
             <tbody>
               {usuarios.map((usuario) => {
-                const initial = (usuario.name || "U").charAt(0).toUpperCase();
                 const isSelf = Boolean(
                   currentUser?.id && Number(currentUser.id) === Number(usuario.id)
                 );
@@ -233,7 +233,12 @@ export function Usuarios() {
                     {/* Usuário / Nome */}
                     <td className={styles.td}>
                       <div className={styles.userCell}>
-                        <div className={styles.avatarMini}>{initial}</div>
+                        <UserAvatar
+                          name={usuario.name}
+                          fotoUrl={usuario.foto_url}
+                          size="sm"
+                          className={styles.avatarMini}
+                        />
                         <div className={styles.userInfo}>
                           <span className={styles.userName}>
                             {usuario.name || "Sem nome"}

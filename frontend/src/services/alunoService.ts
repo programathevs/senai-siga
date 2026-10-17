@@ -13,6 +13,8 @@ export interface Aluno {
   is_maior_de_idade?: boolean;
   email: string | null;
   telefone: string | null;
+  foto?: string | null;
+  foto_url?: string | null;
   status: "ativo" | "inativo" | "transferido";
   created_at: string;
   updated_at: string;
@@ -28,6 +30,8 @@ export interface AlunoPayload {
   email?: string | null;
   telefone?: string | null;
   status?: "ativo" | "inativo" | "transferido";
+  foto?: File | null;
+  remover_foto?: boolean;
 }
 
 export interface AlunoHistorico {
@@ -59,11 +63,49 @@ export const alunoService = {
   },
 
   async createAluno(payload: AlunoPayload): Promise<Aluno> {
+    if (payload.foto instanceof File) {
+      const formData = new FormData();
+      formData.append("nome", payload.nome);
+      formData.append("matricula", payload.matricula);
+      if (payload.turma_id) formData.append("turma_id", String(payload.turma_id));
+      if (payload.cpf) formData.append("cpf", payload.cpf);
+      if (payload.data_nascimento) formData.append("data_nascimento", payload.data_nascimento);
+      if (payload.email) formData.append("email", payload.email);
+      if (payload.telefone) formData.append("telefone", payload.telefone);
+      if (payload.status) formData.append("status", payload.status);
+      formData.append("foto", payload.foto);
+
+      const response = await api.post<{ message: string; data: Aluno }>("/api/alunos", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data.data;
+    }
+
     const response = await api.post<{ message: string; data: Aluno }>("/api/alunos", payload);
     return response.data.data;
   },
 
   async updateAluno(id: number, payload: AlunoPayload): Promise<Aluno> {
+    if (payload.foto instanceof File || payload.remover_foto) {
+      const formData = new FormData();
+      formData.append("_method", "PUT");
+      formData.append("nome", payload.nome);
+      formData.append("matricula", payload.matricula);
+      if (payload.turma_id !== undefined) formData.append("turma_id", payload.turma_id ? String(payload.turma_id) : "");
+      if (payload.cpf !== undefined) formData.append("cpf", payload.cpf || "");
+      if (payload.data_nascimento !== undefined) formData.append("data_nascimento", payload.data_nascimento || "");
+      if (payload.email !== undefined) formData.append("email", payload.email || "");
+      if (payload.telefone !== undefined) formData.append("telefone", payload.telefone || "");
+      if (payload.status) formData.append("status", payload.status);
+      if (payload.foto instanceof File) formData.append("foto", payload.foto);
+      if (payload.remover_foto) formData.append("remover_foto", "1");
+
+      const response = await api.post<{ message: string; data: Aluno }>(`/api/alunos/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data.data;
+    }
+
     const response = await api.put<{ message: string; data: Aluno }>(`/api/alunos/${id}`, payload);
     return response.data.data;
   },

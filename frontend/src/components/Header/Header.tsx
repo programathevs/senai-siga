@@ -6,6 +6,7 @@ import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
 import { PerfilDropdown } from "../PerfilDropdown/PerfilDropdown";
 import { PerfilModal } from "../PerfilModal/PerfilModal";
 import { AlterarSenhaModal } from "../AlterarSenhaModal/AlterarSenhaModal";
+import { UserAvatar } from "../UserAvatar/UserAvatar";
 import type { ToastType } from "../../utils/toast";
 import styles from "./Header.module.css";
 
@@ -104,15 +105,16 @@ export function Header() {
 
           {/* Avatar Mini, Card de Perfil Dropdown e Toast Flutuante */}
           <div className={styles.avatarWrapper}>
-            <div
+            <UserAvatar
+              name={user?.name}
+              fotoUrl={user?.foto_url}
+              fallbackText={initials}
               className={styles.userAvatarMini}
               title={`Perfil de ${user?.name || "Usuário"}`}
               onClick={() => setIsPerfilDropdownOpen((prev) => !prev)}
               role="button"
               tabIndex={0}
-            >
-              <span>{initials}</span>
-            </div>
+            />
 
             <PerfilDropdown
               isOpen={isPerfilDropdownOpen}

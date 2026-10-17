@@ -14,6 +14,8 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  foto?: string | null;
+  foto_url?: string | null;
   email_verified_at: string | null;
   deve_trocar_senha: boolean;
   created_at: string;

@@ -9,6 +9,7 @@ import { formatPhoneNumber } from "../../utils/formatters";
 import { AlunoModal } from "./AlunoModal";
 import { AlunoHistoricoModal } from "./AlunoHistoricoModal";
 import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
+import { UserAvatar } from "../../components/UserAvatar/UserAvatar";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./Alunos.module.css";
 
@@ -210,12 +211,16 @@ export function Alunos() {
             </thead>
             <tbody>
               {alunos.map((aluno) => {
-                const initial = aluno.nome.charAt(0).toUpperCase();
                 return (
                   <tr key={aluno.id} className={styles.tr}>
                     <td className={styles.td}>
                       <div className={styles.userCell}>
-                        <div className={styles.avatarMini}>{initial}</div>
+                        <UserAvatar
+                          name={aluno.nome}
+                          fotoUrl={aluno.foto_url}
+                          size="sm"
+                          className={styles.avatarMini}
+                        />
                         <div className={styles.userInfo}>
                           <span className={styles.userName}>{aluno.nome}</span>
                           <span className={styles.userEmail}>{aluno.email || "Sem e-mail"}</span>

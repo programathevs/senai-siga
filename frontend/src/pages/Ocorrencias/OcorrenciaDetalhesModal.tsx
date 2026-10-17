@@ -534,9 +534,9 @@ export function OcorrenciaDetalhesModal({
                 type="button"
                 className={styles.btnAction}
                 style={{
-                  backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
-                  color: "var(--color-primary)",
-                  borderColor: "color-mix(in srgb, var(--color-primary) 30%, transparent)",
+                  backgroundColor: "color-mix(in srgb, #3b82f6 12%, transparent)",
+                  color: "#3b82f6",
+                  borderColor: "color-mix(in srgb, #3b82f6 30%, transparent)",
                   fontWeight: 600,
                   display: "inline-flex",
                   alignItems: "center",

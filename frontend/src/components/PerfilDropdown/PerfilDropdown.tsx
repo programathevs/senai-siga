@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { User, KeyRound, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router";
+import { UserAvatar } from "../UserAvatar/UserAvatar";
 import styles from "./PerfilDropdown.module.css";
 
 interface PerfilDropdownProps {
@@ -88,7 +89,12 @@ export function PerfilDropdown({
     >
       {/* Topo do Card com Informações do Perfil */}
       <div className={styles.userHeader}>
-        <div className={styles.avatarCircle}>{initials}</div>
+        <UserAvatar
+          name={user.name}
+          fotoUrl={user.foto_url}
+          fallbackText={initials}
+          className={styles.avatarCircle}
+        />
         <div className={styles.userInfo}>
           <span className={styles.userName} title={user.name}>{user.name || "Usuário"}</span>
           <span className={styles.userEmail} title={user.email}>{user.email || "usuario@senai.br"}</span>

@@ -179,14 +179,14 @@
 .avatarMini {
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #1e40af 100%);
-  color: #ffffff;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   flex-shrink: 0;
 }
 
@@ -276,22 +276,22 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   border: 1px solid var(--color-border);
-  background-color: var(--color-background);
+  background-color: var(--color-surface);
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .actionBtnEdit:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background-color: color-mix(in srgb, #3b82f6 10%, transparent);
+  border-color: #3b82f6;
+  color: #3b82f6;
 }
 
 .actionBtnDelete:hover {
-  background-color: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  background-color: color-mix(in srgb, var(--color-danger) 10%, transparent);
   border-color: var(--color-danger);
   color: var(--color-danger);
 }

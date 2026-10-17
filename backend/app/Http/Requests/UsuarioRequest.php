@@ -38,6 +38,8 @@ class UsuarioRequest extends FormRequest
                 Rule::in(['gestor', 'instrutor', 'aqv']),
             ],
             'telefone' => ['nullable', 'string', 'max:20'],
+            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'remover_foto' => ['nullable', 'boolean'],
         ];
     }
 
@@ -52,6 +54,9 @@ class UsuarioRequest extends FormRequest
             'role.required' => 'O perfil de acesso do usuário é obrigatório.',
             'role.in' => 'O perfil selecionado deve ser Gestor, Instrutor ou AQV.',
             'telefone.max' => 'O telefone deve ter no máximo 20 caracteres.',
+            'foto.image' => 'O arquivo enviado deve ser uma imagem válida.',
+            'foto.mimes' => 'A foto deve ser nos formatos JPEG, PNG, JPG ou WEBP.',
+            'foto.max' => 'A foto não pode ultrapassar o tamanho de 2MB.',
         ];
     }
 }

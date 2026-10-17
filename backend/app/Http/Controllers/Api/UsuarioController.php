@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
@@ -89,14 +90,20 @@ class UsuarioController extends Controller
     {
         $validated = $request->validated();
 
-        $user = DB::transaction(function () use ($validated) {
+        $user = DB::transaction(function () use ($validated, $request) {
             $temporaryPassword = Str::password(10, symbols: false);
+
+            $fotoPath = null;
+            if ($request->hasFile('foto')) {
+                $fotoPath = $request->file('foto')->store('avatars/users', 'public');
+            }
 
             $user = User::create([
                 'name' => $validated['nome'],
                 'email' => $validated['email'],
                 'password' => Hash::make($temporaryPassword),
                 'role' => $validated['role'],
+                'foto' => $fotoPath,
                 'deve_trocar_senha' => true,
             ]);
 
@@ -155,12 +162,26 @@ class UsuarioController extends Controller
             ], 422);
         }
 
-        $usuario = DB::transaction(function () use ($usuario, $validated) {
-            $usuario->update([
+        $usuario = DB::transaction(function () use ($usuario, $validated, $request) {
+            $updateData = [
                 'name' => $validated['nome'],
                 'email' => $validated['email'],
                 'role' => $validated['role'],
-            ]);
+            ];
+
+            if ($request->boolean('remover_foto')) {
+                if ($usuario->foto && Storage::disk('public')->exists($usuario->foto)) {
+                    Storage::disk('public')->delete($usuario->foto);
+                }
+                $updateData['foto'] = null;
+            } elseif ($request->hasFile('foto')) {
+                if ($usuario->foto && Storage::disk('public')->exists($usuario->foto)) {
+                    Storage::disk('public')->delete($usuario->foto);
+                }
+                $updateData['foto'] = $request->file('foto')->store('avatars/users', 'public');
+            }
+
+            $usuario->update($updateData);
 
             $usuario->instrutor()->updateOrCreate(
                 ['user_id' => $usuario->id],
@@ -198,6 +219,9 @@ class UsuarioController extends Controller
         }
 
         DB::transaction(function () use ($usuario) {
+            if ($usuario->foto && Storage::disk('public')->exists($usuario->foto)) {
+                Storage::disk('public')->delete($usuario->foto);
+            }
             if ($usuario->instrutor) {
                 $usuario->instrutor->turmas()->detach();
                 $usuario->instrutor->delete();
