@@ -175,9 +175,9 @@
 }
 
 .actionBtnEdit:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: #2563eb;
+  color: #2563eb;
+  background-color: color-mix(in srgb, #2563eb 10%, transparent);
 }
 
 .actionBtnDelete:hover {

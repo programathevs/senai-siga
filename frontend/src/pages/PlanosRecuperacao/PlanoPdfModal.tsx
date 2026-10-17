@@ -407,16 +407,7 @@ export function PlanoPdfModal({
           {canEdit && onEdit && (
             <button
               type="button"
-              className={styles.btnAction}
-              style={{
-                backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
-                color: "var(--color-primary)",
-                borderColor: "color-mix(in srgb, var(--color-primary) 30%, transparent)",
-                fontWeight: 600,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.35rem",
-              }}
+              className={`${styles.btnAction} ${styles.btnEdit}`}
               onClick={() => {
                 onClose();
                 onEdit(plano);

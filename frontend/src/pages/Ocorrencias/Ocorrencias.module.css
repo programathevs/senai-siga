@@ -419,14 +419,14 @@
 }
 
 .editBtn {
-  color: var(--color-primary);
-  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  color: #2563eb;
+  border-color: color-mix(in srgb, #2563eb 30%, transparent);
 }
 
 .editBtn:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background-color: color-mix(in srgb, #2563eb 15%, transparent);
+  border-color: #2563eb;
+  color: #2563eb;
 }
 
 .deleteBtn:hover {

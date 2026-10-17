@@ -321,15 +321,15 @@
 }
 
 .actionBtnEdit {
-  color: var(--color-primary);
-  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
-  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  color: #2563eb;
+  border-color: color-mix(in srgb, #2563eb 30%, transparent);
+  background-color: color-mix(in srgb, #2563eb 6%, transparent);
 }
 
 .actionBtnEdit:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-color: #2563eb;
+  color: #2563eb;
+  background-color: color-mix(in srgb, #2563eb 15%, transparent);
 }
 
 .actionBtnDelete:hover {

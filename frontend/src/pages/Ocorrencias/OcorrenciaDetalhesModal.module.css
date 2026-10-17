@@ -380,6 +380,17 @@
   border-color: #7c3aed;
 }
 
+.btnEdit {
+  background-color: color-mix(in srgb, #2563eb 12%, transparent);
+  border-color: color-mix(in srgb, #2563eb 30%, transparent);
+  color: #2563eb;
+}
+
+.btnEdit:hover {
+  background-color: color-mix(in srgb, #2563eb 20%, transparent);
+  border-color: #2563eb;
+}
+
 /* ========================================================
    ESTILOS DE IMPRESSÃO (@media print)
    ======================================================== */
