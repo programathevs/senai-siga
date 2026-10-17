@@ -602,14 +602,14 @@ export function Relatorios() {
                                 oc.tipo === "falta"
                                   ? "rgba(217, 119, 6, 0.12)"
                                   : oc.tipo === "comportamento"
-                                  ? "rgba(227, 6, 19, 0.1)"
-                                  : "var(--color-surface)",
+                                    ? "rgba(227, 6, 19, 0.1)"
+                                    : "var(--color-surface)",
                               color:
                                 oc.tipo === "falta"
                                   ? "var(--color-warning)"
                                   : oc.tipo === "comportamento"
-                                  ? "var(--color-primary)"
-                                  : "var(--color-text-primary)",
+                                    ? "var(--color-primary)"
+                                    : "var(--color-text-primary)",
                             }}
                           >
                             {oc.tipo === "falta" && <Clock size={12} />}
@@ -631,14 +631,14 @@ export function Relatorios() {
                                 oc.status === "enviado_aqv"
                                   ? "rgba(0, 89, 168, 0.12)"
                                   : oc.status === "pendente"
-                                  ? "rgba(217, 119, 6, 0.12)"
-                                  : "rgba(16, 185, 129, 0.12)",
+                                    ? "rgba(217, 119, 6, 0.12)"
+                                    : "rgba(16, 185, 129, 0.12)",
                               color:
                                 oc.status === "enviado_aqv"
                                   ? "var(--color-primary)"
                                   : oc.status === "pendente"
-                                  ? "var(--color-warning)"
-                                  : "var(--color-success)",
+                                    ? "var(--color-warning)"
+                                    : "var(--color-success)",
                             }}
                           >
                             <span
@@ -648,15 +648,15 @@ export function Relatorios() {
                                   oc.status === "enviado_aqv"
                                     ? "var(--color-primary)"
                                     : oc.status === "pendente"
-                                    ? "var(--color-warning)"
-                                    : "var(--color-success)",
+                                      ? "var(--color-warning)"
+                                      : "var(--color-success)",
                               }}
                             />
                             {oc.status === "enviado_aqv"
                               ? "Encaminhado AQV"
                               : oc.status === "pendente"
-                              ? "Pendente"
-                              : "Concluído"}
+                                ? "Pendente"
+                                : "Concluído"}
                           </span>
                         </td>
 
@@ -755,8 +755,8 @@ export function Relatorios() {
                               turma.taxa_incidencia > 25
                                 ? "var(--color-primary)"
                                 : turma.taxa_incidencia > 10
-                                ? "var(--color-warning)"
-                                : "var(--color-success)",
+                                  ? "var(--color-warning)"
+                                  : "var(--color-success)",
                           }}
                         >
                           {turma.taxa_incidencia}% ({turma.alunos_notificados} alunos)
@@ -774,10 +774,10 @@ export function Relatorios() {
       {/* Assinaturas exclusivas para impressão do relatório */}
       <div className={styles.printSignatures}>
         <div className={styles.signatureLine}>
-          Docente / Instrutor Responsável
+          Instrutor Responsável
         </div>
         <div className={styles.signatureLine}>
-          Coordenação Pedagógica / Direção Escolar
+          Coordenação Pedagógica
         </div>
       </div>
 

@@ -224,7 +224,7 @@ Consulte o arquivo [CONTRIBUTING.md](CONTRIBUTING.md) para detalhes sobre a estr
 Para detalhes arquiteturais aprofundados e especificações das regras de negócio, consulte a pasta [docs/](docs/):
 - [Arquitetura do Sistema](docs/arquitetura.md)
 - [Ciclo de Vida da FIAP](docs/fluxos-fiap.md)
-- [Perfis e Permissões (RBAC)](docs/perfis-e-permissoes.md)
+- [Perfis e Permissões](docs/perfis-e-permissoes.md)
 
 ---
 

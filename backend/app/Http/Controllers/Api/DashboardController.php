@@ -26,7 +26,7 @@ class DashboardController extends Controller
         $turmaIds = [];
         $userId = $user?->id;
 
-        // Escopo do Docente / Instrutor
+        // Escopo do Instrutor
         if ($user && $user->hasRole('instrutor')) {
             $instrutor = $user->instrutor;
             $turmaIds = $instrutor ? $instrutor->turmas()->pluck('turmas.id')->toArray() : [];

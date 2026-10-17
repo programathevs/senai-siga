@@ -287,7 +287,7 @@ export function Ocorrencias() {
       {/* Cabeçalho da Página */}
       <div className={styles.pageHeader}>
         <div className={styles.titleGroup}>
-          <h1 className={styles.title}>Ocorrências &amp; FIAPs</h1>
+          <h1 className={styles.title}>FIAPs</h1>
           <p className={styles.subtitle}>
             Fichas Individuais de Acompanhamento Periódico: faltas, comportamento disciplinar e
             rendimento acadêmico.

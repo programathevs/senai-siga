@@ -49,7 +49,7 @@ export function Sidebar() {
     },
     {
       to: "/ocorrencias",
-      label: "Ocorrências & Advertências",
+      label: "Ocorrências",
       icon: Gavel,
       allowedRoles: ["gestor", "instrutor", "aqv"],
     },
@@ -91,7 +91,7 @@ export function Sidebar() {
     },
     {
       to: "/relatorios",
-      label: "Relatórios & Histórico",
+      label: "Relatórios",
       icon: BarChart3,
       allowedRoles: ["gestor", "instrutor", "aqv"],
     },
@@ -183,8 +183,8 @@ export function Sidebar() {
               {user?.role === "gestor"
                 ? "Perfil Gestor"
                 : user?.role === "aqv"
-                ? "Perfil AQV"
-                : "Perfil Docente"}
+                  ? "Perfil AQV"
+                  : "Perfil Docente"}
             </span>
           </div>
 

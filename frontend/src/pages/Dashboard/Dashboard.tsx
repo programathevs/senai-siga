@@ -156,7 +156,7 @@ export function Dashboard() {
         <div className={styles.headerTextGroup}>
           <div className={styles.moduleTagRow}>
             <span className={styles.moduleTag}>Módulo Acadêmico</span>
-            <span className={styles.versionTag}>• SENAI SIGA v2.0</span>
+            <span className={styles.versionTag}>• SENAI SIGA v1.0</span>
           </div>
           <h1 className={styles.pageTitle}>
             {user?.role === "gestor"

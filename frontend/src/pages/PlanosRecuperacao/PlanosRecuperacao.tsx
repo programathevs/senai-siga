@@ -162,7 +162,7 @@ export function PlanosRecuperacao() {
       {/* Cabeçalho da Página */}
       <div className={styles.pageHeader}>
         <div className={styles.titleGroup}>
-          <h1 className={styles.title}>Planos de Recuperação (PRP / PCA)</h1>
+          <h1 className={styles.title}>Planos de Recuperação</h1>
           <p className={styles.subtitle}>
             Acompanhamento e emissão dos Planos de Recuperação Paralela e Compensação de Ausências.
           </p>
@@ -446,10 +446,10 @@ export function PlanosRecuperacao() {
         }}
         canEdit={Boolean(
           selectedPlanoPdf &&
-            !selectedPlanoPdf.deleted_at &&
-            user?.role !== "aqv" &&
-            (user?.role === "gestor" ||
-              (user?.role === "instrutor" && selectedPlanoPdf.status_processo !== "concluido"))
+          !selectedPlanoPdf.deleted_at &&
+          user?.role !== "aqv" &&
+          (user?.role === "gestor" ||
+            (user?.role === "instrutor" && selectedPlanoPdf.status_processo !== "concluido"))
         )}
       />
 

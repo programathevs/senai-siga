@@ -160,7 +160,7 @@ export function OcorrenciaModal({
         }
         setAlunos(loaded);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         setIsLoadingAlunos(false);
       });
@@ -1202,7 +1202,7 @@ export function OcorrenciaModal({
 
             <div className={styles.formGrid}>
               <div className={styles.fieldGroup}>
-                <label className={styles.label}>Recomendações do Docente / Instrutor</label>
+                <label className={styles.label}>Recomendações do Instrutor</label>
                 <textarea
                   className={styles.textarea}
                   rows={2}
@@ -1277,8 +1277,8 @@ export function OcorrenciaModal({
                 isEditing && !hasChanges
                   ? "Altere algum campo para habilitar o salvamento"
                   : isEditing && !motivoEdicao.trim()
-                  ? "Informe a justificativa da edição para salvar"
-                  : undefined
+                    ? "Informe a justificativa da edição para salvar"
+                    : undefined
               }
             >
               {isSubmitting ? (
