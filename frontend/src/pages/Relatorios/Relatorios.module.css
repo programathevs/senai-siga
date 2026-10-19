@@ -233,46 +233,6 @@
   gap: 0.35rem;
 }
 
-.reincidentesBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.9rem;
-  border-radius: var(--radius);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-surface);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-
-.reincidentesBtn:hover {
-  border-color: color-mix(in srgb, var(--color-warning) 50%, transparent);
-  color: var(--color-warning);
-}
-
-.reincidentesBtnActive {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.9rem;
-  border-radius: var(--radius);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
-  background-color: color-mix(in srgb, var(--color-warning) 12%, transparent);
-  color: #b45309;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-
-.reincidentesBtnActive:hover {
-  background-color: color-mix(in srgb, var(--color-warning) 18%, transparent);
-}
 
 /* Abas */
 .tabsContainer {

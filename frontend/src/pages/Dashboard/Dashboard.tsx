@@ -176,7 +176,7 @@ export function Dashboard() {
 
         <div className={styles.headerActions}>
           <div className={styles.periodBadge}>
-            <Calendar size={16} color="var(--color-primary)" />
+            <Calendar size={15} color="var(--color-text-secondary)" />
             <span>{stats?.periodo?.mes_nome || "Mês Vigente"}</span>
           </div>
 

@@ -14,7 +14,6 @@ import {
   Calendar,
   RotateCcw,
   Eye,
-  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { RelatorioPdfModal } from "./RelatorioPdfModal";
@@ -461,15 +460,16 @@ export function Relatorios() {
               <option value="assinado">Assinado</option>
             </select>
 
-            <button
-              type="button"
-              className={apenasReincidentes ? styles.reincidentesBtnActive : styles.reincidentesBtn}
-              onClick={() => setApenasReincidentes((prev) => !prev)}
-              title="Filtrar apenas estudantes com 2 ou mais ocorrências registradas"
+            <select
+              className={styles.selectInput}
+              value={apenasReincidentes ? "reincidentes" : "todos"}
+              onChange={(e) => setApenasReincidentes(e.target.value === "reincidentes")}
+              aria-label="Filtrar por perfil de reincidência"
+              title="Filtrar por perfil de reincidência"
             >
-              <AlertTriangle size={15} />
-              <span>Apenas Reincidentes</span>
-            </button>
+              <option value="todos">Todos os Estudantes</option>
+              <option value="reincidentes">Apenas Reincidentes</option>
+            </select>
           </div>
         ) : (
           <div className={styles.consolidadoNotice}>
