@@ -18,7 +18,7 @@ RUN { \
     echo 'opcache.memory_consumption=128'; \
     echo 'opcache.interned_strings_buffer=16'; \
     echo 'opcache.max_accelerated_files=10000'; \
-    echo 'opcache.revalidate_freq=1'; \
+    echo 'opcache.revalidate_freq=0'; \
     echo 'opcache.validate_timestamps=1'; \
 } > /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
 
