@@ -116,19 +116,23 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // 5. Resumo das Turmas
+        // 5. Resumo das Turmas otimizado via JOIN agregador único
         $turmasQuery = Turma::query()->with('curso');
         if ($user && $user->hasRole('instrutor')) {
             $turmasQuery->whereIn('id', $turmaIds);
         }
+
+        $ocorrenciasPorTurma = (clone $baseQuery)
+            ->join('alunos', 'ocorrencias.aluno_id', '=', 'alunos.id')
+            ->whereNotNull('alunos.turma_id')
+            ->groupBy('alunos.turma_id')
+            ->selectRaw('alunos.turma_id, COUNT(ocorrencias.id) as total')
+            ->pluck('total', 'alunos.turma_id');
+
         $turmasResumo = $turmasQuery
             ->withCount(['alunos'])
             ->get()
-            ->map(function ($turma) use ($baseQuery) {
-                $ocorrenciasCount = (clone $baseQuery)->whereHas('aluno', function ($q) use ($turma) {
-                    $q->where('turma_id', $turma->id);
-                })->count();
-
+            ->map(function ($turma) use ($ocorrenciasPorTurma) {
                 return [
                     'id' => $turma->id,
                     'nome' => $turma->nome,
@@ -140,7 +144,7 @@ class DashboardController extends Controller
                         'nome' => $turma->curso->nome,
                     ] : null,
                     'alunos_count' => $turma->alunos_count,
-                    'ocorrencias_count' => $ocorrenciasCount,
+                    'ocorrencias_count' => (int) ($ocorrenciasPorTurma[$turma->id] ?? 0),
                 ];
             });
 
@@ -159,16 +163,20 @@ class DashboardController extends Controller
                 ->count();
             $taxaResolucao = $totalMes > 0 ? round(($resolvidasMes / $totalMes) * 100, 1) : 100.0;
 
-            // Distribuição por Cursos
-            $distribuicaoCursos = Curso::get()->map(function ($curso) {
-                $count = Ocorrencia::whereHas('aluno.turma', function ($q) use ($curso) {
-                    $q->where('curso_id', $curso->id);
-                })->count();
+            // Distribuição por Cursos otimizada com JOIN agrupado único
+            $ocorrenciasPorCurso = Ocorrencia::query()
+                ->join('alunos', 'ocorrencias.aluno_id', '=', 'alunos.id')
+                ->join('turmas', 'alunos.turma_id', '=', 'turmas.id')
+                ->whereNotNull('turmas.curso_id')
+                ->groupBy('turmas.curso_id')
+                ->selectRaw('turmas.curso_id, COUNT(ocorrencias.id) as total')
+                ->pluck('total', 'turmas.curso_id');
 
+            $distribuicaoCursos = Curso::select(['id', 'nome'])->get()->map(function ($curso) use ($ocorrenciasPorCurso) {
                 return [
                     'id' => $curso->id,
                     'nome' => $curso->nome,
-                    'ocorrencias_count' => $count,
+                    'ocorrencias_count' => (int) ($ocorrenciasPorCurso[$curso->id] ?? 0),
                 ];
             });
             $totalOcorrenciasCursos = $distribuicaoCursos->sum('ocorrencias_count');

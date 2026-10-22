@@ -31,7 +31,13 @@ class Aluno extends Model
     protected $appends = [
         'is_maior_de_idade',
         'foto_url',
+        'ra',
     ];
+
+    public function getRaAttribute(): ?string
+    {
+        return $this->attributes['ra'] ?? $this->matricula;
+    }
 
     public function getFotoUrlAttribute(): ?string
     {

@@ -23,7 +23,7 @@ Route::post('/email/verification-notification', [ResendVerificationEmailControll
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth.early', 'auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
     Route::get('/me', [AuthController::class, 'me'])->name('auth.me');
     Route::post('/first-access/update-password', [FirstAccessController::class, 'updatePassword'])
