@@ -19,8 +19,9 @@ const Turmas = lazy(() => import("../pages/Turmas/Turmas").then((m) => ({ defaul
 const Alunos = lazy(() => import("../pages/Alunos/Alunos").then((m) => ({ default: m.Alunos })));
 const Ocorrencias = lazy(() => import("../pages/Ocorrencias/Ocorrencias").then((m) => ({ default: m.Ocorrencias })));
 const Relatorios = lazy(() => import("../pages/Relatorios/Relatorios").then((m) => ({ default: m.Relatorios })));
-const EncaminhamentosAqv = lazy(() => import("../pages/EncaminhamentosAqv/EncaminhamentosAqv").then((m) => ({ default: m.EncaminhamentosAqv })));
+const EncaminhamentosEquipeEscolar = lazy(() => import("../pages/EncaminhamentosEquipeEscolar/EncaminhamentosEquipeEscolar").then((m) => ({ default: m.EncaminhamentosEquipeEscolar })));
 const PlanosRecuperacao = lazy(() => import("../pages/PlanosRecuperacao/PlanosRecuperacao").then((m) => ({ default: m.PlanosRecuperacao })));
+const MeusAlunos = lazy(() => import("../pages/MeusAlunos/MeusAlunos").then((m) => ({ default: m.MeusAlunos })));
 const Configuracoes = lazy(() => import("../pages/Configuracoes/Configuracoes").then((m) => ({ default: m.Configuracoes })));
 const Auditoria = lazy(() => import("../pages/Auditoria/Auditoria").then((m) => ({ default: m.Auditoria })));
 
@@ -69,7 +70,7 @@ export const router = createBrowserRouter([
             element: withSuspense(Dashboard),
           },
           {
-            element: <RoleRoute allowedRoles={["gestor", "instrutor", "aqv"]} />,
+            element: <RoleRoute allowedRoles={["gestor", "instrutor", "equipe_escolar", "aqv"]} />,
             children: [
               {
                 path: "/ocorrencias",
@@ -90,11 +91,24 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            element: <RoleRoute allowedRoles={["gestor", "aqv"]} />,
+            element: <RoleRoute allowedRoles={["gestor", "instrutor"]} />,
             children: [
               {
+                path: "/meus-alunos",
+                element: withSuspense(MeusAlunos),
+              },
+            ],
+          },
+          {
+            element: <RoleRoute allowedRoles={["gestor", "equipe_escolar", "aqv"]} />,
+            children: [
+              {
+                path: "/encaminhamentos-equipe-escolar",
+                element: withSuspense(EncaminhamentosEquipeEscolar),
+              },
+              {
                 path: "/encaminhamentos-aqv",
-                element: withSuspense(EncaminhamentosAqv),
+                element: withSuspense(EncaminhamentosEquipeEscolar),
               },
             ],
           },

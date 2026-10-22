@@ -46,19 +46,25 @@ export function Sidebar() {
       label: "Dashboard",
       icon: LayoutDashboard,
       end: true,
-      allowedRoles: ["gestor", "instrutor", "aqv"],
+      allowedRoles: ["gestor", "instrutor", "equipe_escolar", "aqv"],
     },
     {
       to: "/ocorrencias",
       label: "Ocorrências",
       icon: Gavel,
-      allowedRoles: ["gestor", "instrutor", "aqv"],
+      allowedRoles: ["gestor", "instrutor", "equipe_escolar", "aqv"],
     },
     {
       to: "/planos-recuperacao",
       label: "Planos de Recuperação",
       icon: ClipboardCheck,
-      allowedRoles: ["gestor", "instrutor", "aqv"],
+      allowedRoles: ["gestor", "instrutor", "equipe_escolar", "aqv"],
+    },
+    {
+      to: "/meus-alunos",
+      label: "Meus Alunos",
+      icon: Users,
+      allowedRoles: ["gestor", "instrutor"],
     },
     {
       to: "/cursos",
@@ -85,16 +91,16 @@ export function Sidebar() {
       allowedRoles: ["gestor"],
     },
     {
-      to: "/encaminhamentos-aqv",
-      label: "Encaminhamentos AQV",
+      to: "/encaminhamentos-equipe-escolar",
+      label: "Equipe Escolar",
       icon: Headphones,
-      allowedRoles: ["gestor", "aqv"],
+      allowedRoles: ["gestor", "equipe_escolar", "aqv"],
     },
     {
       to: "/relatorios",
       label: "Relatórios",
       icon: BarChart3,
-      allowedRoles: ["gestor", "instrutor", "aqv"],
+      allowedRoles: ["gestor", "instrutor", "equipe_escolar", "aqv"],
     },
     {
       to: "/auditoria",
@@ -106,7 +112,7 @@ export function Sidebar() {
       to: "/configuracoes",
       label: "Configurações",
       icon: Settings,
-      allowedRoles: ["gestor", "instrutor", "aqv"],
+      allowedRoles: ["gestor", "instrutor", "equipe_escolar", "aqv"],
     },
   ];
 
@@ -187,8 +193,8 @@ export function Sidebar() {
             <span className={styles.profileRole} title={user?.role}>
               {user?.role === "gestor"
                 ? "Perfil Gestor"
-                : user?.role === "aqv"
-                  ? "Perfil AQV"
+                : user?.role === "equipe_escolar" || user?.role === "aqv"
+                  ? "Equipe Escolar"
                   : "Perfil Docente"}
             </span>
           </div>

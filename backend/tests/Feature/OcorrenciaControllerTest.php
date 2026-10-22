@@ -134,11 +134,11 @@ class OcorrenciaControllerTest extends TestCase
         $response = $this->actingAs($admin)->postJson("/api/ocorrencias/{$ocorrencia->id}/encaminhar-aqv");
 
         $response->assertOk()
-            ->assertJsonPath('data.status', 'enviado_aqv');
+            ->assertJsonPath('data.status', 'enviado_equipe_escolar');
 
         $this->assertDatabaseHas('ocorrencias', [
             'id' => $ocorrencia->id,
-            'status' => 'enviado_aqv',
+            'status' => 'enviado_equipe_escolar',
         ]);
     }
 
@@ -276,7 +276,7 @@ class OcorrenciaControllerTest extends TestCase
             ->assertJsonValidationErrors(['unidade_curricular_id']);
     }
 
-    public function test_editing_enviado_aqv_fiap_resets_status_to_pendente_and_clears_aqv_receipt(): void
+    public function test_editing_enviado_aqv_fiap_preserves_status_and_aqv_receipt(): void
     {
         $instrutorUser = User::factory()->create(['role' => UserRole::INSTRUTOR]);
         $aluno = Aluno::factory()->create();
@@ -292,7 +292,7 @@ class OcorrenciaControllerTest extends TestCase
             'status' => 'enviado_aqv',
         ]);
 
-        \App\Models\AqvRecebimento::create([
+        \App\Models\EquipeEscolarRecebimento::create([
             'ocorrencia_id' => $ocorrencia->id,
             'enviado_em' => now(),
             'status_atendimento' => 'pendente',
@@ -309,17 +309,14 @@ class OcorrenciaControllerTest extends TestCase
         $response = $this->actingAs($instrutorUser)->putJson("/api/ocorrencias/{$ocorrencia->id}", $updatePayload);
 
         $response->assertOk()
-            ->assertJsonPath('data.status', 'pendente')
+            ->assertJsonPath('data.status', 'enviado_aqv')
             ->assertJsonPath('data.versao', 2);
 
-        $this->assertEquals('pendente', $ocorrencia->fresh()->status);
-        $this->assertNull($ocorrencia->fresh()->aqvRecebimento);
-        $this->assertDatabaseMissing('aqv_recebimentos', [
-            'ocorrencia_id' => $ocorrencia->id,
-        ]);
+        $this->assertEquals('enviado_aqv', $ocorrencia->fresh()->status);
+        $this->assertNotNull($ocorrencia->fresh()->aqvRecebimento);
     }
 
-    public function test_editing_assinado_fiap_resets_status_to_pendente_and_clears_aqv_receipt(): void
+    public function test_editing_assinado_fiap_is_forbidden(): void
     {
         $instrutorUser = User::factory()->create(['role' => UserRole::INSTRUTOR]);
         $aluno = Aluno::factory()->create();
@@ -335,7 +332,7 @@ class OcorrenciaControllerTest extends TestCase
             'status' => 'assinado',
         ]);
 
-        \App\Models\AqvRecebimento::create([
+        \App\Models\EquipeEscolarRecebimento::create([
             'ocorrencia_id' => $ocorrencia->id,
             'enviado_em' => now(),
             'confirmado_em' => now(),
@@ -352,12 +349,11 @@ class OcorrenciaControllerTest extends TestCase
 
         $response = $this->actingAs($instrutorUser)->putJson("/api/ocorrencias/{$ocorrencia->id}", $updatePayload);
 
-        $response->assertOk()
-            ->assertJsonPath('data.status', 'pendente')
-            ->assertJsonPath('data.versao', 2);
+        $response->assertStatus(403)
+            ->assertJsonPath('message', 'Ocorrências que já estão aguardando assinatura ou foram assinadas não podem mais ser editadas.');
 
-        $this->assertEquals('pendente', $ocorrencia->fresh()->status);
-        $this->assertNull($ocorrencia->fresh()->aqvRecebimento);
+        $this->assertEquals('assinado', $ocorrencia->fresh()->status);
+        $this->assertNotNull($ocorrencia->fresh()->aqvRecebimento);
     }
 }
 

@@ -10,6 +10,8 @@ export type OcorrenciaStatus =
   | "pendente"
   | "pdf_gerado"
   | "enviado_aqv"
+  | "enviado_equipe_escolar"
+  | "aguardando_assinatura"
   | "impresso"
   | "assinado";
 
@@ -75,6 +77,18 @@ export interface Ocorrencia {
   instrutores?: Instrutor[];
   edicoes?: OcorrenciaEdicao[];
   has_plano_pendente?: boolean;
+  aqv_recebimento?: {
+    id?: number;
+    justificativa_aluno?: string | null;
+    parecer_aqv?: string | null;
+    status_atendimento?: string;
+  } | null;
+  aqvRecebimento?: {
+    id?: number;
+    justificativa_aluno?: string | null;
+    parecer_aqv?: string | null;
+    status_atendimento?: string;
+  } | null;
   planos_recuperacao?: any[];
   planosRecuperacao?: any[];
   created_at?: string;

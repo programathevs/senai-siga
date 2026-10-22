@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Aluno;
-use App\Models\AqvRecebimento;
+use App\Models\EquipeEscolarRecebimento;
 use App\Models\Curso;
 use App\Models\Ocorrencia;
 use App\Models\OcorrenciaUnidade;
@@ -214,7 +214,7 @@ class DashboardController extends Controller
                     ->orWhereHas('aqvRecebimento');
             })->count();
 
-            $aqvEmAtendimento = AqvRecebimento::where('status_atendimento', 'em_atendimento')
+            $aqvEmAtendimento = EquipeEscolarRecebimento::where('status_atendimento', 'em_atendimento')
                 ->whereNull('confirmado_em')
                 ->count();
 

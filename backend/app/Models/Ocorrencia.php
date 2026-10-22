@@ -146,11 +146,16 @@ class Ocorrencia extends Model
     }
 
     /**
-     * Registro de recebimento e acolhimento pelo setor AQV.
+     * Registro de recebimento e acolhimento pela Equipe Escolar.
      */
     public function aqvRecebimento(): HasOne
     {
-        return $this->hasOne(AqvRecebimento::class, 'ocorrencia_id');
+        return $this->hasOne(EquipeEscolarRecebimento::class, 'ocorrencia_id');
+    }
+
+    public function equipeEscolarRecebimento(): HasOne
+    {
+        return $this->hasOne(EquipeEscolarRecebimento::class, 'ocorrencia_id');
     }
 
     /**

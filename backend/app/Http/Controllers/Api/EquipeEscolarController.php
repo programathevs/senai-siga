@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\AqvAtendimentoRequest;
-use App\Models\AqvRecebimento;
+use App\Http\Requests\EquipeEscolarAtendimentoRequest;
+use App\Models\EquipeEscolarRecebimento;
 use App\Models\Ocorrencia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\AuditService;
 
-class AqvController extends Controller
+class EquipeEscolarController extends Controller
 {
     /**
-     * Lista todos os encaminhamentos para a equipe AQV com paginação e filtros corporativos.
+     * Lista todos os encaminhamentos para a Equipe Escolar com paginação e filtros corporativos.
      */
     public function index(Request $request): JsonResponse
     {
@@ -24,6 +24,7 @@ class AqvController extends Controller
             ->where('status', '!=', 'pendente')
             ->where(function ($q) {
                 $q->where('status', 'enviado_aqv')
+                    ->orWhere('status', 'enviado_equipe_escolar')
                     ->orWhereHas('aqvRecebimento');
             })
             ->with([
@@ -59,7 +60,7 @@ class AqvController extends Controller
             }
         }
 
-        // Filtro por Status do Atendimento AQV
+        // Filtro por Status do Atendimento
         if ($status = $request->input('status')) {
             if ($status === 'pendente') {
                 $query->where(function ($q) {
@@ -67,7 +68,7 @@ class AqvController extends Controller
                         $aq->where('status_atendimento', 'pendente')
                             ->orWhereNull('status_atendimento');
                     })->orWhere(function ($sq) {
-                        $sq->where('status', 'enviado_aqv')
+                        $sq->whereIn('status', ['enviado_aqv', 'enviado_equipe_escolar'])
                             ->whereDoesntHave('aqvRecebimento');
                     });
                 });
@@ -106,21 +107,20 @@ class AqvController extends Controller
     }
 
     /**
-     * Retorna os 4 KPIs consolidados da fila de acolhimento AQV.
+     * Retorna os 4 KPIs consolidados da fila de acolhimento da Equipe Escolar.
      */
     public function stats(): JsonResponse
     {
         $baseQuery = Ocorrencia::query()
             ->where('status', '!=', 'pendente')
             ->where(function ($q) {
-                $q->where('status', 'enviado_aqv')
-                    ->orWhere('status', 'assinado')
+                $q->whereIn('status', ['enviado_aqv', 'enviado_equipe_escolar', 'assinado'])
                     ->orWhereHas('aqvRecebimento');
             });
 
         $totalEncaminhados = (clone $baseQuery)->count();
 
-        // Concluídos & Assinados: Ocorrência que está assinada ou atendimento concluído (desde que não esteja pendente/reaberta)
+        // Concluídos & Assinados
         $concluidos = (clone $baseQuery)
             ->where(function ($q) {
                 $q->where('status', 'assinado')
@@ -143,7 +143,7 @@ class AqvController extends Controller
             })
             ->count();
 
-        // Aguardando Atendimento: Todas as demais na fila que não estão concluídas nem em acolhimento
+        // Aguardando Atendimento
         $aguardandoAtendimento = max(0, $totalEncaminhados - $emAtendimento - $concluidos);
 
         return response()->json([
@@ -155,9 +155,9 @@ class AqvController extends Controller
     }
 
     /**
-     * Registra o atendimento pedagógico da AQV e atualiza o acolhimento do estudante.
+     * Registra o atendimento pedagógico da Equipe Escolar e atualiza o acolhimento do estudante.
      */
-    public function salvarAtendimento(AqvAtendimentoRequest $request, Ocorrencia $ocorrencia): JsonResponse
+    public function salvarAtendimento(EquipeEscolarAtendimentoRequest $request, Ocorrencia $ocorrencia): JsonResponse
     {
         $validated = $request->validated();
         $user = Auth::user();
@@ -169,35 +169,43 @@ class AqvController extends Controller
             : now();
 
         DB::transaction(function () use ($ocorrencia, $validated, $user, $confirmarAssinatura, $statusAtendimento, $dataAtendimento) {
-            $dadosAqv = [
+            $dadosEquipe = [
                 'recebido_por' => $user->id,
                 'justificativa_aluno' => $validated['justificativa_aluno'],
-                'parecer_aqv' => $validated['parecer_aqv'] ?? null,
+                'parecer_aqv' => $validated['parecer_aqv'] ?? ($validated['parecer_equipe_escolar'] ?? null),
                 'data_atendimento' => $dataAtendimento,
                 'status_atendimento' => $statusAtendimento,
             ];
 
+            if (isset($validated['compensacao_faltas_autorizada'])) {
+                $dadosEquipe['compensacao_faltas_autorizada'] = $validated['compensacao_faltas_autorizada'];
+                $dadosEquipe['motivo_excepcionalidade'] = $validated['motivo_excepcionalidade'] ?? null;
+                $dadosEquipe['autorizado_por'] = $user->id;
+                $dadosEquipe['autorizado_em'] = now();
+            }
+
             if ($confirmarAssinatura) {
-                $dadosAqv['confirmado_em'] = now();
+                $dadosEquipe['confirmado_em'] = now();
                 $ocorrencia->update(['status' => 'assinado']);
             }
 
-            AqvRecebimento::updateOrCreate(
+            EquipeEscolarRecebimento::updateOrCreate(
                 ['ocorrencia_id' => $ocorrencia->id],
-                $dadosAqv
+                $dadosEquipe
             );
         });
 
         AuditService::registrar(
-            'atendimento_aqv',
+            'atendimento_equipe_escolar',
             'Ocorrencia',
             $ocorrencia->id,
-            "Registro de acolhimento pedagógico da ocorrência {$ocorrencia->numero_sequencial}" . ($confirmarAssinatura ? ' com confirmação de assinatura' : ''),
+            "Registro de acolhimento pedagógico da ocorrência {$ocorrencia->numero_sequencial} pela Equipe Escolar" . ($confirmarAssinatura ? ' com confirmação de assinatura' : ''),
             null,
             [
                 'status_atendimento' => $statusAtendimento,
                 'data_atendimento' => $dataAtendimento->toDateTimeString(),
                 'confirmar_assinatura' => $confirmarAssinatura,
+                'compensacao_faltas_autorizada' => $validated['compensacao_faltas_autorizada'] ?? null,
             ]
         );
 
@@ -214,31 +222,31 @@ class AqvController extends Controller
 
     /**
      * Confirmação de colhimento da assinatura física da FIAP.
-     * Exige que a justificativa do estudante e o parecer da gestão/AQV estejam cadastrados.
+     * Exige que a justificativa do estudante e o parecer da Equipe Escolar estejam cadastrados.
      */
     public function confirmarAssinatura(Request $request, Ocorrencia $ocorrencia): JsonResponse
     {
         $user = Auth::user();
 
-        $aqvRecebimento = $ocorrencia->aqvRecebimento()->first();
-        $justificativa = trim($aqvRecebimento?->justificativa_aluno ?? '');
-        $parecer = trim($aqvRecebimento?->parecer_aqv ?? '');
+        $recebimento = $ocorrencia->aqvRecebimento()->first();
+        $justificativa = trim($recebimento?->justificativa_aluno ?? '');
+        $parecer = trim($recebimento?->parecer_aqv ?? '');
 
-        if (! $aqvRecebimento || empty($justificativa) || empty($parecer)) {
+        if (! $recebimento || empty($justificativa) || empty($parecer)) {
             return response()->json([
-                'message' => 'Para finalizar a FIAP, é obrigatório registrar previamente a Justificativa do Estudante e o Parecer da Gestão/AQV no acolhimento.',
+                'message' => 'Para finalizar a FIAP, é obrigatório registrar previamente a Justificativa do Estudante e o Parecer da Equipe Escolar no acolhimento.',
             ], 422);
         }
 
-        DB::transaction(function () use ($ocorrencia, $user, $aqvRecebimento) {
+        DB::transaction(function () use ($ocorrencia, $user, $recebimento) {
             $ocorrencia->update(['status' => 'assinado']);
 
-            $aqvRecebimento->confirmado_em = now();
-            $aqvRecebimento->status_atendimento = 'concluido';
-            if (! $aqvRecebimento->recebido_por) {
-                $aqvRecebimento->recebido_por = $user->id;
+            $recebimento->confirmado_em = now();
+            $recebimento->status_atendimento = 'concluido';
+            if (! $recebimento->recebido_por) {
+                $recebimento->recebido_por = $user->id;
             }
-            $aqvRecebimento->save();
+            $recebimento->save();
         });
 
         AuditService::registrar(

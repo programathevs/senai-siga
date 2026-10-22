@@ -27,6 +27,7 @@ class PlanoRecuperacaoController extends Controller
             'unidades',
             'unidadeCurricular',
             'registradoPor:id,name,email',
+            'analisadoPor:id,name,email',
             'frequencias',
         ];
 
@@ -100,6 +101,24 @@ class PlanoRecuperacaoController extends Controller
 
         return DB::transaction(function () use ($data, $user, $ocorrencia) {
             $data['registrado_por'] = $user->id;
+
+            // Se for plano decorrente de FIAP de falta com autorização prévia da Equipe Escolar, nasce direto em "aguardando_visto"
+            $aqvRec = $ocorrencia?->aqvRecebimento;
+            $jaAutorizado = $aqvRec && in_array($aqvRec->compensacao_faltas_autorizada, ['autorizado_atestado', 'autorizado_excepcional']);
+
+            if ($jaAutorizado) {
+                $data['status_processo'] = 'aguardando_visto';
+                $data['parecer_equipe_escolar'] = $aqvRec->compensacao_faltas_autorizada === 'autorizado_atestado'
+                    ? 'Compensação de ausências autorizada com apresentação de atestado médico/justificativa legal.'
+                    : ($aqvRec->motivo_excepcionalidade
+                        ? "Compensação de ausências autorizada em caráter excepcional pela Gestão: {$aqvRec->motivo_excepcionalidade}"
+                        : 'Compensação de ausências autorizada em caráter excepcional pela Gestão.');
+                $data['analisado_por'] = $aqvRec->autorizado_por ?? $aqvRec->recebido_por;
+                $data['analisado_em'] = $aqvRec->autorizado_em ?? now();
+            } else {
+                $data['status_processo'] = $data['status_processo'] ?? 'em_analise';
+            }
+
             $frequencias = $data['frequencias'] ?? [];
             unset($data['frequencias']);
 
@@ -333,6 +352,78 @@ class PlanoRecuperacaoController extends Controller
                 'unidades',
                 'unidadeCurricular',
                 'registradoPor',
+                'analisadoPor:id,name,email',
+                'frequencias',
+            ]),
+        ]);
+    }
+
+    /**
+     * Registra o parecer da Equipe Escolar (Aceite ou Recusa) sobre o Plano de Recuperação.
+     */
+    public function parecerEquipeEscolar(Request $request, PlanoRecuperacao $plano): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasRole(['gestor', 'equipe_escolar', 'aqv'])) {
+            return response()->json([
+                'message' => 'Apenas a Equipe Escolar ou a gestão podem emitir parecer sobre Planos de Recuperação.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'decisao' => ['required', 'string', 'in:aceito,recusado'],
+            'parecer' => ['nullable', 'string', 'max:2000'],
+        ], [
+            'decisao.required' => 'A decisão (aceito ou recusado) é obrigatória.',
+            'decisao.in' => 'Decisão inválida.',
+        ]);
+
+        if ($validated['decisao'] === 'recusado' && empty(trim($validated['parecer'] ?? ''))) {
+            return response()->json([
+                'message' => 'É obrigatório informar uma justificativa ao recusar o Plano de Recuperação.',
+                'errors' => [
+                    'parecer' => ['A justificativa da recusa é obrigatória.'],
+                ],
+            ], 422);
+        }
+
+        $dadosAntigos = $plano->toArray();
+
+        $novoStatus = $validated['decisao'] === 'aceito' ? 'aguardando_visto' : 'recusado';
+        $parecerTexto = !empty(trim($validated['parecer'] ?? ''))
+            ? trim($validated['parecer'])
+            : ($validated['decisao'] === 'aceito' ? 'Plano de Recuperação aceito pela Equipe Escolar.' : 'Plano de Recuperação recusado.');
+
+        $plano->update([
+            'status_processo' => $novoStatus,
+            'parecer_equipe_escolar' => $parecerTexto,
+            'analisado_por' => $user->id,
+            'analisado_em' => now(),
+        ]);
+
+        AuditService::registrar(
+            'parecer_equipe_escolar_plano',
+            'PlanoRecuperacao',
+            $plano->id,
+            "Parecer da Equipe Escolar no Plano #{$plano->id}: {$validated['decisao']}",
+            $dadosAntigos,
+            $plano->toArray()
+        );
+
+        $msg = $validated['decisao'] === 'aceito'
+            ? 'Plano de Recuperação aceito com sucesso e encaminhado para vistos.'
+            : 'Plano de Recuperação recusado e finalizado com justificativa registrada.';
+
+        return response()->json([
+            'message' => $msg,
+            'data' => $plano->load([
+                'ocorrencia.unidades.unidadeCurricular',
+                'aluno.turma.curso',
+                'unidades',
+                'unidadeCurricular',
+                'registradoPor:id,name,email',
+                'analisadoPor:id,name,email',
                 'frequencias',
             ]),
         ]);

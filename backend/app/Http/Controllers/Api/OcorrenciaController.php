@@ -4,14 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\OcorrenciaRequest;
-use App\Models\AqvRecebimento;
+use App\Models\EquipeEscolarRecebimento;
 use App\Models\Ocorrencia;
 use App\Models\OcorrenciaEdicao;
 use App\Models\OcorrenciaUnidade;
 use App\Models\PlanoRecuperacao;
 use App\Models\UnidadeCurricular;
 use App\Models\User;
-use App\Notifications\OcorrenciaEncaminhadaAqvNotification;
+use App\Notifications\OcorrenciaEncaminhadaEquipeEscolarNotification;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,6 +38,7 @@ class OcorrenciaController extends Controller
                 'instrutores.user',
                 'edicoes.editadoPor',
                 'planosRecuperacao',
+                'aqvRecebimento',
             ])
             : Ocorrencia::with([
                 'aluno.turma.curso',
@@ -46,6 +47,7 @@ class OcorrenciaController extends Controller
                 'instrutores.user',
                 'edicoes.editadoPor',
                 'planosRecuperacao',
+                'aqvRecebimento',
             ]);
 
         // Filtro por busca textual (número sequencial, nome do aluno, matrícula ou CPF)
@@ -285,6 +287,12 @@ class OcorrenciaController extends Controller
             ], 403);
         }
 
+        if (in_array($ocorrencia->status, ['aguardando_assinatura', 'assinado'])) {
+            return response()->json([
+                'message' => 'Ocorrências que já estão aguardando assinatura ou foram assinadas não podem mais ser editadas.',
+            ], 403);
+        }
+
         $validated = $request->validated();
 
         // Se nenhum dado relevante tiver sido alterado, bloqueia a criação de versão fantasma
@@ -318,8 +326,7 @@ class OcorrenciaController extends Controller
                 'motivo' => $validated['motivo_edicao'] ?? 'Atualização dos dados da ocorrência.',
             ]);
 
-            // Se a ocorrência foi enviada à AQV, estava aguardando assinatura, assinada ou impressa,
-            // a edição dos dados invalida o estado anterior e reseta o fluxo para 'pendente', permitindo reenvio.
+            // Atualiza os dados da ocorrência mantendo a integridade do fluxo
             $ocorrencia->update([
                 'aluno_id' => $validated['aluno_id'],
                 'versao' => $novaVersao,
@@ -330,13 +337,7 @@ class OcorrenciaController extends Controller
                 'providencias_gestao' => $validated['providencias_gestao'] ?? null,
                 'outras_observacoes' => $validated['outras_observacoes'] ?? null,
                 'data_ocorrencia' => $validated['data_ocorrencia'],
-                'status' => 'pendente',
             ]);
-
-            // Remove o acolhimento anterior no AQV para exigir reenvio formal pelo professor
-            if ($ocorrencia->aqvRecebimento) {
-                $ocorrencia->aqvRecebimento()->delete();
-            }
 
             // Processa as unidades curriculares da ocorrência (suporte a N UCs)
             $resUnidades = $this->processarUnidades($ocorrencia, $validated);
@@ -636,30 +637,30 @@ class OcorrenciaController extends Controller
     }
 
     /**
-     * Encaminha formalmente a ocorrência para a equipe de Analista de Qualidade de Vida (AQV).
+     * Encaminha formalmente a ocorrência para a Equipe Escolar.
      */
-    public function encaminharAqv(Request $request, Ocorrencia $ocorrencia): JsonResponse
+    public function encaminharEquipeEscolar(Request $request, Ocorrencia $ocorrencia): JsonResponse
     {
         $user = $request->user();
 
-        // Apenas GESTOR ou o PRÓPRIO criador da FIAP podem encaminhá-la para a AQV
+        // Apenas GESTOR ou o PRÓPRIO criador da FIAP podem encaminhá-la para a Equipe Escolar
         if (! $user->hasRole('gestor') && $ocorrencia->registrado_por !== $user->id) {
             return response()->json([
-                'message' => 'Apenas a gestão ou o próprio instrutor que criou a FIAP podem encaminhá-la para a AQV.',
+                'message' => 'Apenas a gestão ou o próprio instrutor que criou a FIAP podem encaminhá-la para a Equipe Escolar.',
             ], 403);
         }
 
         if ($ocorrencia->has_plano_pendente) {
             return response()->json([
-                'message' => 'Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.',
+                'message' => 'Não é possível encaminhar para a Equipe Escolar pois esta FIAP possui um Plano de Recuperação pendente.',
             ], 422);
         }
 
         $ocorrencia->update([
-            'status' => 'enviado_aqv',
+            'status' => 'enviado_equipe_escolar',
         ]);
 
-        AqvRecebimento::updateOrCreate(
+        EquipeEscolarRecebimento::updateOrCreate(
             ['ocorrencia_id' => $ocorrencia->id],
             [
                 'enviado_em' => now(),
@@ -667,26 +668,34 @@ class OcorrenciaController extends Controller
             ]
         );
 
-        // Notifica por e-mail os usuários da equipe AQV
+        // Notifica por e-mail os usuários da Equipe Escolar
         try {
-            $aqvUsers = User::where('role', 'aqv')->get();
-            foreach ($aqvUsers as $aqvUser) {
-                $aqvUser->notify(new OcorrenciaEncaminhadaAqvNotification($ocorrencia));
+            $equipeUsers = User::whereIn('role', ['equipe_escolar', 'aqv'])->get();
+            foreach ($equipeUsers as $equipeUser) {
+                $equipeUser->notify(new OcorrenciaEncaminhadaEquipeEscolarNotification($ocorrencia));
             }
         } catch (\Throwable $e) {
-            Log::error('Erro ao notificar equipe AQV: ' . $e->getMessage());
+            Log::error('Erro ao notificar Equipe Escolar: ' . $e->getMessage());
         }
 
         AuditService::registrar(
-            'encaminhamento_aqv',
+            'encaminhamento_equipe_escolar',
             'Ocorrencia',
             $ocorrencia->id,
-            "Encaminhamento da ocorrência {$ocorrencia->numero_sequencial} para a equipe AQV"
+            "Encaminhamento da ocorrência {$ocorrencia->numero_sequencial} para a Equipe Escolar"
         );
 
         return response()->json([
-            'message' => "Ocorrência {$ocorrencia->numero_sequencial} encaminhada para a equipe AQV com sucesso.",
+            'message' => "Ocorrência {$ocorrencia->numero_sequencial} encaminhada para a Equipe Escolar com sucesso.",
             'data' => $ocorrencia->load(['aluno.turma.curso', 'aqvRecebimento']),
         ]);
+    }
+
+    /**
+     * Alias para compatibilidade com rotas legadas.
+     */
+    public function encaminharAqv(Request $request, Ocorrencia $ocorrencia): JsonResponse
+    {
+        return $this->encaminharEquipeEscolar($request, $ocorrencia);
     }
 }

@@ -331,6 +331,47 @@
   cursor: not-allowed !important;
 }
 
+.sugestoesContainer {
+  margin-top: 0.4rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sugestoesLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.chipsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chipButton {
+  background-color: color-mix(in srgb, #6366f1 8%, transparent);
+  border: 1px solid color-mix(in srgb, #6366f1 25%, transparent);
+  color: #6366f1;
+  border-radius: 9999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  line-height: 1.3;
+}
+
+.chipButton:hover {
+  background-color: #6366f1;
+  color: #ffffff;
+  border-color: #6366f1;
+  transform: translateY(-1px);
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

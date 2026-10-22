@@ -24,7 +24,17 @@ class CheckRole
             ], 401);
         }
 
-        if (! $user->hasRole($roles)) {
+        $expandedRoles = [];
+        foreach ($roles as $r) {
+            $expandedRoles[] = $r;
+            if ($r === 'equipe_escolar') {
+                $expandedRoles[] = 'aqv';
+            } elseif ($r === 'aqv') {
+                $expandedRoles[] = 'equipe_escolar';
+            }
+        }
+
+        if (! $user->hasRole($expandedRoles)) {
             return response()->json([
                 'message' => 'Acesso negado: o seu perfil de usuário não possui permissão para executar esta ação.',
             ], 403);

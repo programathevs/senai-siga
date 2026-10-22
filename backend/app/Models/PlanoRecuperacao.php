@@ -34,6 +34,9 @@ class PlanoRecuperacao extends Model
         'conceito',
         'status_processo',
         'registro_desempenho',
+        'parecer_equipe_escolar',
+        'analisado_por',
+        'analisado_em',
     ];
 
     protected $casts = [
@@ -44,6 +47,7 @@ class PlanoRecuperacao extends Model
         'visto_coordenacao' => 'date',
         'visto_aluno' => 'date',
         'visto_professor' => 'date',
+        'analisado_em' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -88,5 +92,10 @@ class PlanoRecuperacao extends Model
     public function frequencias(): HasMany
     {
         return $this->hasMany(PlanoFrequencia::class, 'plano_id');
+    }
+
+    public function analisadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'analisado_por');
     }
 }

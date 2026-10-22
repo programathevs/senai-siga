@@ -244,17 +244,32 @@ export function Alunos() {
                     </td>
 
                     <td className={styles.td}>
-                      <strong>{aluno.matricula}</strong>
+                      <div>
+                        <strong>{aluno.matricula}</strong>
+                        {aluno.turmas && aluno.turmas.length > 1 && (
+                          <div style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", marginTop: "2px" }}>
+                            2º RA: {aluno.turmas.find((t) => t.id !== aluno.turma_id)?.pivot?.ra || aluno.matricula}
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     <td className={styles.td}>
-                      {aluno.turma ? (
-                        <span className={styles.badgeTurma}>
-                          {aluno.turma.nome} ({aluno.turma.turno || "Turno"})
-                        </span>
-                      ) : (
-                        <span className={styles.badgeSemTurma}>Sem turma</span>
-                      )}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        {aluno.turmas && aluno.turmas.length > 0 ? (
+                          aluno.turmas.map((t) => (
+                            <span key={t.id} className={styles.badgeTurma}>
+                              {t.nome} {t.turno ? `(${t.turno})` : ""}
+                            </span>
+                          ))
+                        ) : aluno.turma ? (
+                          <span className={styles.badgeTurma}>
+                            {aluno.turma.nome} {aluno.turma.turno ? `(${aluno.turma.turno})` : ""}
+                          </span>
+                        ) : (
+                          <span className={styles.badgeSemTurma}>Sem turma</span>
+                        )}
+                      </div>
                     </td>
 
                     <td className={styles.td}>

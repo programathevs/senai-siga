@@ -32,6 +32,8 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [turmaId, setTurmaId] = useState<number | "">("");
+  const [segundaTurmaId, setSegundaTurmaId] = useState<number | "">("");
+  const [segundoRa, setSegundoRa] = useState("");
   const [status, setStatus] = useState<"ativo" | "inativo" | "transferido">("ativo");
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
@@ -70,6 +72,11 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
         setEmail(alunoToEdit.email || "");
         setTelefone(formatPhoneNumber(alunoToEdit.telefone || ""));
         setTurmaId(alunoToEdit.turma_id || "");
+
+        const segTurma = alunoToEdit.turmas?.find((t) => t.id !== alunoToEdit.turma_id);
+        setSegundaTurmaId(segTurma ? segTurma.id : "");
+        setSegundoRa(segTurma?.pivot?.ra || "");
+
         setStatus(alunoToEdit.status);
         setFotoPreview(alunoToEdit.foto_url || null);
         setFotoFile(null);
@@ -82,6 +89,8 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
         setEmail("");
         setTelefone("");
         setTurmaId("");
+        setSegundaTurmaId("");
+        setSegundoRa("");
         setStatus("ativo");
         setFotoPreview(null);
         setFotoFile(null);
@@ -120,6 +129,8 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
         email: email.trim() || null,
         telefone: telefone.trim() || null,
         turma_id: turmaId ? Number(turmaId) : null,
+        segunda_turma_id: segundaTurmaId ? Number(segundaTurmaId) : null,
+        segundo_ra: segundoRa.trim() || null,
         status,
         foto: fotoFile,
         remover_foto: removerFoto,
@@ -325,6 +336,38 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
                 <option value="inativo">Inativo</option>
                 <option value="transferido">Transferido</option>
               </select>
+            </div>
+          </div>
+
+          <div className={styles.gridRow}>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>2ª Turma (Múltipla Matrícula - Opcional)</label>
+              <select
+                className={styles.select}
+                value={segundaTurmaId}
+                onChange={(e) => setSegundaTurmaId(e.target.value ? Number(e.target.value) : "")}
+              >
+                <option value="">Nenhuma (estudante vinculado a apenas 1 turma)</option>
+                {turmas
+                  .filter((t) => !turmaId || t.id !== Number(turmaId))
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nome} - {t.curso?.nome} ({t.turno})
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>2º RA / Matrícula (para a 2ª Turma)</label>
+              <input
+                type="text"
+                className={styles.input}
+                value={segundoRa}
+                onChange={(e) => setSegundoRa(e.target.value)}
+                placeholder="Ex: RA654321 (se vazio, usará o RA principal)"
+                disabled={!segundaTurmaId}
+              />
             </div>
           </div>
 

@@ -50,12 +50,14 @@ class PlanoRecuperacaoControllerTest extends TestCase
             ->postJson('/api/planos-recuperacao', $payload);
 
         $response->assertCreated()
-            ->assertJsonPath('data.tipo_programa', 'recuperacao_paralela');
+            ->assertJsonPath('data.tipo_programa', 'recuperacao_paralela')
+            ->assertJsonPath('data.status_processo', 'em_analise');
 
         $this->assertDatabaseHas('planos_recuperacao', [
             'ocorrencia_id' => $data['ocorrencia']->id,
             'aluno_id' => $data['aluno']->id,
             'tipo_programa' => 'recuperacao_paralela',
+            'status_processo' => 'em_analise',
         ]);
     }
 
@@ -265,6 +267,69 @@ class PlanoRecuperacaoControllerTest extends TestCase
             'plano_recuperacao_id' => $planoId,
             'unidade_curricular_id' => $uc2->id,
         ]);
+    }
+
+    public function test_equipe_escolar_pode_aceitar_plano_de_recuperacao(): void
+    {
+        $data = $this->criarEstruturaBase();
+        $equipeUser = User::factory()->create(['role' => 'equipe_escolar']);
+
+        $plano = PlanoRecuperacao::create([
+            'ocorrencia_id' => $data['ocorrencia']->id,
+            'aluno_id' => $data['aluno']->id,
+            'registrado_por' => $data['instrutor']->id,
+            'tipo_programa' => 'recuperacao_paralela',
+            'status_processo' => 'em_analise',
+        ]);
+
+        $response = $this->actingAs($equipeUser)
+            ->postJson("/api/planos-recuperacao/{$plano->id}/parecer-equipe-escolar", [
+                'decisao' => 'aceito',
+                'parecer' => 'Plano condizente com as diretrizes pedagógicas.',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.status_processo', 'aguardando_visto')
+            ->assertJsonPath('data.parecer_equipe_escolar', 'Plano condizente com as diretrizes pedagógicas.');
+
+        $this->assertEquals('aguardando_visto', $plano->fresh()->status_processo);
+        $this->assertEquals($equipeUser->id, $plano->fresh()->analisado_por);
+    }
+
+    public function test_equipe_escolar_recusar_plano_exige_justificativa(): void
+    {
+        $data = $this->criarEstruturaBase();
+        $equipeUser = User::factory()->create(['role' => 'equipe_escolar']);
+
+        $plano = PlanoRecuperacao::create([
+            'ocorrencia_id' => $data['ocorrencia']->id,
+            'aluno_id' => $data['aluno']->id,
+            'registrado_por' => $data['instrutor']->id,
+            'tipo_programa' => 'recuperacao_paralela',
+            'status_processo' => 'em_analise',
+        ]);
+
+        // Sem justificativa -> 422
+        $responseSemJustificativa = $this->actingAs($equipeUser)
+            ->postJson("/api/planos-recuperacao/{$plano->id}/parecer-equipe-escolar", [
+                'decisao' => 'recusado',
+                'parecer' => '',
+            ]);
+
+        $responseSemJustificativa->assertStatus(422);
+
+        // Com justificativa -> recusado e finalizado
+        $responseComJustificativa = $this->actingAs($equipeUser)
+            ->postJson("/api/planos-recuperacao/{$plano->id}/parecer-equipe-escolar", [
+                'decisao' => 'recusado',
+                'parecer' => 'Cronograma incompatível com o calendário de aulas.',
+            ]);
+
+        $responseComJustificativa->assertOk()
+            ->assertJsonPath('data.status_processo', 'recusado')
+            ->assertJsonPath('data.parecer_equipe_escolar', 'Cronograma incompatível com o calendário de aulas.');
+
+        $this->assertEquals('recusado', $plano->fresh()->status_processo);
     }
 }
 

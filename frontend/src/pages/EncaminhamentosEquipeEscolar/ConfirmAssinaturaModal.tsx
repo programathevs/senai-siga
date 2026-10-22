@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Check, X, Loader2, CheckCircle2, User, FileText, Calendar } from "lucide-react";
-import type { AqvEncaminhamentoItem } from "../../services/aqvService";
+import type { EquipeEscolarEncaminhamentoItem } from "../../services/equipeEscolarService";
 import styles from "./ConfirmAssinaturaModal.module.css";
 
 interface ConfirmAssinaturaModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
-  item: AqvEncaminhamentoItem | null;
+  item: EquipeEscolarEncaminhamentoItem | null;
 }
 
 export function ConfirmAssinaturaModal({

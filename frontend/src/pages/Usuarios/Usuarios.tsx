@@ -136,11 +136,12 @@ export function Usuarios() {
             Gestor
           </span>
         );
+      case "equipe_escolar":
       case "aqv":
         return (
           <span className={`${styles.roleBadge} ${styles.roleBadgeAqv}`}>
             <HeartHandshake size={13} />
-            AQV
+            Equipe Escolar
           </span>
         );
       default:
@@ -160,7 +161,7 @@ export function Usuarios() {
         <div className={styles.titleGroup}>
           <h1 className={styles.title}>Gestão de Usuários</h1>
           <p className={styles.subtitle}>
-            Cadastre e gerencie os acessos ao sistema com perfis de Gestor, Instrutor e AQV.
+            Cadastre e gerencie os acessos ao sistema com perfis de Gestor, Instrutor e Equipe Escolar.
           </p>
         </div>
 
@@ -195,7 +196,7 @@ export function Usuarios() {
           <option value="">Todos os Perfis</option>
           <option value="gestor">Apenas Gestores</option>
           <option value="instrutor">Apenas Instrutores (Docentes)</option>
-          <option value="aqv">Apenas AQV (Acolhimento)</option>
+          <option value="equipe_escolar">Apenas Equipe Escolar</option>
         </select>
       </div>
 
@@ -361,8 +362,8 @@ export function Usuarios() {
                   value:
                     usuarioToDelete.role === "gestor"
                       ? "Gestor"
-                      : usuarioToDelete.role === "aqv"
-                      ? "AQV"
+                      : usuarioToDelete.role === "equipe_escolar" || usuarioToDelete.role === "aqv"
+                      ? "Equipe Escolar"
                       : "Instrutor",
                 },
                 {

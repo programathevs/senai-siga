@@ -111,7 +111,7 @@ export function Dashboard() {
           bg: "color-mix(in srgb, var(--color-primary) 10%, transparent)",
           color: "var(--color-primary)",
           dot: "var(--color-primary)",
-          label: "Encaminhado AQV",
+          label: "Encaminhado à Equipe Escolar",
         };
       case "pendente":
         return {
@@ -166,8 +166,8 @@ export function Dashboard() {
           <h1 className={styles.pageTitle}>
             {user?.role === "gestor"
               ? "Painel de Gestão Escolar"
-              : user?.role === "aqv"
-                ? "Painel do Analista de Qualidade de Vida (AQV)"
+              : user?.role === "equipe_escolar" || user?.role === "aqv"
+                ? "Painel da Equipe Escolar"
                 : "Painel do Docente"}
           </h1>
           <p className={styles.pageSubtitle}>
@@ -466,7 +466,7 @@ export function Dashboard() {
                 <div className={styles.analyticsHeader}>
                   <div className={styles.analyticsTitleGroup}>
                     <Headphones size={18} color="#0059a8" />
-                    <span className={styles.analyticsTitle}>Funil de Atendimento AQV</span>
+                    <span className={styles.analyticsTitle}>Funil de Atendimento da Equipe Escolar</span>
                   </div>
                   <span className={styles.analyticsBadge} style={{ backgroundColor: "color-mix(in srgb, #0059a8 12%, transparent)", color: "#0059a8" }}>
                     {stats.metricas_gestao.funil_aqv.total} Total
@@ -539,9 +539,9 @@ export function Dashboard() {
               <button
                 type="button"
                 className={styles.cardFooterBtn}
-                onClick={() => navigate("/aqv")}
+                onClick={() => navigate("/encaminhamentos-equipe-escolar")}
               >
-                <span>Acessar fila completa do AQV</span>
+                <span>Acessar fila da Equipe Escolar</span>
                 <ArrowRight size={14} />
               </button>
             </article>
@@ -629,25 +629,25 @@ export function Dashboard() {
           </div>
         </article>
 
-        {/* Card 3: Encaminhadas AQV */}
+        {/* Card 3: Encaminhadas à Equipe Escolar */}
         <article
           className={`${styles.kpiCard} ${styles.kpiCardAqv}`}
           onClick={() =>
             navigate(
               user?.role === "instrutor"
                 ? "/ocorrencias?status=enviado_aqv"
-                : "/encaminhamentos-aqv"
+                : "/encaminhamentos-equipe-escolar"
             )
           }
           title={
             user?.role === "instrutor"
-              ? "Ver ocorrências encaminhadas à AQV"
-              : "Acessar fila de encaminhamentos da AQV"
+              ? "Ver ocorrências encaminhadas à Equipe Escolar"
+              : "Acessar fila da Equipe Escolar"
           }
         >
           <div className={styles.kpiTopRow}>
             <div>
-              <span className={styles.kpiLabel}>Encaminhadas à AQV</span>
+              <span className={styles.kpiLabel}>Encaminhadas à Equipe Escolar</span>
               <div className={styles.kpiValue} style={{ color: "#0059a8" }}>
                 {isLoading ? <Loader2 size={24} className="animate-spin" /> : kpis?.encaminhadas_aqv ?? 0}
               </div>
@@ -743,7 +743,7 @@ export function Dashboard() {
             >
               <option value="todos">Todos os Status</option>
               <option value="pendente">Pendente de Envio</option>
-              <option value="enviado_aqv">Encaminhado AQV</option>
+              <option value="enviado_aqv">Encaminhado à Equipe Escolar</option>
               <option value="pdf_gerado">PDF Gerado</option>
               <option value="impresso">Impresso</option>
               <option value="assinado">Assinado</option>

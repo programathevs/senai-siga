@@ -149,14 +149,14 @@ export function Auditoria() {
       case "encaminhamento_aqv":
         return {
           icon: <Headphones size={12} />,
-          label: "Encaminhado AQV",
+          label: "Encaminhado à Equipe Escolar",
           bg: "color-mix(in srgb, #0059a8 14%, transparent)",
           color: "#0059a8",
         };
       case "atendimento_aqv":
         return {
           icon: <ShieldCheck size={12} />,
-          label: "Acolhimento AQV",
+          label: "Acolhimento Equipe Escolar",
           bg: "color-mix(in srgb, #8b5cf6 14%, transparent)",
           color: "#8b5cf6",
         };
@@ -269,7 +269,7 @@ export function Auditoria() {
         <article className={styles.kpiCard}>
           <div className={styles.kpiTopRow}>
             <div>
-              <span className={styles.kpiLabel}>Acolhimentos AQV</span>
+              <span className={styles.kpiLabel}>Acolhimentos Equipe Escolar</span>
               <div className={styles.kpiValue} style={{ color: "#8b5cf6" }}>
                 {stats?.atendimentos_aqv ?? 0}
               </div>
@@ -361,8 +361,8 @@ export function Auditoria() {
               <option value="edicao_fiap">Edição de FIAP (com Versão)</option>
               <option value="exclusao_fiap">Exclusão de FIAP</option>
               <option value="restauracao_fiap">Restauração de FIAP</option>
-              <option value="encaminhamento_aqv">Encaminhamento à AQV</option>
-              <option value="atendimento_aqv">Acolhimento Pedagógico AQV</option>
+              <option value="encaminhamento_aqv">Encaminhamento à Equipe Escolar</option>
+              <option value="atendimento_aqv">Acolhimento Equipe Escolar</option>
               <option value="assinatura_fiap">Assinatura Física Confirmada</option>
               <option value="criacao_plano">Criação de Plano PRP/PCA</option>
               <option value="atualizacao_plano">Atualização de Plano</option>

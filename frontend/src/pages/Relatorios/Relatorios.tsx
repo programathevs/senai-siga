@@ -391,7 +391,7 @@ export function Relatorios() {
 
           <div className={styles.summaryCard}>
             <div>
-              <span className={styles.summaryLabel}>Encaminhadas AQV</span>
+              <span className={styles.summaryLabel}>Encaminhadas à Equipe Escolar</span>
               <div className={styles.summaryValue} style={{ color: "#0059a8" }}>
                 {resumoGeral.total_aqv}
               </div>
@@ -469,7 +469,7 @@ export function Relatorios() {
             >
               <option value="">Todos os Status</option>
               <option value="pendente">Pendente de Envio</option>
-              <option value="enviado_aqv">Encaminhado AQV</option>
+              <option value="enviado_aqv">Encaminhado à Equipe Escolar</option>
               <option value="pdf_gerado">PDF Gerado</option>
               <option value="impresso">Impresso</option>
               <option value="assinado">Assinado</option>
@@ -692,7 +692,7 @@ export function Relatorios() {
                               }}
                             />
                             {oc.status === "enviado_aqv"
-                              ? "Encaminhado AQV"
+                              ? "Encaminhado à Equipe Escolar"
                               : oc.status === "pendente"
                                 ? "Pendente"
                                 : "Concluído"}

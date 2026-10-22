@@ -64,8 +64,15 @@ export function OcorrenciaDetalhesModal({
 
   if (!isOpen || !ocorrencia) return null;
 
+  const isBloqueada = ocorrencia.status === "aguardando_assinatura" || ocorrencia.status === "assinado";
+
   const canSendAqv = (() => {
-    if (ocorrencia.status === "enviado_aqv" || ocorrencia.status === "assinado" || !user) return false;
+    if (
+      ocorrencia.status === "enviado_aqv" ||
+      ocorrencia.status === "enviado_equipe_escolar" ||
+      isBloqueada ||
+      !user
+    ) return false;
     if (user.role === "gestor") return true;
     if (user.role === "instrutor") {
       const regId = typeof ocorrencia.registrado_por === "number" ? ocorrencia.registrado_por : ocorrencia.registrado_por?.id;
@@ -116,26 +123,26 @@ export function OcorrenciaDetalhesModal({
     return ocorrencia.tipo === "comportamento"
       ? "Sem unidade curricular vinculada (Normas de Convivência / Regimento Escolar)"
       : ocorrencia.tipo === "desempenho"
-      ? "Sem unidade curricular vinculada (Acompanhamento Pedagógico)"
-      : "Não informada";
+        ? "Sem unidade curricular vinculada (Acompanhamento Pedagógico)"
+        : "Não informada";
   })();
 
   const faltasDisplay = ocorrencia.tipo !== "falta"
     ? "----"
     : unidades.length > 0
-    ? unidades.map((u) => `${u.quantidade_faltas} (${u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC"})`).join(" / ")
-    : `${quantidadeFaltas} faltas`;
+      ? unidades.map((u) => `${u.quantidade_faltas} (${u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC"})`).join(" / ")
+      : `${quantidadeFaltas} faltas`;
 
   const limiteFaltasDisplay = ocorrencia.tipo !== "falta"
     ? "----"
     : unidades.length > 0
-    ? unidades.map((u) => {
-      const ch = u.unidade_curricular?.carga_horaria || 80;
-      const lim = Math.round((ch / 0.75) * 0.25);
-      const sigla = u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC";
-      return `${lim} (${sigla})`;
-    }).join(" / ")
-    : `${limiteFaltasAulas}`;
+      ? unidades.map((u) => {
+        const ch = u.unidade_curricular?.carga_horaria || 80;
+        const lim = Math.round((ch / 0.75) * 0.25);
+        const sigla = u.unidade_curricular?.sigla || u.unidade_curricular?.nome || "UC";
+        return `${lim} (${sigla})`;
+      }).join(" / ")
+      : `${limiteFaltasAulas}`;
 
   const nomeDocente =
     ocorrencia.registrado_por_user?.name ||
@@ -185,10 +192,9 @@ export function OcorrenciaDetalhesModal({
   const recomendacoesProfessorPadrao =
     "Recomendo o aluno, frequentar e participar das aulas efetivamente, bem como as constantes ausências acabam comprometendo o aproveitamento escolar.";
 
-  const recomendacoesGestaoPadrao =
-    "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas.";
-
-  const providenciasGestaoPadrao = `Acompanhar diariamente o cumprimento dos compromissos com o curso que ${nomeAluno}, está sendo reorientado por meio da FIAP para atingir integralmente os objetivos do mesmo.`;
+  const aqvRec = ocorrencia.aqv_recebimento || (ocorrencia as any).aqvRecebimento;
+  const justificativaEstudante = aqvRec?.justificativa_aluno || "";
+  const parecerEquipeEscolar = aqvRec?.parecer_aqv || "";
 
   // Verificação de maioridade do aluno (18 anos ou mais na data do registro/ocorrência)
   const isMaiorDeIdade = (() => {
@@ -423,26 +429,36 @@ export function OcorrenciaDetalhesModal({
                 </p>
               </div>
 
-              {/* 3. Recomendações da Equipe de Gestão */}
+              {/* 3. Justificativa Formal Apresentada pelo Estudante / Responsável */}
               <div className={`${styles.feedback} ${styles.feedbackTeamRecommendations}`}>
                 <p className={styles.feedbackTitle}>
-                  <b>Recomendações da Equipe de Gestão ao Aluno/Responsável:</b>
+                  <b>Justificativa Formal Apresentada pelo Estudante / Responsável:</b>
                 </p>
                 <p className={styles.feedbackDescription}>
-                  {ocorrencia.recomendacoes_gestao || recomendacoesGestaoPadrao}
+                  {justificativaEstudante}
                 </p>
               </div>
 
-              {/* 4. Providências da Equipe de Gestão */}
+              {/* 4. Parecer, Recomendações e Encaminhamentos Acordados (Equipe Escolar) */}
               <div className={`${styles.feedback} ${styles.feedbackProvidencias}`}>
                 <p className={styles.feedbackTitle}>
                   <b>
-                    Providências da Equipe de Gestão da escola para auxiliar o aluno (a):
+                    Parecer, Recomendações e Encaminhamentos Acordados (Equipe Escolar):
                   </b>
                 </p>
                 <p className={styles.feedbackDescription}>
-                  {ocorrencia.providencias_gestao || providenciasGestaoPadrao}
+                  {parecerEquipeEscolar}
                 </p>
+                {aqvRec?.compensacao_faltas_autorizada && (
+                  <p style={{ marginTop: "4px", fontSize: "11px", fontWeight: 600 }}>
+                    {aqvRec.compensacao_faltas_autorizada === "autorizado_atestado" &&
+                      "• Decisão: Compensação de faltas autorizada mediante Atestado Médico protocolado."}
+                    {aqvRec.compensacao_faltas_autorizada === "autorizado_excepcional" &&
+                      `• Decisão: Compensação de faltas autorizada em caráter excepcional pela Direção/Gestão. Motivo: ${aqvRec.motivo_excepcionalidade || "Não especificado"}.`}
+                    {aqvRec.compensacao_faltas_autorizada === "nao_autorizado" &&
+                      "• Decisão: Compensação de faltas não autorizada pela Equipe Escolar (Ausências injustificadas)."}
+                  </p>
+                )}
               </div>
 
               {/* 5. Outras Observações */}
@@ -451,7 +467,7 @@ export function OcorrenciaDetalhesModal({
                   <b>Outras Observações:</b>
                 </p>
                 <p className={styles.feedbackDescription}>
-                  {ocorrencia.outras_observacoes || "----"}
+                  {""}
                 </p>
               </div>
 
@@ -525,11 +541,11 @@ export function OcorrenciaDetalhesModal({
                 onClick={() => onEncaminharAqv(ocorrencia.id)}
               >
                 <Headphones size={15} />
-                Encaminhar ao AQV
+                Encaminhar à Equipe Escolar
               </button>
             )}
 
-            {canEdit && onEdit && (
+            {canEdit && !isBloqueada && onEdit && (
               <button
                 type="button"
                 className={`${styles.btnAction} ${styles.btnEdit}`}

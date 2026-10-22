@@ -65,6 +65,16 @@ class Aluno extends Model
     }
 
     /**
+     * Turmas vinculadas ao aluno com RAs específicos (suporte a múltiplas turmas).
+     */
+    public function turmas(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Turma::class, 'aluno_turmas')
+            ->withPivot('ra', 'status')
+            ->withTimestamps();
+    }
+
+    /**
      * Ocorrências / FIAPs registradas para o aluno.
      */
     public function ocorrencias(): \Illuminate\Database\Eloquent\Relations\HasMany

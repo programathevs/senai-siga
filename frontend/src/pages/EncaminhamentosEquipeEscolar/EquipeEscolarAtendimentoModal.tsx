@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { X, Headphones, CheckCircle2, Save, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { aqvService, type AqvEncaminhamentoItem } from "../../services/aqvService";
-import styles from "./AqvAtendimentoModal.module.css";
+import {
+  equipeEscolarService,
+  type EquipeEscolarEncaminhamentoItem,
+} from "../../services/equipeEscolarService";
+import styles from "./EquipeEscolarAtendimentoModal.module.css";
 
-interface AqvAtendimentoModalProps {
+interface EquipeEscolarAtendimentoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  ocorrencia: AqvEncaminhamentoItem | null;
+  ocorrencia: EquipeEscolarEncaminhamentoItem | null;
   onSuccess: () => void;
 }
 
@@ -23,20 +26,47 @@ function formatToDateTimeLocal(dateStr?: string | null): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-export function AqvAtendimentoModal({
+const SUGESTOES_JUSTIFICATIVA = [
+  "Estudante reconheceu a conduta inadequada e comprometeu-se com a mudança de postura e foco nas aulas.",
+  "Estudante relatou dificuldades de concentração e compreensão do conteúdo pedagógico.",
+  "Estudante justificou ausências por motivos de saúde/força maior com documentação comprobatória.",
+  "Estudante alegou desentendimento interpessoal pontual e aceitou diálogo mediado com os colegas.",
+  "Responsável legal compareceu ao atendimento e alinhou rotina de estudos em ambiente familiar."
+];
+
+const SUGESTOES_PARECER = [
+  "Orientado(a) quanto às normas regimentais e convivência escolar. Alinhado plano de acompanhamento pedagógico.",
+  "Encaminhado(a) para apoio pedagógico e reforço escolar no contraturno.",
+  "Agendada reunião de alinhamento com os responsáveis legais para acompanhamento da frequência e rendimento.",
+  "Estudante advertido(a) formalmente com termo de compromisso pedagógico assinado.",
+  "Alinhado acompanhamento conjunto e contínuo entre coordenação pedagógica e docentes da turma."
+];
+
+export function EquipeEscolarAtendimentoModal({
   isOpen,
   onClose,
   ocorrencia,
   onSuccess,
-}: AqvAtendimentoModalProps) {
+}: EquipeEscolarAtendimentoModalProps) {
   const { user } = useAuth();
 
   const [justificativaAluno, setJustificativaAluno] = useState("");
   const [parecerAqv, setParecerAqv] = useState("");
   const [dataAtendimento, setDataAtendimento] = useState("");
   const [confirmarAssinatura, setConfirmarAssinatura] = useState(false);
+  const [compensacaoFaltasAutorizada, setCompensacaoFaltasAutorizada] = useState<
+    "pendente" | "nao_autorizado" | "autorizado_atestado" | "autorizado_excepcional"
+  >("pendente");
+  const [motivoExcepcionalidade, setMotivoExcepcionalidade] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const isFaltaEstourada =
+    ocorrencia?.tipo === "falta" &&
+    (ocorrencia.unidades?.some((u) => {
+      const lim = u.limite_faltas_aulas;
+      return lim != null && lim > 0 && u.quantidade_faltas > lim;
+    }) || (ocorrencia.quantidade_faltas || 0) > 4);
 
   // Inicializa os campos quando a ocorrência for selecionada
   useEffect(() => {
@@ -49,6 +79,12 @@ export function AqvAtendimentoModal({
       setConfirmarAssinatura(
         ocorrencia.status === "assinado" ||
           Boolean(ocorrencia.aqv_recebimento?.confirmado_em)
+      );
+      setCompensacaoFaltasAutorizada(
+        (ocorrencia.aqv_recebimento as any)?.compensacao_faltas_autorizada || "pendente"
+      );
+      setMotivoExcepcionalidade(
+        (ocorrencia.aqv_recebimento as any)?.motivo_excepcionalidade || ""
       );
       setErrorMsg(null);
     }
@@ -85,7 +121,27 @@ export function AqvAtendimentoModal({
 
     if (willConfirm && !parecerAqv.trim()) {
       setErrorMsg(
-        "O parecer da equipe de gestão/AQV é obrigatório para confirmar a assinatura e concluir a FIAP."
+        "O parecer da Equipe Escolar é obrigatório para confirmar a assinatura e concluir a FIAP."
+      );
+      return;
+    }
+
+    if (
+      isFaltaEstourada &&
+      (!compensacaoFaltasAutorizada || compensacaoFaltasAutorizada === "pendente")
+    ) {
+      setErrorMsg(
+        "Para FIAPs de falta acima do limite, é obrigatório definir a autorização para compensação de ausências (Não Autorizado, Com Atestado ou Excepcional)."
+      );
+      return;
+    }
+
+    if (
+      compensacaoFaltasAutorizada === "autorizado_excepcional" &&
+      !motivoExcepcionalidade.trim()
+    ) {
+      setErrorMsg(
+        "Por favor, informe a justificativa da liberação excepcional autorizada pela Direção/Gestão."
       );
       return;
     }
@@ -94,11 +150,17 @@ export function AqvAtendimentoModal({
     setErrorMsg(null);
 
     try {
-      await aqvService.salvarAtendimento(ocorrencia.id, {
+      await equipeEscolarService.salvarAtendimento(ocorrencia.id, {
         justificativa_aluno: justificativaAluno.trim(),
         parecer_aqv: parecerAqv.trim(),
+        parecer_equipe_escolar: parecerAqv.trim(),
         data_atendimento: dataAtendimento || undefined,
         confirmar_assinatura: willConfirm,
+        compensacao_faltas_autorizada: isFaltaEstourada ? compensacaoFaltasAutorizada : undefined,
+        motivo_excepcionalidade:
+          isFaltaEstourada && compensacaoFaltasAutorizada === "autorizado_excepcional"
+            ? motivoExcepcionalidade.trim()
+            : undefined,
       });
 
       onSuccess();
@@ -124,7 +186,7 @@ export function AqvAtendimentoModal({
               <Headphones size={22} />
             </div>
             <div>
-              <h2 className={styles.title}>Acolhimento & Atendimento Pedagógico</h2>
+              <h2 className={styles.title}>Atendimento Pedagógico — Equipe Escolar</h2>
               <p className={styles.subtitle}>
                 FIAP {ocorrencia.numero_sequencial} • Estudante: {aluno?.nome || "Estudante"}
               </p>
@@ -213,7 +275,7 @@ export function AqvAtendimentoModal({
               <input
                 type="text"
                 className={styles.input}
-                value={user?.name || "Equipe AQV"}
+                value={user?.name || "Equipe Escolar"}
                 disabled
               />
             </div>
@@ -236,6 +298,24 @@ export function AqvAtendimentoModal({
                 Justificativa Formal Apresentada pelo Estudante / Responsável
                 <span className={styles.required}>*</span>
               </label>
+
+              <div className={styles.sugestoesContainer}>
+                <span className={styles.sugestoesLabel}>Sugestões rápidas de preenchimento:</span>
+                <div className={styles.chipsGrid}>
+                  {SUGESTOES_JUSTIFICATIVA.map((sugestao, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={styles.chipButton}
+                      onClick={() => setJustificativaAluno((prev) => (prev ? `${prev}\n${sugestao}` : sugestao))}
+                      title="Clique para adicionar este texto"
+                    >
+                      + {sugestao}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <textarea
                 className={styles.textarea}
                 placeholder="Descreva detalhadamente o relato e os motivos apresentados pelo estudante durante a entrevista pedagógica..."
@@ -251,12 +331,30 @@ export function AqvAtendimentoModal({
 
             <div className={styles.formGroupFull}>
               <label className={styles.label}>
-                Parecer, Recomendações e Encaminhamentos Acordados (Gestão / AQV)
+                Parecer, Recomendações e Encaminhamentos Acordados (Equipe Escolar)
                 <span className={styles.required}>*</span>
                 <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "var(--color-text-secondary)", marginLeft: "6px" }}>
                   (Obrigatório para concluir e assinar a FIAP)
                 </span>
               </label>
+
+              <div className={styles.sugestoesContainer}>
+                <span className={styles.sugestoesLabel}>Sugestões rápidas de parecer institucional:</span>
+                <div className={styles.chipsGrid}>
+                  {SUGESTOES_PARECER.map((sugestao, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={styles.chipButton}
+                      onClick={() => setParecerAqv((prev) => (prev ? `${prev}\n${sugestao}` : sugestao))}
+                      title="Clique para adicionar este texto"
+                    >
+                      + {sugestao}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <textarea
                 className={styles.textarea}
                 placeholder="Orientações prestadas pela equipe escolar, compromissos pactuados, necessidade de plano de recuperação ou encaminhamentos externos..."
@@ -266,6 +364,129 @@ export function AqvAtendimentoModal({
                 rows={3}
               />
             </div>
+
+            {/* Triagem de Compensação de Ausências (Exclusivo para FIAP de Falta acima do Limite) */}
+            {isFaltaEstourada && (
+              <div
+                className={styles.formGroupFull}
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--color-primary) 5%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--color-primary) 30%, transparent)",
+                  borderRadius: "var(--radius)",
+                  padding: "1rem 1.15rem",
+                  marginTop: "0.25rem",
+                }}
+              >
+                <label
+                  className={styles.label}
+                  style={{
+                    fontSize: "0.875rem",
+                    color: "var(--color-primary)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <AlertCircle size={17} />
+                  <strong>Compensação de Ausências (Faltas Acima do Limite de 100%)</strong>
+                  <span className={styles.required}>*</span>
+                </label>
+                <p
+                  style={{
+                    fontSize: "0.8rem",
+                    color: "var(--color-text-secondary)",
+                    margin: "4px 0 12px 0",
+                  }}
+                >
+                  Defina se o estudante terá direito a compensar as ausências excedentes via Plano de Recuperação:
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "0.85rem",
+                      cursor: "pointer",
+                      fontWeight: 500,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="compensacao_faltas"
+                      value="nao_autorizado"
+                      checked={compensacaoFaltasAutorizada === "nao_autorizado"}
+                      onChange={() => setCompensacaoFaltasAutorizada("nao_autorizado")}
+                    />
+                    <span style={{ color: "var(--color-danger, #e30613)" }}>
+                      🔴 <strong>Não Autorizado:</strong> Faltas injustificadas / Sem amparo legal (Não gera plano para o professor).
+                    </span>
+                  </label>
+
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "0.85rem",
+                      cursor: "pointer",
+                      fontWeight: 500,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="compensacao_faltas"
+                      value="autorizado_atestado"
+                      checked={compensacaoFaltasAutorizada === "autorizado_atestado"}
+                      onChange={() => setCompensacaoFaltasAutorizada("autorizado_atestado")}
+                    />
+                    <span style={{ color: "var(--color-success, #16a34a)" }}>
+                      🟢 <strong>Sim — Com Atestado Médico / Amparo Legal:</strong> Justificativa protocolada e comprovada.
+                    </span>
+                  </label>
+
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "0.85rem",
+                      cursor: "pointer",
+                      fontWeight: 500,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="compensacao_faltas"
+                      value="autorizado_excepcional"
+                      checked={compensacaoFaltasAutorizada === "autorizado_excepcional"}
+                      onChange={() => setCompensacaoFaltasAutorizada("autorizado_excepcional")}
+                    />
+                    <span style={{ color: "#d97706" }}>
+                      🟡 <strong>Sim — Em Caráter Excepcional:</strong> Aprovado pela Gestão / Direção Escolar.
+                    </span>
+                  </label>
+                </div>
+
+                {compensacaoFaltasAutorizada === "autorizado_excepcional" && (
+                  <div style={{ marginTop: "12px" }}>
+                    <label className={styles.label} style={{ fontSize: "0.8rem" }}>
+                      Justificativa da Excepcionalidade (Aprovada pela Direção/Gestão){" "}
+                      <span className={styles.required}>*</span>
+                    </label>
+                    <textarea
+                      className={styles.textarea}
+                      rows={2}
+                      style={{ minHeight: "3.5rem", marginTop: "4px" }}
+                      placeholder="Descreva detalhadamente o motivo da concessão excepcional sem atestado (ex: vulnerabilidade social, luto, alinhamento institucional)..."
+                      value={motivoExcepcionalidade}
+                      onChange={(e) => setMotivoExcepcionalidade(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Checkbox de Confirmação de Assinatura */}
             <div

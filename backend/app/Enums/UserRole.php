@@ -6,6 +6,7 @@ enum UserRole: string
 {
     case GESTOR = 'gestor';
     case INSTRUTOR = 'instrutor';
+    case EQUIPE_ESCOLAR = 'equipe_escolar';
     case AQV = 'aqv';
 
     /**

@@ -35,7 +35,7 @@ class UsuarioRequest extends FormRequest
             'role' => [
                 'required',
                 'string',
-                Rule::in(['gestor', 'instrutor', 'aqv']),
+                Rule::in(['gestor', 'instrutor', 'equipe_escolar', 'aqv']),
             ],
             'telefone' => ['nullable', 'string', 'max:20'],
             'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
