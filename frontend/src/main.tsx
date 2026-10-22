@@ -1,4 +1,3 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router";
 import { router } from "./routes";
@@ -20,13 +19,12 @@ document.addEventListener(
   { passive: true }
 );
 
+// React.StrictMode foi desativado para evitar montagem duplicada e chamadas HTTP repetidas em desenvolvimento
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <ThemeProvider>
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
-    </ThemeProvider>
-  </React.StrictMode>,
+  <ThemeProvider>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  </ThemeProvider>,
 );
 

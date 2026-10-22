@@ -29,41 +29,51 @@ export const TurmaAlunosModal: React.FC<TurmaAlunosModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [alunoToDesenturmar, setAlunoToDesenturmar] = useState<{ id: number; nome: string } | null>(null);
 
-  async function loadTurmaDetails() {
+  async function loadTurmaDetails(signal?: AbortSignal) {
     if (!turmaId) return;
     try {
       setIsLoading(true);
-      const data = await turmaService.getTurma(turmaId);
+      const data = await turmaService.getTurma(turmaId, signal);
       setTurma(data);
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       setTurma(null);
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function loadCandidatos() {
+  async function loadCandidatos(signal?: AbortSignal) {
     try {
-      const res = await alunoService.getAlunos({ all: true });
+      const res = await alunoService.getAlunos({ all: true }, signal);
       // Permite enturmar qualquer aluno que não esteja já nesta turma
       const disponiveis = (res.data || []).filter((a) => a.turma_id !== turmaId);
       setCandidatosAlunos(disponiveis);
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       setCandidatosAlunos([]);
     }
   }
 
   useEffect(() => {
     if (isOpen && turmaId) {
-      loadTurmaDetails();
+      const controller = new AbortController();
+      loadTurmaDetails(controller.signal);
       setShowEnturmarPanel(false);
       setSelectedAlunoIds([]);
+      return () => controller.abort();
     }
   }, [isOpen, turmaId]);
 
   useEffect(() => {
     if (showEnturmarPanel) {
-      loadCandidatos();
+      const controller = new AbortController();
+      loadCandidatos(controller.signal);
+      return () => controller.abort();
     }
   }, [showEnturmarPanel]);
 

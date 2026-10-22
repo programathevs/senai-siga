@@ -39,9 +39,14 @@ export interface UsuarioPayload {
 }
 
 export const usuarioService = {
-  async getUsuarios(params?: UsuarioFilters): Promise<PaginatedResponse<Usuario>> {
+  async getUsuarios(
+    params?: UsuarioFilters,
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
+  ): Promise<PaginatedResponse<Usuario>> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
     const response = await api.get<PaginatedResponse<Usuario>>("/api/usuarios", {
       params,
+      signal,
     });
     return response.data;
   },

@@ -28,17 +28,20 @@ export function Cursos() {
 
   const isGestor = user?.role === "gestor";
 
-  async function loadCursos(targetPage = page, targetPerPage = perPage) {
+  async function loadCursos(targetPage = page, targetPerPage = perPage, signal?: AbortSignal) {
     try {
       setIsLoading(true);
       const res = await cursoService.getCursos({
         search: search.trim() || undefined,
         page: targetPage,
         per_page: targetPerPage,
-      });
+      }, signal);
       setCursos(res.data);
       setMeta(res.meta || null);
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       setCursos([]);
       setMeta(null);
     } finally {
@@ -52,18 +55,23 @@ export function Cursos() {
   }, [search]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     // Carregamento imediato no primeiro render
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadCursos(page, perPage);
-      return;
+      loadCursos(page, perPage, controller.signal);
+      return () => controller.abort();
     }
 
     const timer = setTimeout(() => {
-      loadCursos(page, perPage);
+      loadCursos(page, perPage, controller.signal);
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [page, perPage, search]);
 
   function handleOpenCreateModal() {

@@ -110,7 +110,12 @@ export function Ocorrencias() {
   }
 
 
-  async function loadOcorrencias(targetPage = page, targetPerPage = perPage, bypassCache = false) {
+  async function loadOcorrencias(
+    targetPage = page,
+    targetPerPage = perPage,
+    bypassCache = false,
+    signal?: AbortSignal
+  ) {
     try {
       setIsLoading(true);
       const res = await ocorrenciaService.getOcorrencias({
@@ -120,7 +125,7 @@ export function Ocorrencias() {
         status: selectedStatus || undefined,
         page: targetPage,
         per_page: targetPerPage,
-      }, bypassCache);
+      }, bypassCache, signal);
 
       // Se a página atual ficou vazia após exclusão, mas ainda existem registros em páginas anteriores
       if (res.data.length === 0 && res.meta && res.meta.total > 0 && targetPage > 1) {
@@ -134,7 +139,10 @@ export function Ocorrencias() {
       if (res.meta?.estatisticas) {
         setEstatisticas(res.meta.estatisticas);
       }
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       setOcorrencias([]);
       setMeta(null);
     } finally {
@@ -143,16 +151,22 @@ export function Ocorrencias() {
   }
 
   useEffect(() => {
+    const controller = new AbortController();
     turmaService
-      .getTurmas({ all: true })
+      .getTurmas({ all: true }, controller.signal)
       .then((res) => setTurmas(res.data))
-      .catch(() => setTurmas([]));
+      .catch((err: any) => {
+        if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+          setTurmas([]);
+        }
+      });
+    return () => controller.abort();
   }, []);
 
   // Sincroniza filtro de status com a URL (ex: drilldown vindo do Dashboard ?status=pendente)
   useEffect(() => {
     const statusParam = (searchParams.get("status") as OcorrenciaStatus) || "";
-    setSelectedStatus(statusParam);
+    setSelectedStatus((prev) => (prev !== statusParam ? statusParam : prev));
   }, [searchParams]);
 
   // Reseta página para 1 quando filtros mudarem
@@ -161,10 +175,12 @@ export function Ocorrencias() {
   }, [search, selectedTurmaId, selectedTipo, selectedStatus]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadOcorrencias(page, perPage);
-      return;
+      loadOcorrencias(page, perPage, false, controller.signal);
+      return () => controller.abort();
     }
 
     const isSearchChange = prevSearchRef.current !== search;
@@ -172,12 +188,16 @@ export function Ocorrencias() {
 
     if (isSearchChange) {
       const timer = setTimeout(() => {
-        loadOcorrencias(page, perPage);
+        loadOcorrencias(page, perPage, false, controller.signal);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        controller.abort();
+      };
     }
 
-    loadOcorrencias(page, perPage);
+    loadOcorrencias(page, perPage, false, controller.signal);
+    return () => controller.abort();
   }, [page, perPage, search, selectedTurmaId, selectedTipo, selectedStatus]);
 
   function handleOpenCreate() {
@@ -800,10 +820,38 @@ export function Ocorrencias() {
       {/* Modal de Criação / Edição de Ocorrência */}
       <OcorrenciaModal
         isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        onSuccess={() => {
+        onClose={() => {
           setIsFormModalOpen(false);
-          loadOcorrencias(page, perPage, true);
+          setEditingOcorrencia(null);
+        }}
+        onSuccess={(salvo, isEdit) => {
+          setIsFormModalOpen(false);
+          setEditingOcorrencia(null);
+          if (salvo) {
+            if (isEdit) {
+              setOcorrencias((prev) =>
+                prev.map((item) => (item.id === salvo.id ? salvo : item))
+              );
+            } else {
+              setOcorrencias((prev) => [salvo, ...prev]);
+              setMeta((prev) =>
+                prev ? { ...prev, total: prev.total + 1 } : null
+              );
+              setEstatisticas((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      total_mes: prev.total_mes + 1,
+                      total_falta: salvo.tipo === "falta" ? prev.total_falta + 1 : prev.total_falta,
+                      total_comportamento: salvo.tipo === "comportamento" ? prev.total_comportamento + 1 : prev.total_comportamento,
+                      total_desempenho: salvo.tipo === "desempenho" ? prev.total_desempenho + 1 : prev.total_desempenho,
+                      total_pendente: salvo.status === "pendente" ? prev.total_pendente + 1 : prev.total_pendente,
+                      total_aqv: salvo.status === "enviado_aqv" ? prev.total_aqv + 1 : prev.total_aqv,
+                    }
+                  : null
+              );
+            }
+          }
         }}
         ocorrenciaToEdit={editingOcorrencia}
         onOpenPlanoModal={handleOpenPlanoModal}
@@ -817,7 +865,19 @@ export function Ocorrencias() {
           setIsPlanoModalOpen(false);
           setOcorrenciaParaPlano(null);
         }}
-        onSaveSuccess={() => loadOcorrencias(page, perPage, true)}
+        onSaveSuccess={(novoPlano) => {
+          setIsPlanoModalOpen(false);
+          setOcorrenciaParaPlano(null);
+          if (novoPlano && novoPlano.ocorrencia_id) {
+            setOcorrencias((prev) =>
+              prev.map((oc) =>
+                oc.id === novoPlano.ocorrencia_id
+                  ? { ...oc, has_plano_pendente: false, plano_recuperacao: novoPlano }
+                  : oc
+              )
+            );
+          }
+        }}
         ocorrencia={ocorrenciaParaPlano}
       />
 

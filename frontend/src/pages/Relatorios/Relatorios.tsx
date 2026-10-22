@@ -120,10 +120,16 @@ export function Relatorios() {
 
   // Carrega turmas para o filtro
   useEffect(() => {
+    const controller = new AbortController();
     turmaService
-      .getTurmas({ all: true })
+      .getTurmas({ all: true }, controller.signal)
       .then((res) => setTurmasList(res.data))
-      .catch(() => setTurmasList([]));
+      .catch((err: any) => {
+        if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+          setTurmasList([]);
+        }
+      });
+    return () => controller.abort();
   }, []);
 
   // Sincroniza filtro de reincidentes com a URL (ex: drilldown vindo do Dashboard ?reincidentes=true)
@@ -131,7 +137,7 @@ export function Relatorios() {
     setApenasReincidentes(searchParams.get("reincidentes") === "true");
   }, [searchParams]);
 
-  async function loadRelatorio(targetPage = page, targetPerPage = perPage) {
+  async function loadRelatorio(targetPage = page, targetPerPage = perPage, signal?: AbortSignal) {
     try {
       setIsLoading(true);
 
@@ -150,7 +156,7 @@ export function Relatorios() {
       };
 
       if (activeTab === "analitico") {
-        const res = await relatorioService.getOcorrencias(filtros);
+        const res = await relatorioService.getOcorrencias(filtros, signal);
         setOcorrencias(res.data);
         setMeta(res.meta);
         setResumoGeral(res.meta?.resumo || null);
@@ -158,10 +164,13 @@ export function Relatorios() {
         const res = await relatorioService.getResumoTurmas({
           data_inicio: dataInicio || undefined,
           data_fim: dataFim || undefined,
-        });
+        }, signal);
         setTurmasResumo(res.data);
       }
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       setOcorrencias([]);
       setMeta(null);
     } finally {
@@ -210,10 +219,12 @@ export function Relatorios() {
   }, [search, selectedTurmaId, selectedTipo, selectedStatus, dataInicio, dataFim, activeTab, apenasReincidentes]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadRelatorio(page, perPage);
-      return;
+      loadRelatorio(page, perPage, controller.signal);
+      return () => controller.abort();
     }
 
     const isSearchChange = prevSearchRef.current !== search;
@@ -221,12 +232,16 @@ export function Relatorios() {
 
     if (isSearchChange) {
       const timer = setTimeout(() => {
-        loadRelatorio(page, perPage);
+        loadRelatorio(page, perPage, controller.signal);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        controller.abort();
+      };
     }
 
-    loadRelatorio(page, perPage);
+    loadRelatorio(page, perPage, controller.signal);
+    return () => controller.abort();
   }, [page, perPage, search, selectedTurmaId, selectedTipo, selectedStatus, dataInicio, dataFim, activeTab, apenasReincidentes]);
 
   function handleResetFilters() {

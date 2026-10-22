@@ -50,19 +50,29 @@ export interface RelatorioTurmaResumoItem {
 }
 
 export const relatorioService = {
-  async getOcorrencias(filtros?: RelatorioFiltros): Promise<RelatorioOcorrenciasResponse> {
+  async getOcorrencias(
+    filtros?: RelatorioFiltros,
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
+  ): Promise<RelatorioOcorrenciasResponse> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
     const response = await api.get<RelatorioOcorrenciasResponse>("/api/relatorios/ocorrencias", {
       params: filtros,
+      signal,
     });
     return response.data;
   },
 
-  async getResumoTurmas(params?: {
-    data_inicio?: string;
-    data_fim?: string;
-  }): Promise<{ data: RelatorioTurmaResumoItem[] }> {
+  async getResumoTurmas(
+    params?: {
+      data_inicio?: string;
+      data_fim?: string;
+    },
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
+  ): Promise<{ data: RelatorioTurmaResumoItem[] }> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
     const response = await api.get<{ data: RelatorioTurmaResumoItem[] }>("/api/relatorios/resumo-turmas", {
       params,
+      signal,
     });
     return response.data;
   },

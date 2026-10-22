@@ -38,7 +38,7 @@ export function Alunos() {
 
   const isGestor = user?.role === "gestor";
 
-  async function loadAlunos(targetPage = page, targetPerPage = perPage) {
+  async function loadAlunos(targetPage = page, targetPerPage = perPage, signal?: AbortSignal) {
     try {
       setIsLoading(true);
       const res = await alunoService.getAlunos({
@@ -47,10 +47,13 @@ export function Alunos() {
         status: selectedStatus || undefined,
         page: targetPage,
         per_page: targetPerPage,
-      });
+      }, signal);
       setAlunos(res.data);
       setMeta(res.meta || null);
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       setAlunos([]);
       setMeta(null);
     } finally {
@@ -59,10 +62,16 @@ export function Alunos() {
   }
 
   useEffect(() => {
+    const controller = new AbortController();
     turmaService
-      .getTurmas({ all: true })
+      .getTurmas({ all: true }, controller.signal)
       .then((res) => setTurmas(res.data))
-      .catch(() => setTurmas([]));
+      .catch((err: any) => {
+        if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+          setTurmas([]);
+        }
+      });
+    return () => controller.abort();
   }, []);
 
   // Reseta página para 1 quando filtros de pesquisa/seleção mudarem
@@ -71,11 +80,13 @@ export function Alunos() {
   }, [search, selectedTurmaId, selectedStatus]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     // Carregamento imediato no primeiro render
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadAlunos(page, perPage);
-      return;
+      loadAlunos(page, perPage, controller.signal);
+      return () => controller.abort();
     }
 
     // Se a alteração foi no campo de busca digitada, aplica debounce de 300ms
@@ -84,13 +95,17 @@ export function Alunos() {
 
     if (isSearchChange) {
       const timer = setTimeout(() => {
-        loadAlunos(page, perPage);
+        loadAlunos(page, perPage, controller.signal);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        controller.abort();
+      };
     }
 
     // Para seleções de dropdown (turma ou status) ou paginação, dispara imediatamente
-    loadAlunos(page, perPage);
+    loadAlunos(page, perPage, controller.signal);
+    return () => controller.abort();
   }, [page, perPage, search, selectedTurmaId, selectedStatus]);
 
   function handleOpenCreateModal() {
@@ -316,6 +331,7 @@ export function Alunos() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => loadAlunos(page, perPage)}
         alunoToEdit={editingAluno}
+        turmas={turmas}
       />
 
       {/* Modal de Ficha & Histórico Disciplinar */}

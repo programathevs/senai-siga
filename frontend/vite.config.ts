@@ -5,11 +5,13 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '0.0.0.0',
+    host: true,
     port: 5173,
     strictPort: true,
     watch: {
       usePolling: true, // Garante detecção imediata de arquivos salvos no Windows
+      interval: 1000, // Checa a cada 1 segundo em vez de verificar continuamente
+      ignored: ['**/node_modules/**', '**/.git/**'], // Evita varrer dependências
     },
     hmr: {
       clientPort: 5173, // Força a conexão do WebSocket no navegador para a porta 5173

@@ -36,7 +36,7 @@ export function Turmas() {
 
   const isGestor = user?.role === "gestor";
 
-  async function loadTurmas(targetPage = page, targetPerPage = perPage) {
+  async function loadTurmas(targetPage = page, targetPerPage = perPage, signal?: AbortSignal) {
     try {
       setIsLoading(true);
       const res = await turmaService.getTurmas({
@@ -45,10 +45,13 @@ export function Turmas() {
         turno: selectedTurno || undefined,
         page: targetPage,
         per_page: targetPerPage,
-      });
+      }, signal);
       setTurmas(res.data);
       setMeta(res.meta || null);
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       setTurmas([]);
       setMeta(null);
     } finally {
@@ -57,10 +60,16 @@ export function Turmas() {
   }
 
   useEffect(() => {
+    const controller = new AbortController();
     cursoService
-      .getCursos({ all: true })
+      .getCursos({ all: true }, controller.signal)
       .then((res) => setCursos(res.data))
-      .catch(() => setCursos([]));
+      .catch((err: any) => {
+        if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+          setCursos([]);
+        }
+      });
+    return () => controller.abort();
   }, []);
 
   // Reseta página para 1 quando filtros mudarem
@@ -69,11 +78,13 @@ export function Turmas() {
   }, [search, selectedCursoId, selectedTurno]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     // Carregamento imediato no primeiro render
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadTurmas(page, perPage);
-      return;
+      loadTurmas(page, perPage, controller.signal);
+      return () => controller.abort();
     }
 
     // Se a alteração foi no campo de busca digitada, aplica debounce de 300ms
@@ -82,24 +93,26 @@ export function Turmas() {
 
     if (isSearchChange) {
       const timer = setTimeout(() => {
-        loadTurmas(page, perPage);
+        loadTurmas(page, perPage, controller.signal);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        controller.abort();
+      };
     }
 
     // Para seleções de dropdown (curso ou turno) ou paginação, dispara imediatamente
-    loadTurmas(page, perPage);
+    loadTurmas(page, perPage, controller.signal);
+    return () => controller.abort();
   }, [page, perPage, search, selectedCursoId, selectedTurno]);
 
   function handleOpenCreateModal() {
     setEditingTurma(null);
-    cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => {});
     setIsModalOpen(true);
   }
 
   function handleOpenEditModal(turma: Turma) {
     setEditingTurma(turma);
-    cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => {});
     setIsModalOpen(true);
   }
 

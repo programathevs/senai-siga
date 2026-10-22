@@ -32,12 +32,28 @@ export const TurmaModal: React.FC<TurmaModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (cursosProp && cursosProp.length > 0) {
+      setCursos(cursosProp);
+    }
+  }, [cursosProp]);
+
+  useEffect(() => {
     if (isOpen) {
+      const controller = new AbortController();
+
       if (cursosProp && cursosProp.length > 0) {
         setCursos(cursosProp);
+      } else {
+        cursoService
+          .getCursos({ all: true }, controller.signal)
+          .then((res) => setCursos(res.data))
+          .catch(() => {});
       }
-      cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => {});
-      instrutorService.getInstrutores({ all: true }).then((res) => setInstrutores(res.data)).catch(() => setInstrutores([]));
+
+      instrutorService
+        .getInstrutores({ all: true }, controller.signal)
+        .then((res) => setInstrutores(res.data))
+        .catch(() => setInstrutores([]));
 
       if (turmaToEdit) {
         setCursoId(turmaToEdit.curso_id);
@@ -57,6 +73,8 @@ export const TurmaModal: React.FC<TurmaModalProps> = ({
         setSelectedInstrutorIds([]);
       }
       setError(null);
+
+      return () => controller.abort();
     }
   }, [isOpen, turmaToEdit, cursosProp]);
 

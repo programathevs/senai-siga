@@ -37,12 +37,18 @@ export const AlunoHistoricoModal: React.FC<AlunoHistoricoModalProps> = ({
 
   useEffect(() => {
     if (isOpen && alunoId) {
+      const controller = new AbortController();
       setIsLoading(true);
       alunoService
-        .getHistorico(alunoId)
+        .getHistorico(alunoId, controller.signal)
         .then(setData)
-        .catch(() => setData(null))
+        .catch((err: any) => {
+          if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+            setData(null);
+          }
+        })
         .finally(() => setIsLoading(false));
+      return () => controller.abort();
     }
   }, [isOpen, alunoId]);
 

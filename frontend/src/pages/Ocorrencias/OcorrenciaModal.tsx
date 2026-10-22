@@ -17,7 +17,7 @@ import {
   type OcorrenciaTipo,
 } from "../../services/ocorrenciaService";
 import { turmaService, type Turma } from "../../services/turmaService";
-import { alunoService, type Aluno } from "../../services/alunoService";
+import { alunoService, type Aluno, type AlunoOption } from "../../services/alunoService";
 import { cursoService, type Curso } from "../../services/cursoService";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./OcorrenciaModal.module.css";
@@ -59,10 +59,11 @@ function areUnidadesEqual(
 interface OcorrenciaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (savedOcorrencia?: Ocorrencia, isEdit?: boolean) => void;
   ocorrenciaToEdit?: Ocorrencia | null;
   onOpenPlanoModal?: (createdOcorrencia: Ocorrencia) => void;
   initialTurmas?: Turma[];
+  turmas?: Turma[];
 }
 
 export function OcorrenciaModal({
@@ -72,20 +73,22 @@ export function OcorrenciaModal({
   ocorrenciaToEdit,
   onOpenPlanoModal,
   initialTurmas,
+  turmas: turmasProp,
 }: OcorrenciaModalProps) {
+  const propTurmas = initialTurmas || turmasProp;
   // Dados auxiliares para seleção
-  const [turmas, setTurmas] = useState<Turma[]>(initialTurmas || []);
-  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [turmas, setTurmas] = useState<Turma[]>(propTurmas || []);
+  const [alunos, setAlunos] = useState<Array<Aluno | AlunoOption>>([]);
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isLoadingAlunos, setIsLoadingAlunos] = useState(false);
 
   // Sincroniza turmas pré-carregadas pelo componente pai
   useEffect(() => {
-    if (initialTurmas && initialTurmas.length > 0 && turmas.length === 0) {
-      setTurmas(initialTurmas);
+    if (propTurmas && propTurmas.length > 0) {
+      setTurmas(propTurmas);
     }
-  }, [initialTurmas]);
+  }, [propTurmas]);
 
   // Estados do Formulário
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>("");
@@ -117,13 +120,28 @@ export function OcorrenciaModal({
 
   const isEditing = !!ocorrenciaToEdit;
 
-  // Carrega turmas e cursos leves ao abrir o modal (alunos são carregados sob demanda por turma)
+  // Carrega turmas e cursos leves ao abrir o modal (se turmas já vierem por props do pai, evita novo fetch)
   useEffect(() => {
-    if (isOpen) {
-      setIsLoadingData(true);
+    if (!isOpen) return;
+
+    const controller = new AbortController();
+    setIsLoadingData(true);
+
+    if (propTurmas && propTurmas.length > 0) {
+      setTurmas(propTurmas);
+      cursoService
+        .getCursos({ all: true }, controller.signal)
+        .then((res) => setCursos(res.data))
+        .catch((err: any) => {
+          if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+            setCursos([]);
+          }
+        })
+        .finally(() => setIsLoadingData(false));
+    } else {
       Promise.allSettled([
-        turmaService.getTurmas({ all: true }),
-        cursoService.getCursos({ all: true }),
+        turmaService.getTurmas({ all: true }, controller.signal),
+        cursoService.getCursos({ all: true }, controller.signal),
       ]).then(([resTurmas, resCursos]) => {
         if (resTurmas.status === "fulfilled") {
           setTurmas(resTurmas.value.data);
@@ -134,7 +152,9 @@ export function OcorrenciaModal({
         setIsLoadingData(false);
       });
     }
-  }, [isOpen]);
+
+    return () => controller.abort();
+  }, [isOpen, propTurmas]);
 
   // Carrega estudantes sob demanda apenas da turma selecionada
   useEffect(() => {
@@ -145,11 +165,12 @@ export function OcorrenciaModal({
       return;
     }
 
+    const controller = new AbortController();
     setIsLoadingAlunos(true);
     alunoService
-      .getAlunos({ turma_id: Number(selectedTurmaId), all: true })
+      .getAlunos<AlunoOption>({ turma_id: Number(selectedTurmaId), all: true }, controller.signal)
       .then((res) => {
-        let loaded = res.data;
+        let loaded: Array<Aluno | AlunoOption> = res.data;
         if (
           isEditing &&
           ocorrenciaToEdit?.aluno &&
@@ -160,10 +181,16 @@ export function OcorrenciaModal({
         }
         setAlunos(loaded);
       })
-      .catch(() => { })
+      .catch((err: any) => {
+        if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+          setAlunos([]);
+        }
+      })
       .finally(() => {
         setIsLoadingAlunos(false);
       });
+
+    return () => controller.abort();
   }, [isOpen, selectedTurmaId, isEditing, ocorrenciaToEdit]);
 
   // Preenche dados ao editar
@@ -284,7 +311,7 @@ export function OcorrenciaModal({
   // Filtra alunos pertencentes à turma selecionada
   const alunosFiltrados = useMemo(() => {
     if (!selectedTurmaId) return alunos;
-    return alunos.filter((a) => String(a.turma_id) === String(selectedTurmaId));
+    return alunos.filter((a) => !a.turma_id || String(a.turma_id) === String(selectedTurmaId));
   }, [alunos, selectedTurmaId]);
 
   const alunoSelecionado = useMemo(() => {
@@ -651,6 +678,9 @@ export function OcorrenciaModal({
         motivo_edicao: motivoEdicao.trim() || undefined,
       };
 
+      let savedOcorrencia: Ocorrencia;
+      const isEdit = Boolean(isEditing && ocorrenciaToEdit);
+
       if (isEditing && ocorrenciaToEdit) {
         const hadAqvFlow =
           ocorrenciaToEdit.status === "enviado_aqv" ||
@@ -658,6 +688,8 @@ export function OcorrenciaModal({
           Boolean((ocorrenciaToEdit as any).aqv_recebimento);
 
         const updated = await ocorrenciaService.updateOcorrencia(ocorrenciaToEdit.id, payload);
+        savedOcorrencia = updated;
+
         if (updated.sem_alteracoes) {
           showAvatarToast("Nenhuma alteração foi realizada na FIAP.", "Sem alterações", "warning");
         } else if (updated.plano_arquivado) {
@@ -677,14 +709,15 @@ export function OcorrenciaModal({
         }
       } else {
         const created = await ocorrenciaService.createOcorrencia(payload);
+        savedOcorrencia = created;
         showAvatarToast("FIAP cadastrada com sucesso!");
         if (onOpenPlanoModal && created.has_plano_pendente) {
           onOpenPlanoModal(created);
         }
       }
 
-      onSuccess();
       onClose();
+      onSuccess(savedOcorrencia, isEdit);
     } catch (err: any) {
       const msg =
         err.response?.data?.message ||
@@ -858,7 +891,7 @@ export function OcorrenciaModal({
                   </option>
                   {alunosFiltrados.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.nome} (RA: {a.matricula})
+                      {a.nome} (RA: {a.ra || a.matricula})
                     </option>
                   ))}
                 </select>

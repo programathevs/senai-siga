@@ -29,7 +29,7 @@ import styles from "./PlanoRecuperacaoModal.module.css";
 interface PlanoRecuperacaoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaveSuccess: () => void;
+  onSaveSuccess: (savedPlano?: PlanoRecuperacao, isEdit?: boolean) => void;
   ocorrencia?: Ocorrencia | null;
   planoToEdit?: PlanoRecuperacao | null;
 }
@@ -91,13 +91,21 @@ export function PlanoRecuperacaoModal({
   useEffect(() => {
     if (!isOpen) return;
 
+    const controller = new AbortController();
     setErrorMsg(null);
-    cursoService.getCursos({ all: true }).then((res) => setCursos(res.data)).catch(() => setCursos([]));
+    cursoService
+      .getCursos({ all: true }, controller.signal)
+      .then((res) => setCursos(res.data))
+      .catch((err: any) => {
+        if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+          setCursos([]);
+        }
+      });
 
     if (!ocorrencia && !planoToEdit) {
       Promise.all([
-        ocorrenciaService.getOcorrencias({ per_page: 100 }),
-        planoRecuperacaoService.getAll(),
+        ocorrenciaService.getOcorrencias({ per_page: 100 }, false, controller.signal),
+        planoRecuperacaoService.getAll(undefined, false, controller.signal),
       ])
         .then(([ocorrenciasRes, planosRes]) => {
           const existingOcorrenciaIdsWithPlano = new Set(
@@ -115,7 +123,11 @@ export function PlanoRecuperacaoModal({
 
           setAvailableOcorrencias(eligible);
         })
-        .catch(() => setAvailableOcorrencias([]));
+        .catch((err: any) => {
+          if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+            setAvailableOcorrencias([]);
+          }
+        });
     }
 
     if (planoToEdit) {
@@ -196,6 +208,8 @@ export function PlanoRecuperacaoModal({
       setFrequencias([]);
       setSelectedUcIds([]);
     }
+
+    return () => controller.abort();
   }, [isOpen, ocorrencia, planoToEdit]);
 
   const targetOcorrencia = planoToEdit?.ocorrencia || ocorrencia || manualOcorrencia;
@@ -384,15 +398,18 @@ export function PlanoRecuperacaoModal({
         frequencias: frequencias,
       };
 
+      let savedPlano: PlanoRecuperacao;
+      const isEdit = Boolean(planoToEdit);
+
       if (planoToEdit) {
-        await planoRecuperacaoService.update(planoToEdit.id, payload);
+        savedPlano = await planoRecuperacaoService.update(planoToEdit.id, payload);
       } else {
-        await planoRecuperacaoService.create(payload);
+        savedPlano = await planoRecuperacaoService.create(payload);
       }
 
       clearApiCache();
-      onSaveSuccess();
       onClose();
+      onSaveSuccess(savedPlano, isEdit);
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { message?: string } } };
       setErrorMsg(

@@ -11,6 +11,8 @@ interface AlunoModalProps {
   onClose: () => void;
   onSuccess: () => void;
   alunoToEdit?: Aluno | null;
+  turmas?: Turma[];
+  initialTurmas?: Turma[];
 }
 
 export const AlunoModal: React.FC<AlunoModalProps> = ({
@@ -18,8 +20,11 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
   onClose,
   onSuccess,
   alunoToEdit,
+  turmas: turmasProp,
+  initialTurmas,
 }) => {
-  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const propTurmas = turmasProp || initialTurmas;
+  const [turmas, setTurmas] = useState<Turma[]>(propTurmas || []);
   const [nome, setNome] = useState("");
   const [matricula, setMatricula] = useState("");
   const [cpf, setCpf] = useState("");
@@ -35,8 +40,28 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (propTurmas && propTurmas.length > 0) {
+      setTurmas(propTurmas);
+    }
+  }, [propTurmas]);
+
+  useEffect(() => {
     if (isOpen) {
-      turmaService.getTurmas({ all: true }).then((res) => setTurmas(res.data)).catch(() => setTurmas([]));
+      let controller: AbortController | null = null;
+      if (propTurmas && propTurmas.length > 0) {
+        setTurmas(propTurmas);
+      } else {
+        controller = new AbortController();
+        turmaService
+          .getTurmas({ all: true }, controller.signal)
+          .then((res) => setTurmas(res.data))
+          .catch((err: any) => {
+            if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+              setTurmas([]);
+            }
+          });
+      }
+
       if (alunoToEdit) {
         setNome(alunoToEdit.nome);
         setMatricula(alunoToEdit.matricula);
@@ -63,8 +88,12 @@ export const AlunoModal: React.FC<AlunoModalProps> = ({
         setRemoverFoto(false);
       }
       setError(null);
+
+      return () => {
+        if (controller) controller.abort();
+      };
     }
-  }, [isOpen, alunoToEdit]);
+  }, [isOpen, alunoToEdit, propTurmas]);
 
   if (!isOpen) return null;
 
