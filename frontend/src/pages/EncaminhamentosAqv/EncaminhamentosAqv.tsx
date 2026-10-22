@@ -69,15 +69,19 @@ export function EncaminhamentosAqv() {
 
   // Carrega turmas para o filtro
   useEffect(() => {
+    const controller = new AbortController();
     async function loadTurmas() {
       try {
-        const res = await turmaService.getTurmas({ all: true });
+        const res = await turmaService.getTurmas({ all: true }, controller.signal);
         setTurmas(res.data || []);
-      } catch (err) {
-        console.error("Erro ao carregar turmas para filtro AQV:", err);
+      } catch (err: any) {
+        if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
+          console.error("Erro ao carregar turmas para filtro AQV:", err);
+        }
       }
     }
     loadTurmas();
+    return () => controller.abort();
   }, []);
 
   // Carrega estatísticas dos KPIs
@@ -92,7 +96,7 @@ export function EncaminhamentosAqv() {
 
   // Carrega os encaminhamentos com paginação e filtros
   const loadEncaminhamentos = useCallback(
-    async (currentPage: number, currentPerPage: number) => {
+    async (currentPage: number, currentPerPage: number, signal?: AbortSignal) => {
       setIsLoading(true);
       try {
         const response = await aqvService.getEncaminhamentos(
@@ -103,13 +107,17 @@ export function EncaminhamentosAqv() {
             turma_id: selectedTurmaId || undefined,
           },
           currentPage,
-          currentPerPage
+          currentPerPage,
+          signal
         );
 
         setItems(response.items || []);
         setTotal(response.total || 0);
         setLastPage(response.last_page || 1);
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+          return;
+        }
         console.error("Erro ao carregar encaminhamentos da AQV:", err);
       } finally {
         setIsLoading(false);
@@ -125,11 +133,13 @@ export function EncaminhamentosAqv() {
 
   // Efeito principal de busca com debounce
   useEffect(() => {
+    const controller = new AbortController();
+
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadEncaminhamentos(page, perPage);
+      loadEncaminhamentos(page, perPage, controller.signal);
       loadStats();
-      return;
+      return () => controller.abort();
     }
 
     const isSearchChange = prevSearchRef.current !== search;
@@ -137,12 +147,16 @@ export function EncaminhamentosAqv() {
 
     if (isSearchChange) {
       const timer = setTimeout(() => {
-        loadEncaminhamentos(page, perPage);
+        loadEncaminhamentos(page, perPage, controller.signal);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        controller.abort();
+      };
     }
 
-    loadEncaminhamentos(page, perPage);
+    loadEncaminhamentos(page, perPage, controller.signal);
+    return () => controller.abort();
   }, [page, perPage, search, selectedStatus, selectedTipo, selectedTurmaId, loadEncaminhamentos, loadStats]);
 
   function handleClearFilters() {

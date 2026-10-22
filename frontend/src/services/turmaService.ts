@@ -37,20 +37,25 @@ export interface TurmaPayload {
 }
 
 export const turmaService = {
-  async getTurmas(params?: {
-    search?: string;
-    curso_id?: number;
-    turno?: string;
-    page?: number;
-    per_page?: number;
-    all?: boolean;
-  }): Promise<PaginatedResponse<Turma>> {
-    const response = await api.get<PaginatedResponse<Turma>>("/api/turmas", { params });
+  async getTurmas(
+    params?: {
+      search?: string;
+      curso_id?: number;
+      turno?: string;
+      page?: number;
+      per_page?: number;
+      all?: boolean;
+    },
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
+  ): Promise<PaginatedResponse<Turma>> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<PaginatedResponse<Turma>>("/api/turmas", { params, signal });
     return response.data;
   },
 
-  async getTurma(id: number): Promise<Turma> {
-    const response = await api.get<{ data: Turma }>(`/api/turmas/${id}`);
+  async getTurma(id: number, signalOrOptions?: AbortSignal | { signal?: AbortSignal }): Promise<Turma> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<{ data: Turma }>(`/api/turmas/${id}`, { signal });
     return response.data.data;
   },
 

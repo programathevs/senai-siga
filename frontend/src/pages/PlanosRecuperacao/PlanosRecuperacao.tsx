@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Search,
@@ -54,29 +54,57 @@ export function PlanosRecuperacao() {
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [selectedPlanoPdf, setSelectedPlanoPdf] = useState<PlanoRecuperacao | null>(null);
 
+  const isFirstRender = useRef(true);
+  const prevSearchRef = useRef(search);
+
   useEffect(() => {
     setPage(1);
   }, [search, selectedTipo, selectedStatus]);
 
-  useEffect(() => {
-    loadPlanos();
-  }, [search, selectedTipo, selectedStatus]);
-
-  async function loadPlanos(bypassCache = false) {
+  async function loadPlanos(bypassCache = false, signal?: AbortSignal) {
     try {
       setIsLoading(true);
       const data = await planoRecuperacaoService.getAll({
         search: search.trim() || undefined,
         tipo_programa: selectedTipo || undefined,
         status_processo: selectedStatus || undefined,
-      }, bypassCache);
+      }, bypassCache, signal);
       setPlanos(data);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       console.error("Erro ao carregar planos de recuperação:", err);
     } finally {
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      loadPlanos(false, controller.signal);
+      return () => controller.abort();
+    }
+
+    const isSearchChange = prevSearchRef.current !== search;
+    prevSearchRef.current = search;
+
+    if (isSearchChange) {
+      const timer = setTimeout(() => {
+        loadPlanos(false, controller.signal);
+      }, 300);
+      return () => {
+        clearTimeout(timer);
+        controller.abort();
+      };
+    }
+
+    loadPlanos(false, controller.signal);
+    return () => controller.abort();
+  }, [search, selectedTipo, selectedStatus]);
 
   function handleCreateNew() {
     setPlanoToEdit(null);
@@ -430,8 +458,23 @@ export function PlanosRecuperacao() {
       {/* Modal de Formulário */}
       <PlanoRecuperacaoModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSaveSuccess={() => loadPlanos(true)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setPlanoToEdit(null);
+        }}
+        onSaveSuccess={(salvo, isEdit) => {
+          setIsModalOpen(false);
+          setPlanoToEdit(null);
+          if (salvo) {
+            if (isEdit) {
+              setPlanos((prev) =>
+                prev.map((item) => (item.id === salvo.id ? salvo : item))
+              );
+            } else {
+              setPlanos((prev) => [salvo, ...prev]);
+            }
+          }
+        }}
         planoToEdit={planoToEdit}
       />
 

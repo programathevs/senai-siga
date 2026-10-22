@@ -104,29 +104,25 @@ class RelatorioController extends Controller
             $query->whereIn('aluno_id', $alunoIdsReincidentes);
         }
 
-        // Cálculo de totais consolidados para o relatório
-        $resumoQuery = clone $query;
-        $totalOcorrencias = (clone $resumoQuery)->count();
-        $totalFaltas = (clone $resumoQuery)->where('tipo', 'falta')->count();
-        $totalComportamento = (clone $resumoQuery)->where('tipo', 'comportamento')->count();
-        $totalDesempenho = (clone $resumoQuery)->where('tipo', 'desempenho')->count();
-        $totalAqv = (clone $resumoQuery)->where('status', 'enviado_aqv')->count();
-        $totalResolvidas = (clone $resumoQuery)->whereIn('status', ['assinado', 'impresso'])->count();
-
-        $alunosUnicos = (clone $resumoQuery)
-            ->select('aluno_id')
-            ->distinct()
-            ->get()
-            ->count();
+        // Cálculo de totais consolidados para o relatório em query agregadora única
+        $resumoRaw = (clone $query)->reorder()->selectRaw('
+            COUNT(ocorrencias.id) as total_ocorrencias,
+            COUNT(CASE WHEN ocorrencias.tipo = "falta" THEN 1 END) as total_faltas,
+            COUNT(CASE WHEN ocorrencias.tipo = "comportamento" THEN 1 END) as total_comportamento,
+            COUNT(CASE WHEN ocorrencias.tipo = "desempenho" THEN 1 END) as total_desempenho,
+            COUNT(CASE WHEN ocorrencias.status = "enviado_aqv" THEN 1 END) as total_aqv,
+            COUNT(CASE WHEN ocorrencias.status IN ("assinado", "impresso") THEN 1 END) as total_resolvidas,
+            COUNT(DISTINCT ocorrencias.aluno_id) as alunos_unicos
+        ')->first();
 
         $resumo = [
-            'total_ocorrencias' => $totalOcorrencias,
-            'total_faltas' => $totalFaltas,
-            'total_comportamento' => $totalComportamento,
-            'total_desempenho' => $totalDesempenho,
-            'total_aqv' => $totalAqv,
-            'total_resolvidas' => $totalResolvidas,
-            'alunos_unicos' => $alunosUnicos,
+            'total_ocorrencias' => (int) ($resumoRaw?->total_ocorrencias ?? 0),
+            'total_faltas' => (int) ($resumoRaw?->total_faltas ?? 0),
+            'total_comportamento' => (int) ($resumoRaw?->total_comportamento ?? 0),
+            'total_desempenho' => (int) ($resumoRaw?->total_desempenho ?? 0),
+            'total_aqv' => (int) ($resumoRaw?->total_aqv ?? 0),
+            'total_resolvidas' => (int) ($resumoRaw?->total_resolvidas ?? 0),
+            'alunos_unicos' => (int) ($resumoRaw?->alunos_unicos ?? 0),
         ];
 
         $query->orderBy('data_ocorrencia', 'desc')->orderBy('id', 'desc');
@@ -190,23 +186,43 @@ class RelatorioController extends Controller
             $turmasQuery->whereIn('id', $turmaIds);
         }
 
-        $turmas = $turmasQuery->withCount(['alunos'])->get()->map(function ($turma) use ($dataInicio, $dataFim) {
-            $ocQuery = Ocorrencia::query()->whereHas('aluno', function ($q) use ($turma) {
-                $q->where('turma_id', $turma->id);
-            });
+        // Pré-agrega todas as métricas das turmas em uma única query com JOIN e GROUP BY
+        $statsQuery = Ocorrencia::query()
+            ->join('alunos', 'ocorrencias.aluno_id', '=', 'alunos.id')
+            ->whereNotNull('alunos.turma_id');
 
-            if ($dataInicio) {
-                $ocQuery->whereDate('data_ocorrencia', '>=', $dataInicio);
-            }
-            if ($dataFim) {
-                $ocQuery->whereDate('data_ocorrencia', '<=', $dataFim);
-            }
+        if ($user && $user->hasRole('instrutor')) {
+            $statsQuery->whereIn('alunos.turma_id', $turmaIds);
+        }
 
-            $total = (clone $ocQuery)->count();
-            $faltas = (clone $ocQuery)->where('tipo', 'falta')->count();
-            $comportamento = (clone $ocQuery)->where('tipo', 'comportamento')->count();
-            $desempenho = (clone $ocQuery)->where('tipo', 'desempenho')->count();
-            $alunosNotificados = (clone $ocQuery)->select('aluno_id')->distinct()->get()->count();
+        if ($dataInicio) {
+            $statsQuery->whereDate('ocorrencias.data_ocorrencia', '>=', $dataInicio);
+        }
+        if ($dataFim) {
+            $statsQuery->whereDate('ocorrencias.data_ocorrencia', '<=', $dataFim);
+        }
+
+        $statsPorTurma = $statsQuery
+            ->groupBy('alunos.turma_id')
+            ->selectRaw('
+                alunos.turma_id,
+                COUNT(ocorrencias.id) as total_ocorrencias,
+                COUNT(CASE WHEN ocorrencias.tipo = "falta" THEN 1 END) as total_faltas,
+                COUNT(CASE WHEN ocorrencias.tipo = "comportamento" THEN 1 END) as total_comportamento,
+                COUNT(CASE WHEN ocorrencias.tipo = "desempenho" THEN 1 END) as total_desempenho,
+                COUNT(DISTINCT ocorrencias.aluno_id) as alunos_notificados
+            ')
+            ->get()
+            ->keyBy('turma_id');
+
+        $turmas = $turmasQuery->withCount(['alunos'])->get()->map(function ($turma) use ($statsPorTurma) {
+            $stat = $statsPorTurma->get($turma->id);
+
+            $total = (int) ($stat?->total_ocorrencias ?? 0);
+            $faltas = (int) ($stat?->total_faltas ?? 0);
+            $comportamento = (int) ($stat?->total_comportamento ?? 0);
+            $desempenho = (int) ($stat?->total_desempenho ?? 0);
+            $alunosNotificados = (int) ($stat?->alunos_notificados ?? 0);
 
             $taxaIncidencia = $turma->alunos_count > 0
                 ? round(($alunosNotificados / $turma->alunos_count) * 100, 1)

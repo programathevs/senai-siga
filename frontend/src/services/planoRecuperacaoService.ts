@@ -83,7 +83,12 @@ export interface PlanoFiltros {
 }
 
 export const planoRecuperacaoService = {
-  async getAll(filtros?: PlanoFiltros, bypassCache?: boolean): Promise<PlanoRecuperacao[]> {
+  async getAll(
+    filtros?: PlanoFiltros,
+    bypassCache?: boolean,
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
+  ): Promise<PlanoRecuperacao[]> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
     const params = new URLSearchParams();
     if (filtros?.search) params.append("search", filtros.search);
     if (filtros?.tipo_programa) params.append("tipo_programa", filtros.tipo_programa);
@@ -95,14 +100,17 @@ export const planoRecuperacaoService = {
       `/api/planos-recuperacao?${params.toString()}`,
       {
         headers: bypassCache ? { "x-no-cache": "true" } : undefined,
+        signal,
       }
     );
     return response.data.data;
   },
 
-  async getById(id: number): Promise<PlanoRecuperacao> {
+  async getById(id: number, signalOrOptions?: AbortSignal | { signal?: AbortSignal }): Promise<PlanoRecuperacao> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
     const response = await api.get<{ data: PlanoRecuperacao }>(
-      `/api/planos-recuperacao/${id}`
+      `/api/planos-recuperacao/${id}`,
+      { signal }
     );
     return response.data.data;
   },

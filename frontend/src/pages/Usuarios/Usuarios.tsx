@@ -39,7 +39,7 @@ export function Usuarios() {
 
   const isFirstRender = useRef(true);
 
-  async function loadUsuarios(targetPage = page, targetPerPage = perPage) {
+  async function loadUsuarios(targetPage = page, targetPerPage = perPage, signal?: AbortSignal) {
     try {
       setIsLoading(true);
       const res = await usuarioService.getUsuarios({
@@ -47,10 +47,13 @@ export function Usuarios() {
         role: roleFilter || undefined,
         page: targetPage,
         per_page: targetPerPage,
-      });
+      }, signal);
       setUsuarios(res.data);
       setMeta(res.meta || null);
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       setUsuarios([]);
       setMeta(null);
     } finally {
@@ -64,17 +67,22 @@ export function Usuarios() {
   }, [search, roleFilter]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      loadUsuarios(page, perPage);
-      return;
+      loadUsuarios(page, perPage, controller.signal);
+      return () => controller.abort();
     }
 
     const timer = setTimeout(() => {
-      loadUsuarios(page, perPage);
+      loadUsuarios(page, perPage, controller.signal);
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [page, perPage, search, roleFilter]);
 
   function handleOpenCreateModal() {

@@ -60,8 +60,10 @@ export const aqvService = {
   async getEncaminhamentos(
     filtros: AqvFiltros = {},
     page: number = 1,
-    perPage: number = 10
+    perPage: number = 10,
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
   ): Promise<AqvEncaminhamentosResponse> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
     const params = new URLSearchParams();
     params.append("page", String(page));
     params.append("per_page", String(perPage));
@@ -86,13 +88,15 @@ export const aqvService = {
     }
 
     const response = await api.get<AqvEncaminhamentosResponse>(
-      `/api/aqv/encaminhamentos?${params.toString()}`
+      `/api/aqv/encaminhamentos?${params.toString()}`,
+      { signal }
     );
     return response.data;
   },
 
-  async getAqvStats(): Promise<AqvStats> {
-    const response = await api.get<AqvStats>("/api/aqv/stats");
+  async getAqvStats(signalOrOptions?: AbortSignal | { signal?: AbortSignal }): Promise<AqvStats> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<AqvStats>("/api/aqv/stats", { signal });
     return response.data;
   },
 

@@ -16,6 +16,52 @@ class AlunoController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // 1. Busca enxuta para rotas de seleção/opções (ex: GET /alunos?turma_id= ou ?options=true)
+        $isOptionsLookup = $request->boolean('options') ||
+            ($request->filled('turma_id') && ($request->boolean('all') || ! $request->has('page')));
+
+        if ($isOptionsLookup) {
+            $optionsQuery = Aluno::query();
+
+            if ($request->filled('turma_id')) {
+                $turmaId = $request->input('turma_id');
+                if ($turmaId === 'sem_turma') {
+                    $optionsQuery->whereNull('turma_id');
+                } else {
+                    $optionsQuery->where('turma_id', $turmaId);
+                }
+            }
+
+            if ($request->filled('status')) {
+                $optionsQuery->where('status', $request->input('status'));
+            }
+
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $optionsQuery->where(function ($q) use ($search) {
+                    $q->where('nome', 'like', "%{$search}%")
+                      ->orWhere('matricula', 'like', "%{$search}%");
+                });
+            }
+
+            $alunosOptions = $optionsQuery->orderBy('nome', 'asc')
+                ->select(['id', 'nome', 'matricula as ra'])
+                ->get()
+                ->map(fn ($aluno) => [
+                    'id' => $aluno->id,
+                    'nome' => $aluno->nome,
+                    'ra' => $aluno->ra ?? $aluno->matricula,
+                ]);
+
+            return response()->json([
+                'data' => $alunosOptions,
+                'meta' => [
+                    'total' => $alunosOptions->count(),
+                    'all' => true,
+                ],
+            ]);
+        }
+
         $query = Aluno::with('turma.curso');
 
         if ($request->filled('search')) {

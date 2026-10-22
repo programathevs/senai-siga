@@ -8,6 +8,7 @@ export interface Aluno {
   turma_id: number | null;
   nome: string;
   matricula: string;
+  ra?: string;
   cpf: string | null;
   data_nascimento: string | null;
   is_maior_de_idade?: boolean;
@@ -19,6 +20,14 @@ export interface Aluno {
   created_at: string;
   updated_at: string;
   turma?: Turma;
+}
+
+export interface AlunoOption {
+  id: number;
+  nome: string;
+  ra: string;
+  matricula?: string;
+  turma_id?: number | null;
 }
 
 export interface AlunoPayload {
@@ -45,20 +54,26 @@ export interface AlunoHistorico {
 }
 
 export const alunoService = {
-  async getAlunos(params?: {
-    search?: string;
-    turma_id?: number | string;
-    status?: string;
-    page?: number;
-    per_page?: number;
-    all?: boolean;
-  }): Promise<PaginatedResponse<Aluno>> {
-    const response = await api.get<PaginatedResponse<Aluno>>("/api/alunos", { params });
+  async getAlunos<T = Aluno>(
+    params?: {
+      search?: string;
+      turma_id?: number | string;
+      status?: string;
+      page?: number;
+      per_page?: number;
+      all?: boolean;
+      options?: boolean;
+    },
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
+  ): Promise<PaginatedResponse<T>> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<PaginatedResponse<T>>("/api/alunos", { params, signal });
     return response.data;
   },
 
-  async getAluno(id: number): Promise<Aluno> {
-    const response = await api.get<{ data: Aluno }>(`/api/alunos/${id}`);
+  async getAluno(id: number, signalOrOptions?: AbortSignal | { signal?: AbortSignal }): Promise<Aluno> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<{ data: Aluno }>(`/api/alunos/${id}`, { signal });
     return response.data.data;
   },
 
@@ -114,8 +129,9 @@ export const alunoService = {
     await api.delete(`/api/alunos/${id}`);
   },
 
-  async getHistorico(id: number): Promise<AlunoHistorico> {
-    const response = await api.get<{ data: AlunoHistorico }>(`/api/alunos/${id}/historico`);
+  async getHistorico(id: number, signalOrOptions?: AbortSignal | { signal?: AbortSignal }): Promise<AlunoHistorico> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<{ data: AlunoHistorico }>(`/api/alunos/${id}/historico`, { signal });
     return response.data.data;
   },
 };

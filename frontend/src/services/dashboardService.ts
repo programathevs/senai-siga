@@ -83,8 +83,9 @@ export interface DashboardStats {
 }
 
 export const dashboardService = {
-  async getStats(): Promise<DashboardStats> {
-    const response = await api.get<{ data: DashboardStats }>("/api/dashboard/stats");
+  async getStats(signalOrOptions?: AbortSignal | { signal?: AbortSignal }): Promise<DashboardStats> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<{ data: DashboardStats }>("/api/dashboard/stats", { signal });
     return response.data.data;
   },
 };

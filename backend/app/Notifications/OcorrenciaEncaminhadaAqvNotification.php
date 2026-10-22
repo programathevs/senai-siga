@@ -4,10 +4,11 @@ namespace App\Notifications;
 
 use App\Models\Ocorrencia;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class OcorrenciaEncaminhadaAqvNotification extends Notification
+class OcorrenciaEncaminhadaAqvNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -27,7 +28,7 @@ class OcorrenciaEncaminhadaAqvNotification extends Notification
         $tipoNome = ucfirst($this->ocorrencia->tipo);
         $seq = $this->ocorrencia->numero_sequencial;
         $docenteNome = $this->ocorrencia->registradoPor?->name ?? 'Docente';
-        $appUrl = env('FRONTEND_URL', 'http://localhost:5173');
+        $appUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:5173'));
 
         return (new MailMessage)
             ->subject("Novo Encaminhamento AQV — {$seq} ({$alunoNome})")

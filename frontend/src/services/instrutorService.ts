@@ -24,17 +24,21 @@ export const instrutorService = {
       page?: number;
       per_page?: number;
       all?: boolean;
-    } | string
+    } | string,
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
   ): Promise<PaginatedResponse<Instrutor>> {
     const queryParams = typeof params === "string" ? { search: params } : params;
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
     const response = await api.get<PaginatedResponse<Instrutor>>("/api/instrutores", {
       params: queryParams,
+      signal,
     });
     return response.data;
   },
 
-  async getInstrutor(id: number): Promise<Instrutor> {
-    const response = await api.get<{ data: Instrutor }>(`/api/instrutores/${id}`);
+  async getInstrutor(id: number, signalOrOptions?: AbortSignal | { signal?: AbortSignal }): Promise<Instrutor> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<{ data: Instrutor }>(`/api/instrutores/${id}`, { signal });
     return response.data.data;
   },
 

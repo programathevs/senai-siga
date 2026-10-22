@@ -33,17 +33,21 @@ export const cursoService = {
       page?: number;
       per_page?: number;
       all?: boolean;
-    } | string
+    } | string,
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
   ): Promise<PaginatedResponse<Curso>> {
     const queryParams = typeof params === "string" ? { search: params } : params;
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
     const response = await api.get<PaginatedResponse<Curso>>("/api/cursos", {
       params: queryParams,
+      signal,
     });
     return response.data;
   },
 
-  async getCurso(id: number): Promise<Curso> {
-    const response = await api.get<{ data: Curso }>(`/api/cursos/${id}`);
+  async getCurso(id: number, signalOrOptions?: AbortSignal | { signal?: AbortSignal }): Promise<Curso> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<{ data: Curso }>(`/api/cursos/${id}`, { signal });
     return response.data.data;
   },
 

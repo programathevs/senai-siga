@@ -145,4 +145,28 @@ class AlunoControllerTest extends TestCase
             ->assertJsonPath('meta.all', true)
             ->assertJsonPath('meta.total', 15);
     }
+
+    public function test_alunos_options_query_by_turma_returns_lean_selection(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::GESTOR]);
+        $turma = Turma::factory()->create();
+        Aluno::factory()->create([
+            'turma_id' => $turma->id,
+            'nome' => 'Aluno Opcao',
+            'matricula' => 'RA123456',
+            'email' => 'aluno@secret.com',
+            'cpf' => '123.456.789-00',
+        ]);
+
+        $response = $this->actingAs($admin)->getJson("/api/alunos?turma_id={$turma->id}");
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', 1)
+            ->assertJsonPath('data.0.nome', 'Aluno Opcao')
+            ->assertJsonPath('data.0.ra', 'RA123456');
+
+        $firstItem = $response->json('data.0');
+        $this->assertEquals(['id', 'nome', 'ra'], array_keys($firstItem));
+    }
 }
+

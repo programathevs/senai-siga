@@ -57,12 +57,15 @@ export function Dashboard() {
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  async function loadDashboard() {
+  async function loadDashboard(signal?: AbortSignal) {
     try {
       setIsLoading(true);
-      const data = await dashboardService.getStats();
+      const data = await dashboardService.getStats(signal);
       setStats(data);
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+        return;
+      }
       setStats(null);
     } finally {
       setIsLoading(false);
@@ -70,7 +73,9 @@ export function Dashboard() {
   }
 
   useEffect(() => {
-    loadDashboard();
+    const controller = new AbortController();
+    loadDashboard(controller.signal);
+    return () => controller.abort();
   }, []);
 
   const filteredOccurrences = useMemo(() => {
@@ -176,7 +181,7 @@ export function Dashboard() {
 
         <div className={styles.headerActions}>
           <div className={styles.periodBadge}>
-            <Calendar size={16} color="var(--color-primary)" />
+            <Calendar size={15} color="var(--color-text-secondary)" />
             <span>{stats?.periodo?.mes_nome || "Mês Vigente"}</span>
           </div>
 

@@ -130,20 +130,24 @@ export interface CreateOcorrenciaPayload {
 export const ocorrenciaService = {
   async getOcorrencias(
     filtros?: OcorrenciaFiltros,
-    bypassCache?: boolean
+    bypassCache?: boolean,
+    signalOrOptions?: AbortSignal | { signal?: AbortSignal }
   ): Promise<{ data: Ocorrencia[]; meta?: PaginationMeta & { estatisticas?: OcorrenciaEstatisticas } }> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
     const response = await api.get<{
       data: Ocorrencia[];
       meta?: PaginationMeta & { estatisticas?: OcorrenciaEstatisticas };
     }>("/api/ocorrencias", {
       params: filtros,
       headers: bypassCache ? { "x-no-cache": "true" } : undefined,
+      signal,
     });
     return response.data;
   },
 
-  async getOcorrencia(id: number): Promise<Ocorrencia> {
-    const response = await api.get<{ data: Ocorrencia }>(`/api/ocorrencias/${id}`);
+  async getOcorrencia(id: number, signalOrOptions?: AbortSignal | { signal?: AbortSignal }): Promise<Ocorrencia> {
+    const signal = signalOrOptions instanceof AbortSignal ? signalOrOptions : signalOrOptions?.signal;
+    const response = await api.get<{ data: Ocorrencia }>(`/api/ocorrencias/${id}`, { signal });
     return response.data.data;
   },
 
