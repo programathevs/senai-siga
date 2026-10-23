@@ -72,7 +72,7 @@ export function Ocorrencias() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingOcorrencia, setEditingOcorrencia] = useState<Ocorrencia | null>(null);
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
-  const [ocorrenciaAqvPending, setOcorrenciaAqvPending] = useState<Ocorrencia | null>(null);
+  const [ocorrenciaEquipeEscolarPending, setOcorrenciaEquipeEscolarPending] = useState<Ocorrencia | null>(null);
   const [ocorrenciaDeletePending, setOcorrenciaDeletePending] = useState<Ocorrencia | null>(null);
   const [ocorrenciaRestorePending, setOcorrenciaRestorePending] = useState<Ocorrencia | null>(null);
 
@@ -98,7 +98,7 @@ export function Ocorrencias() {
 
   const canCreate = user?.role === "instrutor";
 
-  function canSendAqv(oc: Ocorrencia): boolean {
+  function canSendEquipeEscolar(oc: Ocorrencia): boolean {
     if (
       oc.status === "enviado_equipe_escolar" ||
       oc.status === "enviado_aqv" ||
@@ -273,7 +273,7 @@ export function Ocorrencias() {
     }
   }
 
-  function handleEncaminharAqv(ocOrId: Ocorrencia | number) {
+  function handleEncaminharEquipeEscolar(ocOrId: Ocorrencia | number) {
     const targetOc =
       typeof ocOrId === "number"
         ? ocorrencias.find((o) => o.id === ocOrId) || selectedDetalhes
@@ -289,16 +289,16 @@ export function Ocorrencias() {
     }
 
     if (targetOc) {
-      setOcorrenciaAqvPending(targetOc);
+      setOcorrenciaEquipeEscolarPending(targetOc);
     }
   }
 
-  async function handleConfirmEncaminharAqv() {
-    if (!ocorrenciaAqvPending) return;
-    const oc = ocorrenciaAqvPending;
+  async function handleConfirmEncaminharEquipeEscolar() {
+    if (!ocorrenciaEquipeEscolarPending) return;
+    const oc = ocorrenciaEquipeEscolarPending;
 
     try {
-      await ocorrenciaService.encaminharAqv(oc.id);
+      await ocorrenciaService.encaminharEquipeEscolar(oc.id);
       showAvatarToast(
         `FIAP "${oc.numero_sequencial}" encaminhada com sucesso!`
       );
@@ -406,7 +406,7 @@ export function Ocorrencias() {
           </div>
           <div className={styles.kpiContent}>
             <span className={styles.kpiValue} style={{ color: "#7c3aed" }}>
-              {estatisticas?.total_aqv ?? ocorrencias.filter((o) => o.status === "enviado_equipe_escolar" || o.status === "enviado_aqv").length}
+              {estatisticas?.total_equipe_escolar ?? estatisticas?.total_aqv ?? ocorrencias.filter((o) => o.status === "enviado_equipe_escolar" || o.status === "enviado_aqv").length}
             </span>
             <span className={styles.kpiLabel}>Equipe Escolar</span>
           </div>
@@ -804,11 +804,11 @@ export function Ocorrencias() {
                             </button>
                           )}
 
-                          {canSendAqv(oc) && !isDeleted && (
+                          {canSendEquipeEscolar(oc) && !isDeleted && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.aqvBtn}`}
-                              onClick={() => handleEncaminharAqv(oc)}
+                              onClick={() => handleEncaminharEquipeEscolar(oc)}
                               disabled={oc.tipo === "desempenho" && oc.has_plano_pendente}
                               style={
                                 oc.tipo === "desempenho" && oc.has_plano_pendente
@@ -906,7 +906,8 @@ export function Ocorrencias() {
                       total_comportamento: salvo.tipo === "comportamento" ? prev.total_comportamento + 1 : prev.total_comportamento,
                       total_desempenho: salvo.tipo === "desempenho" ? prev.total_desempenho + 1 : prev.total_desempenho,
                       total_pendente: salvo.status === "pendente" ? prev.total_pendente + 1 : prev.total_pendente,
-                      total_aqv: salvo.status === "enviado_aqv" ? prev.total_aqv + 1 : prev.total_aqv,
+                      total_equipe_escolar: (salvo.status === "enviado_equipe_escolar" || salvo.status === "enviado_aqv") ? (prev.total_equipe_escolar ?? prev.total_aqv) + 1 : prev.total_equipe_escolar,
+                      total_aqv: (salvo.status === "enviado_equipe_escolar" || salvo.status === "enviado_aqv") ? prev.total_aqv + 1 : prev.total_aqv,
                     }
                   : null
               );
@@ -946,14 +947,15 @@ export function Ocorrencias() {
         isOpen={Boolean(selectedDetalhes)}
         onClose={() => setSelectedDetalhes(null)}
         ocorrencia={selectedDetalhes}
-        onEncaminharAqv={handleEncaminharAqv}
+        onEncaminharEquipeEscolar={handleEncaminharEquipeEscolar}
+        onEncaminharAqv={handleEncaminharEquipeEscolar}
         onEdit={(oc) => {
           setSelectedDetalhes(null);
           handleOpenEdit(oc);
         }}
         canEdit={(() => {
           if (!selectedDetalhes || !user) return false;
-          if (user.role === "aqv") return false;
+          if (user.role === "equipe_escolar" || user.role === "aqv") return false;
           if (user.role === "gestor") return true;
           const cId =
             typeof selectedDetalhes.registrado_por === "object" && selectedDetalhes.registrado_por !== null
@@ -967,10 +969,10 @@ export function Ocorrencias() {
 
       {/* Modal de Confirmação para Envio à Equipe Escolar */}
       <ConfirmEquipeEscolarModal
-        isOpen={Boolean(ocorrenciaAqvPending)}
-        onClose={() => setOcorrenciaAqvPending(null)}
-        onConfirm={handleConfirmEncaminharAqv}
-        ocorrencia={ocorrenciaAqvPending}
+        isOpen={Boolean(ocorrenciaEquipeEscolarPending)}
+        onClose={() => setOcorrenciaEquipeEscolarPending(null)}
+        onConfirm={handleConfirmEncaminharEquipeEscolar}
+        ocorrencia={ocorrenciaEquipeEscolarPending}
       />
 
       {/* Modal de Confirmação de Exclusão */}

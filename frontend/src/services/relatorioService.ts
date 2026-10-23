@@ -21,6 +21,7 @@ export interface RelatorioResumo {
   total_faltas: number;
   total_comportamento: number;
   total_desempenho: number;
+  total_equipe_escolar?: number;
   total_aqv: number;
   total_resolvidas: number;
   alunos_unicos: number;

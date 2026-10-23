@@ -393,7 +393,7 @@ export function Relatorios() {
             <div>
               <span className={styles.summaryLabel}>Encaminhadas à Equipe Escolar</span>
               <div className={styles.summaryValue} style={{ color: "#0059a8" }}>
-                {resumoGeral.total_aqv}
+                {resumoGeral.total_equipe_escolar ?? resumoGeral.total_aqv}
               </div>
             </div>
             <div
@@ -469,7 +469,7 @@ export function Relatorios() {
             >
               <option value="">Todos os Status</option>
               <option value="pendente">Pendente de Envio</option>
-              <option value="enviado_aqv">Encaminhado à Equipe Escolar</option>
+              <option value="enviado_equipe_escolar">Encaminhado à Equipe Escolar</option>
               <option value="pdf_gerado">PDF Gerado</option>
               <option value="impresso">Impresso</option>
               <option value="assinado">Assinado</option>
@@ -667,13 +667,13 @@ export function Relatorios() {
                             className={styles.statusPill}
                             style={{
                               backgroundColor:
-                                oc.status === "enviado_aqv"
+                                oc.status === "enviado_equipe_escolar" || oc.status === "enviado_aqv"
                                   ? "rgba(0, 89, 168, 0.12)"
                                   : oc.status === "pendente"
                                     ? "rgba(217, 119, 6, 0.12)"
                                     : "rgba(16, 185, 129, 0.12)",
                               color:
-                                oc.status === "enviado_aqv"
+                                oc.status === "enviado_equipe_escolar" || oc.status === "enviado_aqv"
                                   ? "var(--color-primary)"
                                   : oc.status === "pendente"
                                     ? "var(--color-warning)"
@@ -684,14 +684,14 @@ export function Relatorios() {
                               className={styles.statusDot}
                               style={{
                                 backgroundColor:
-                                  oc.status === "enviado_aqv"
+                                  oc.status === "enviado_equipe_escolar" || oc.status === "enviado_aqv"
                                     ? "var(--color-primary)"
                                     : oc.status === "pendente"
                                       ? "var(--color-warning)"
                                       : "var(--color-success)",
                               }}
                             />
-                            {oc.status === "enviado_aqv"
+                            {oc.status === "enviado_equipe_escolar" || oc.status === "enviado_aqv"
                               ? "Encaminhado à Equipe Escolar"
                               : oc.status === "pendente"
                                 ? "Pendente"

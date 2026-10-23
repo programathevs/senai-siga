@@ -26,6 +26,7 @@ export interface AuditoriaStats {
   total_logs: number;
   logs_hoje: number;
   edicoes_fiap: number;
+  atendimentos_equipe_escolar?: number;
   atendimentos_aqv: number;
   assinaturas_fiap: number;
   planos_recuperacao: number;

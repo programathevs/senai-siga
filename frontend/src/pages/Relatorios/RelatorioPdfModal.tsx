@@ -269,7 +269,7 @@ export function RelatorioPdfModal({
                           </td>
                           <td className={styles.reportTd}>{formatDate(oc.data_ocorrencia)}</td>
                           <td className={styles.reportTd}>
-                            {oc.status === "enviado_aqv"
+                            {oc.status === "enviado_equipe_escolar" || oc.status === "enviado_aqv"
                               ? "Encaminhado à Equipe Escolar"
                               : oc.status === "pendente"
                                 ? "Pendente"

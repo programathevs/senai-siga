@@ -28,7 +28,7 @@ senai-siga/
   - CRUD e processamento de FIAPs (Fichas Individuais de Avaliação Periódica).
   - Cálculo de percentual de faltas por unidade curricular.
   - Geração de documento PDF da FIAP.
-  - Disparo de e-mails automáticos para a equipe da AQV.
+  - Disparo de e-mails automáticos para a Equipe Escolar.
   - Gerenciamento de Planos de Recuperação vinculados à FIAP.
 
 ---
@@ -46,7 +46,7 @@ senai-siga/
 ## 4. Banco de Dados (MySQL)
 
 O banco armazena as entidades centrais do sistema:
-- Usuários e Perfis de Acesso (`Admin`, `Instrutor`, `AQV`).
+- Usuários e Perfis de Acesso (`Gestor`, `Instrutor`, `Equipe Escolar`).
 - Unidades Curriculares, Alunos e Turmas.
 - Registros de FIAP (tipo: Falta, Comportamento, Desempenho).
 - Histórico de faltas e percentuais calculados.

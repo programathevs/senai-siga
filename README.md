@@ -1,6 +1,6 @@
 # senai_siga
 
-Sistema interno de gestão de advertências disciplinares para unidade do SENAI. Permite o registro de FIAPs (Fichas Individuais de Avaliação Periódica) por falta, comportamento ou desempenho com cálculo automático de faltas, geração de PDF, envio para a equipe da AQV, abertura de Planos de Recuperação vinculados e controle de acesso baseado em papéis (Admin, Instrutor e AQV).
+Sistema interno de gestão de advertências disciplinares para unidade do SENAI. Permite o registro de FIAPs (Fichas Individuais de Avaliação Periódica) por falta, comportamento ou desempenho com cálculo automático de faltas, geração de PDF, envio para a Equipe Escolar, abertura de Planos de Recuperação vinculados e controle de acesso baseado em papéis (Admin, Instrutor e Equipe Escolar).
 
 <!-- Badges de Stack e Status -->
 ![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?logo=php&logoColor=white)
@@ -74,7 +74,7 @@ Você pode executar o ambiente de desenvolvimento de duas formas:
    # Executa todas as migrações no MySQL
    docker compose exec backend php artisan migrate
 
-   # Popula o banco com os usuários padrão (Admin, Instrutor, AQV)
+   # Popula o banco com os usuários padrão (Admin, Instrutor, Equipe Escolar)
    docker compose exec backend php artisan db:seed
 
    # Cria o link simbólico para visualização/download de PDFs gerados
@@ -174,7 +174,7 @@ Após executar o comando `php artisan db:seed`, os seguintes usuários estarão 
 | :--- | :--- | :--- | :--- |
 | **Admin** | `admin@senai.br` | `password` | Gestão de cadastros base, usuários e turmas |
 | **Instrutor** | `instrutor@senai.br` | `password` | Abertura e registro de FIAPs disciplinares/faltas |
-| **AQV** | `aqv@senai.br` | `password` | Atendimento do aluno, registro de justificativa e assinatura |
+| **Equipe Escolar** | `equipe_escolar@senai.br` | `password` | Atendimento do aluno, registro de justificativa e assinatura |
 
 ---
 

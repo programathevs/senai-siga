@@ -682,9 +682,11 @@ export function OcorrenciaModal({
       const isEdit = Boolean(isEditing && ocorrenciaToEdit);
 
       if (isEditing && ocorrenciaToEdit) {
-        const hadAqvFlow =
+        const hadEquipeEscolarFlow =
+          ocorrenciaToEdit.status === "enviado_equipe_escolar" ||
           ocorrenciaToEdit.status === "enviado_aqv" ||
           ocorrenciaToEdit.status === "assinado" ||
+          Boolean((ocorrenciaToEdit as any).equipe_escolar_recebimento) ||
           Boolean((ocorrenciaToEdit as any).aqv_recebimento);
 
         const updated = await ocorrenciaService.updateOcorrencia(ocorrenciaToEdit.id, payload);
@@ -698,7 +700,7 @@ export function OcorrenciaModal({
             "Plano Arquivado",
             "warning"
           );
-        } else if (hadAqvFlow) {
+        } else if (hadEquipeEscolarFlow) {
           showAvatarToast(
             "FIAP atualizada com sucesso! O status retornou para Pendente para que você possa revisá-la e reenviá-la à Equipe Escolar.",
             "Processo Reiniciado",

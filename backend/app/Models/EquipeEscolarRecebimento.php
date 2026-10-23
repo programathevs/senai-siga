@@ -48,4 +48,14 @@ class EquipeEscolarRecebimento extends Model
     {
         return $this->belongsTo(User::class, 'autorizado_por');
     }
+
+    public function getParecerEquipeEscolarAttribute(): ?string
+    {
+        return $this->parecer_aqv;
+    }
+
+    public function setParecerEquipeEscolarAttribute(?string $value): void
+    {
+        $this->attributes['parecer_aqv'] = $value;
+    }
 }

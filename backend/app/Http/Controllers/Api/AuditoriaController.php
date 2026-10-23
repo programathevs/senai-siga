@@ -73,7 +73,7 @@ class AuditoriaController extends Controller
         $totalLogs = AuditoriaLog::count();
         $logsHoje = AuditoriaLog::whereDate('created_at', $hoje)->count();
         $edicoesFiap = AuditoriaLog::where('acao', 'edicao_fiap')->count();
-        $atendimentosAqv = AuditoriaLog::where('acao', 'atendimento_aqv')->count();
+        $atendimentosEquipeEscolar = AuditoriaLog::whereIn('acao', ['atendimento_equipe_escolar', 'atendimento_aqv'])->count();
         $assinaturasFiap = AuditoriaLog::where('acao', 'assinatura_fiap')->count();
         $planosCriados = AuditoriaLog::whereIn('acao', ['criacao_plano', 'atualizacao_plano'])->count();
 
@@ -81,7 +81,8 @@ class AuditoriaController extends Controller
             'total_logs' => $totalLogs,
             'logs_hoje' => $logsHoje,
             'edicoes_fiap' => $edicoesFiap,
-            'atendimentos_aqv' => $atendimentosAqv,
+            'atendimentos_equipe_escolar' => $atendimentosEquipeEscolar,
+            'atendimentos_aqv' => $atendimentosEquipeEscolar,
             'assinaturas_fiap' => $assinaturasFiap,
             'planos_recuperacao' => $planosCriados,
         ]);

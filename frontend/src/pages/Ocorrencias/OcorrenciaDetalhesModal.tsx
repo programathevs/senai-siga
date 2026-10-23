@@ -20,6 +20,7 @@ interface OcorrenciaDetalhesModalProps {
   isOpen: boolean;
   onClose: () => void;
   ocorrencia: Ocorrencia | null;
+  onEncaminharEquipeEscolar?: (id: number) => void;
   onEncaminharAqv?: (id: number) => void;
   onEdit?: (ocorrencia: Ocorrencia) => void;
   canEdit?: boolean;
@@ -29,6 +30,7 @@ export function OcorrenciaDetalhesModal({
   isOpen,
   onClose,
   ocorrencia,
+  onEncaminharEquipeEscolar,
   onEncaminharAqv,
   onEdit,
   canEdit,
@@ -66,7 +68,7 @@ export function OcorrenciaDetalhesModal({
 
   const isBloqueada = ocorrencia.status === "aguardando_assinatura" || ocorrencia.status === "assinado";
 
-  const canSendAqv = (() => {
+  const canSendEquipeEscolar = (() => {
     if (
       ocorrencia.status === "enviado_aqv" ||
       ocorrencia.status === "enviado_equipe_escolar" ||
@@ -81,6 +83,8 @@ export function OcorrenciaDetalhesModal({
     }
     return false;
   })();
+
+  const handleEncaminhar = onEncaminharEquipeEscolar || onEncaminharAqv;
 
   const aluno = ocorrencia.aluno;
   const primaryUc =
@@ -534,11 +538,11 @@ export function OcorrenciaDetalhesModal({
         {/* Rodapé de Ações */}
         <div className={styles.modalFooter}>
           <div className={styles.footerLeft}>
-            {onEncaminharAqv && canSendAqv && (
+            {handleEncaminhar && canSendEquipeEscolar && (
               <button
                 type="button"
                 className={`${styles.btnAction} ${styles.btnAqv}`}
-                onClick={() => onEncaminharAqv(ocorrencia.id)}
+                onClick={() => handleEncaminhar(ocorrencia.id)}
               >
                 <Headphones size={15} />
                 Encaminhar à Equipe Escolar
