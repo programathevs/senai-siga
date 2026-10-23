@@ -351,12 +351,16 @@
 .actionBadge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
-  padding: 0.25rem 0.65rem;
+  height: 1.45rem;
+  padding: 0 0.55rem;
   border-radius: 9999px;
-  font-size: 0.6875rem;
-  font-weight: 700;
+  font-size: 0.725rem;
+  font-weight: 600;
+  line-height: 1;
   width: fit-content;
+  white-space: nowrap;
 }
 
 .viewDetailBtn {

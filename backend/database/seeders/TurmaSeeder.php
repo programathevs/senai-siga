@@ -159,7 +159,7 @@ class TurmaSeeder extends Seeder
         // 4. Turma I1HSA (1º Termo SESI / Integral)
         if ($cursoSESI) {
             $turmaI1HSA = Turma::updateOrCreate(
-                ['nome' => 'I1HSA'],
+                ['nome' => 'DES-I1HSA'],
                 [
                     'curso_id' => $cursoSESI->id,
                     'turno' => 'Integral',

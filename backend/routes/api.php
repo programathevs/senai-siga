@@ -112,8 +112,9 @@ Route::middleware(['auth.early', 'auth:sanctum'])->group(function () {
         Route::post('/ocorrencias/{ocorrencia}/encaminhar-equipe-escolar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharEquipeEscolar'])->name('ocorrencias.encaminhar-equipe-escolar');
         Route::post('/ocorrencias/{ocorrencia}/encaminhar-aqv', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharAqv'])->name('ocorrencias.encaminhar-aqv');
 
-        // Upload de foto do aluno pelo professor / instrutor
+        // Upload e exclusão de foto do aluno
         Route::post('/alunos/{aluno}/foto', [\App\Http\Controllers\Api\AlunoController::class, 'uploadFoto'])->name('alunos.upload-foto');
+        Route::delete('/alunos/{aluno}/foto', [\App\Http\Controllers\Api\AlunoController::class, 'deleteFoto'])->name('alunos.delete-foto');
 
         // Planos de Recuperação (Escrita)
         Route::post('/planos-recuperacao', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'store'])->name('planos-recuperacao.store');

@@ -59,7 +59,7 @@ class DashboardController extends Controller
                 COUNT(CASE WHEN data_ocorrencia BETWEEN ? AND ? THEN 1 END) as total_mes,
                 COUNT(CASE WHEN data_ocorrencia BETWEEN ? AND ? THEN 1 END) as total_mes_anterior,
                 COUNT(CASE WHEN status = "pendente" THEN 1 END) as pendentes,
-                COUNT(CASE WHEN status = "enviado_aqv" THEN 1 END) as encaminhadas_aqv,
+                COUNT(CASE WHEN status IN ("enviado_aqv", "enviado_equipe_escolar") THEN 1 END) as encaminhadas_aqv,
                 COUNT(CASE WHEN status IN ("assinado", "impresso") THEN 1 END) as resolvidas,
                 COUNT(CASE WHEN tipo = "falta" THEN 1 END) as tipo_falta,
                 COUNT(CASE WHEN tipo = "comportamento" THEN 1 END) as tipo_comportamento,
@@ -209,9 +209,9 @@ class DashboardController extends Controller
 
             // Funil AQV
             $aqvTotal = Ocorrencia::where(function ($q) {
-                $q->where('status', 'enviado_aqv')
+                $q->whereIn('status', ['enviado_aqv', 'enviado_equipe_escolar'])
                     ->orWhere('status', 'assinado')
-                    ->orWhereHas('aqvRecebimento');
+                    ->orWhereHas('equipeEscolarRecebimento');
             })->count();
 
             $aqvEmAtendimento = EquipeEscolarRecebimento::where('status_atendimento', 'em_atendimento')

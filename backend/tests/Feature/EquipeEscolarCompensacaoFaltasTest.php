@@ -119,4 +119,28 @@ class EquipeEscolarCompensacaoFaltasTest extends TestCase
             'compensacao_faltas_autorizada' => 'nao_autorizado',
         ]);
     }
+
+    public function test_professor_pode_encaminhar_fiap_falta_excedente_para_equipe_escolar_sem_plano_previo(): void
+    {
+        $fiapPendente = Ocorrencia::create([
+            'numero_sequencial' => 'FIAP-2026-0002',
+            'aluno_id' => $this->ocorrenciaFalta->aluno_id,
+            'tipo' => 'falta',
+            'status' => 'pendente',
+            'data_ocorrencia' => now()->toDateString(),
+            'registrado_por' => $this->instrutor->id,
+            'relato_dificuldades' => 'Faltas acima de 100% que precisam de avaliação da Equipe Escolar',
+        ]);
+
+        $response = $this->actingAs($this->instrutor)
+            ->postJson("/api/ocorrencias/{$fiapPendente->id}/encaminhar-equipe-escolar");
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'enviado_equipe_escolar');
+
+        $this->assertDatabaseHas('ocorrencias', [
+            'id' => $fiapPendente->id,
+            'status' => 'enviado_equipe_escolar',
+        ]);
+    }
 }

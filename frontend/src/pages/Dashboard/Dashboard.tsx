@@ -28,6 +28,7 @@ import { dashboardService, type DashboardStats } from "../../services/dashboardS
 import type { Ocorrencia } from "../../services/ocorrenciaService";
 import { OcorrenciaDetalhesModal } from "../Ocorrencias/OcorrenciaDetalhesModal";
 import { OcorrenciaModal } from "../Ocorrencias/OcorrenciaModal";
+import { getStatusConfig } from "../../components/StatusBadge/StatusBadge";
 import styles from "./Dashboard.module.css";
 
 function formatDate(dateStr?: string | null) {
@@ -98,51 +99,23 @@ export function Dashboard() {
         String(oc.aluno?.turma_id) === selectedTurmaId;
 
       const matchesStatus =
-        selectedStatus === "todos" || oc.status === selectedStatus;
+        selectedStatus === "todos" ||
+        oc.status === selectedStatus ||
+        ((selectedStatus === "enviado_equipe_escolar" || selectedStatus === "enviado_aqv") &&
+          (oc.status === "enviado_equipe_escolar" || oc.status === "enviado_aqv"));
 
       return matchesSearch && matchesTurma && matchesStatus;
     });
   }, [stats, searchTerm, selectedTurmaId, selectedStatus]);
 
   function getStatusStyle(status: string) {
-    switch (status) {
-      case "enviado_aqv":
-        return {
-          bg: "color-mix(in srgb, var(--color-primary) 10%, transparent)",
-          color: "var(--color-primary)",
-          dot: "var(--color-primary)",
-          label: "Encaminhado à Equipe Escolar",
-        };
-      case "pendente":
-        return {
-          bg: "color-mix(in srgb, var(--color-warning) 12%, transparent)",
-          color: "var(--color-warning)",
-          dot: "var(--color-warning)",
-          label: "Pendente de Envio",
-        };
-      case "assinado":
-      case "impresso":
-        return {
-          bg: "color-mix(in srgb, var(--color-success) 12%, transparent)",
-          color: "var(--color-success)",
-          dot: "var(--color-success)",
-          label: status === "assinado" ? "Assinado" : "Impresso",
-        };
-      case "pdf_gerado":
-        return {
-          bg: "color-mix(in srgb, #0059a8 12%, transparent)",
-          color: "#0059a8",
-          dot: "#0059a8",
-          label: "PDF Gerado",
-        };
-      default:
-        return {
-          bg: "var(--color-surface)",
-          color: "var(--color-text-secondary)",
-          dot: "var(--color-text-secondary)",
-          label: status,
-        };
-    }
+    const config = getStatusConfig(status);
+    return {
+      bg: config.bg,
+      color: config.color,
+      dot: config.dot,
+      label: config.label,
+    };
   }
 
   const kpis = stats?.kpis;
@@ -631,11 +604,11 @@ export function Dashboard() {
 
         {/* Card 3: Encaminhadas à Equipe Escolar */}
         <article
-          className={`${styles.kpiCard} ${styles.kpiCardAqv}`}
+          className={`${styles.kpiCard} ${styles.kpiCardEquipeEscolar}`}
           onClick={() =>
             navigate(
               user?.role === "instrutor"
-                ? "/ocorrencias?status=enviado_aqv"
+                ? "/ocorrencias?status=enviado_equipe_escolar"
                 : "/encaminhamentos-equipe-escolar"
             )
           }
@@ -743,7 +716,8 @@ export function Dashboard() {
             >
               <option value="todos">Todos os Status</option>
               <option value="pendente">Pendente de Envio</option>
-              <option value="enviado_aqv">Encaminhado à Equipe Escolar</option>
+              <option value="enviado_equipe_escolar">Enviado Equipe Escolar</option>
+              <option value="aguardando_assinatura">Aguardando Assinatura</option>
               <option value="pdf_gerado">PDF Gerado</option>
               <option value="impresso">Impresso</option>
               <option value="assinado">Assinado</option>

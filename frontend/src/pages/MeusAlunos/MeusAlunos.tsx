@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Camera, FileText, Users, Loader2, School } from "lucide-react";
+import { Search, Camera, FileText, Users, Loader2, School, X, Check } from "lucide-react";
 import { alunoService, type Aluno } from "../../services/alunoService";
 import { turmaService, type Turma } from "../../services/turmaService";
 import { UserAvatar } from "../../components/UserAvatar/UserAvatar";
 import { AlunoHistoricoModal } from "../Alunos/AlunoHistoricoModal";
+import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./MeusAlunos.module.css";
 
@@ -15,6 +16,8 @@ export function MeusAlunos() {
   const [isLoading, setIsLoading] = useState(true);
   const [uploadingAlunoId, setUploadingAlunoId] = useState<number | null>(null);
   const [historicoAlunoId, setHistoricoAlunoId] = useState<number | null>(null);
+  const [uploadConfirm, setUploadConfirm] = useState<{ aluno: Aluno; file: File; previewUrl: string } | null>(null);
+  const [deleteConfirmAluno, setDeleteConfirmAluno] = useState<Aluno | null>(null);
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -78,7 +81,7 @@ export function MeusAlunos() {
     return () => controller.abort();
   }, [search, selectedTurmaId]);
 
-  async function handleUploadFoto(alunoId: number, file: File) {
+  function handleSelectFile(aluno: Aluno, file: File) {
     if (!file.type.startsWith("image/")) {
       showAvatarToast("Por favor, selecione um arquivo de imagem válido (JPG, PNG ou WEBP).", "Formato Inválido", "error");
       return;
@@ -89,13 +92,30 @@ export function MeusAlunos() {
       return;
     }
 
+    const previewUrl = URL.createObjectURL(file);
+    setUploadConfirm({ aluno, file, previewUrl });
+  }
+
+  function handleCancelUpload() {
+    if (uploadConfirm?.previewUrl) {
+      URL.revokeObjectURL(uploadConfirm.previewUrl);
+    }
+    setUploadConfirm(null);
+  }
+
+  async function handleConfirmUpload() {
+    if (!uploadConfirm) return;
+    const { aluno, file, previewUrl } = uploadConfirm;
+
     try {
-      setUploadingAlunoId(alunoId);
-      const updatedAluno = await alunoService.uploadFoto(alunoId, file);
+      setUploadingAlunoId(aluno.id);
+      const updatedAluno = await alunoService.uploadFoto(aluno.id, file);
       setAlunos((prev) =>
-        prev.map((a) => (a.id === alunoId ? { ...a, foto_url: updatedAluno.foto_url } : a))
+        prev.map((a) => (a.id === aluno.id ? { ...a, foto_url: updatedAluno.foto_url, foto: updatedAluno.foto } : a))
       );
-      showAvatarToast("Foto do estudante atualizada com sucesso!", "Foto Atualizada", "success");
+      showAvatarToast("Foto do estudante definida com sucesso!", "Foto Atualizada", "success");
+      URL.revokeObjectURL(previewUrl);
+      setUploadConfirm(null);
     } catch (err: any) {
       showAvatarToast(
         err.response?.data?.message || "Não foi possível enviar a foto do estudante.",
@@ -104,6 +124,24 @@ export function MeusAlunos() {
       );
     } finally {
       setUploadingAlunoId(null);
+    }
+  }
+
+  async function handleConfirmDeleteFoto() {
+    if (!deleteConfirmAluno) return;
+    try {
+      await alunoService.deleteFoto(deleteConfirmAluno.id);
+      setAlunos((prev) =>
+        prev.map((a) => (a.id === deleteConfirmAluno.id ? { ...a, foto_url: null, foto: null } : a))
+      );
+      showAvatarToast("Foto do estudante removida e excluída permanentemente!", "Foto Excluída", "success");
+      setDeleteConfirmAluno(null);
+    } catch (err: any) {
+      showAvatarToast(
+        err.response?.data?.message || "Não foi possível remover a foto do estudante.",
+        "Erro ao Remover",
+        "error"
+      );
     }
   }
 
@@ -184,6 +222,22 @@ export function MeusAlunos() {
                       size="lg"
                     />
 
+                    {/* Botão X para remover foto existente permanentemente */}
+                    {aluno.foto_url && !isUploading && (
+                      <button
+                        type="button"
+                        className={styles.removePhotoBtn}
+                        title="Remover foto do aluno permanentemente"
+                        aria-label="Remover foto do aluno permanentemente"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirmAluno(aluno);
+                        }}
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+
                     {isUploading ? (
                       <div className={styles.uploadLoadingSpinner}>
                         <Loader2 size={18} className="animate-spin" />
@@ -191,7 +245,7 @@ export function MeusAlunos() {
                     ) : (
                       <label
                         className={styles.uploadPhotoBtn}
-                        title="Clique para adicionar ou atualizar a foto deste aluno"
+                        title="Clique para adicionar ou alterar a foto deste aluno"
                       >
                         <Camera size={14} />
                         <input
@@ -201,7 +255,7 @@ export function MeusAlunos() {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              handleUploadFoto(aluno.id, file);
+                              handleSelectFile(aluno, file);
                               e.target.value = "";
                             }
                           }}
@@ -265,6 +319,78 @@ export function MeusAlunos() {
           })}
         </div>
       )}
+
+      {/* Modal de Confirmação de Upload de Foto (Colocar ou Cancelar) */}
+      {uploadConfirm && (
+        <div
+          className={styles.fotoModalOverlay}
+          onClick={handleCancelUpload}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className={styles.fotoModalCard} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.fotoModalHeader}>
+              <h2 className={styles.fotoModalTitle}>Definir Foto do Aluno</h2>
+              <p className={styles.fotoModalSubtitle}>
+                Verifique a foto selecionada antes de salvar no sistema.
+              </p>
+            </div>
+
+            <div className={styles.fotoModalPreviewWrapper}>
+              <img
+                src={uploadConfirm.previewUrl}
+                alt={`Prévia da foto de ${uploadConfirm.aluno.nome}`}
+                className={styles.fotoModalPreviewImg}
+              />
+            </div>
+
+            <div className={styles.fotoModalStudentInfo}>
+              <div className={styles.fotoModalStudentName}>{uploadConfirm.aluno.nome}</div>
+              <div className={styles.fotoModalStudentRa}>RA: {uploadConfirm.aluno.matricula}</div>
+            </div>
+
+            <div className={styles.fotoModalActions}>
+              <button
+                type="button"
+                className={styles.fotoModalBtnCancelar}
+                onClick={handleCancelUpload}
+                disabled={uploadingAlunoId !== null}
+              >
+                <X size={16} />
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                className={styles.fotoModalBtnColocar}
+                onClick={handleConfirmUpload}
+                disabled={uploadingAlunoId !== null}
+              >
+                {uploadingAlunoId !== null ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Check size={16} />
+                )}
+                Colocar Foto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Remoção Física da Foto */}
+      <ConfirmModal
+        isOpen={deleteConfirmAluno !== null}
+        onClose={() => setDeleteConfirmAluno(null)}
+        onConfirm={handleConfirmDeleteFoto}
+        title="Remover Foto do Aluno"
+        subtitle={deleteConfirmAluno?.nome}
+        description="Tem certeza de que deseja remover a foto deste estudante? O arquivo físico da imagem será permanentemente excluído do servidor."
+        warningText="Esta ação não pode ser desfeita. O estudante voltará a exibir o avatar padrão com as iniciais do nome."
+        confirmLabel="Excluir Foto Definitivamente"
+        confirmVariant="danger"
+        icon="trash"
+      />
 
       {/* Modal de Histórico do Aluno */}
       <AlunoHistoricoModal

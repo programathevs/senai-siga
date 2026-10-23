@@ -245,14 +245,14 @@ export const UsuarioModal: React.FC<UsuarioModalProps> = ({
               {/* Equipe Escolar */}
               <div
                 className={`${styles.roleCard} ${
-                  role === "equipe_escolar" || role === "aqv" ? styles.roleCardActiveAqv : ""
+                  role === "equipe_escolar" || role === "aqv" ? styles.roleCardActiveEquipeEscolar : ""
                 }`}
                 onClick={() => setRole("equipe_escolar")}
                 role="button"
                 tabIndex={0}
               >
                 <div className={styles.roleHeader}>
-                  <div className={`${styles.roleIconBadge} ${styles.roleIconAqv}`}>
+                  <div className={`${styles.roleIconBadge} ${styles.roleIconEquipeEscolar}`}>
                     <HeartHandshake size={16} />
                   </div>
                   <span className={styles.roleTitle}>Equipe Escolar</span>

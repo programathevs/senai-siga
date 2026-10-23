@@ -683,6 +683,7 @@ export function OcorrenciaModal({
 
       if (isEditing && ocorrenciaToEdit) {
         const hadAqvFlow =
+          ocorrenciaToEdit.status === "enviado_equipe_escolar" ||
           ocorrenciaToEdit.status === "enviado_aqv" ||
           ocorrenciaToEdit.status === "assinado" ||
           Boolean((ocorrenciaToEdit as any).aqv_recebimento);

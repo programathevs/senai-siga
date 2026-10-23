@@ -537,7 +537,7 @@ export function OcorrenciaDetalhesModal({
             {onEncaminharAqv && canSendAqv && (
               <button
                 type="button"
-                className={`${styles.btnAction} ${styles.btnAqv}`}
+                className={`${styles.btnAction} ${styles.btnEquipeEscolar}`}
                 onClick={() => onEncaminharAqv(ocorrencia.id)}
               >
                 <Headphones size={15} />

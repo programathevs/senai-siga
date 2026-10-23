@@ -168,5 +168,36 @@ class AlunoControllerTest extends TestCase
         $firstItem = $response->json('data.0');
         $this->assertEquals(['id', 'nome', 'ra'], array_keys($firstItem));
     }
+
+    public function test_user_can_upload_and_delete_foto_do_aluno(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $instrutor = User::factory()->create(['role' => UserRole::INSTRUTOR]);
+        $aluno = Aluno::factory()->create();
+
+        $file = \Illuminate\Http\UploadedFile::fake()->create('aluno_avatar.jpg', 100, 'image/jpeg');
+
+        $responseUpload = $this->actingAs($instrutor)->postJson("/api/alunos/{$aluno->id}/foto", [
+            'foto' => $file,
+        ]);
+
+        $responseUpload->assertOk()
+            ->assertJsonPath('message', 'Foto do aluno atualizada com sucesso.');
+
+        $aluno->refresh();
+        $this->assertNotNull($aluno->foto);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($aluno->foto);
+
+        // Agora exclui a foto com DELETE
+        $responseDelete = $this->actingAs($instrutor)->deleteJson("/api/alunos/{$aluno->id}/foto");
+
+        $responseDelete->assertOk()
+            ->assertJsonPath('message', 'Foto do aluno removida com sucesso.');
+
+        \Illuminate\Support\Facades\Storage::disk('public')->assertMissing($aluno->foto);
+        $aluno->refresh();
+        $this->assertNull($aluno->foto);
+    }
 }
 

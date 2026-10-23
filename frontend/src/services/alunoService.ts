@@ -141,6 +141,11 @@ export const alunoService = {
     return response.data.data;
   },
 
+  async deleteFoto(id: number): Promise<Aluno> {
+    const response = await api.delete<{ message: string; data: Aluno }>(`/api/alunos/${id}/foto`);
+    return response.data.data;
+  },
+
   async deleteAluno(id: number): Promise<void> {
     await api.delete(`/api/alunos/${id}`);
   },

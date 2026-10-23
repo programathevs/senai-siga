@@ -70,7 +70,12 @@ class OcorrenciaController extends Controller
 
         // Filtro por Status
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $status = $request->input('status');
+            if (in_array($status, ['enviado_aqv', 'enviado_equipe_escolar'])) {
+                $query->whereIn('status', ['enviado_aqv', 'enviado_equipe_escolar']);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         // Filtro por Aluno específico
@@ -137,7 +142,7 @@ class OcorrenciaController extends Controller
                 COUNT(CASE WHEN tipo = "falta" THEN 1 END) as total_falta,
                 COUNT(CASE WHEN tipo = "comportamento" THEN 1 END) as total_comportamento,
                 COUNT(CASE WHEN tipo = "desempenho" THEN 1 END) as total_desempenho,
-                COUNT(CASE WHEN status = "enviado_aqv" THEN 1 END) as total_aqv,
+                COUNT(CASE WHEN status IN ("enviado_aqv", "enviado_equipe_escolar") THEN 1 END) as total_aqv,
                 COUNT(CASE WHEN status = "pendente" THEN 1 END) as total_pendente
             ', [$startOfMonth, $endOfMonth])
             ->first();
@@ -650,9 +655,10 @@ class OcorrenciaController extends Controller
             ], 403);
         }
 
-        if ($ocorrencia->has_plano_pendente) {
+        // Apenas FIAPs de desempenho/aproveitamento exigem a elaboração prévia de um Plano antes do encaminhamento
+        if (in_array($ocorrencia->tipo, ['desempenho', 'aproveitamento']) && $ocorrencia->has_plano_pendente) {
             return response()->json([
-                'message' => 'Não é possível encaminhar para a Equipe Escolar pois esta FIAP possui um Plano de Recuperação pendente.',
+                'message' => 'Não é possível encaminhar para a Equipe Escolar pois esta FIAP de desempenho necessita da elaboração prévia de um Plano de Recuperação.',
             ], 422);
         }
 

@@ -139,7 +139,7 @@ export function Usuarios() {
       case "equipe_escolar":
       case "aqv":
         return (
-          <span className={`${styles.roleBadge} ${styles.roleBadgeAqv}`}>
+          <span className={`${styles.roleBadge} ${styles.roleBadgeEquipeEscolar}`}>
             <HeartHandshake size={13} />
             Equipe Escolar
           </span>

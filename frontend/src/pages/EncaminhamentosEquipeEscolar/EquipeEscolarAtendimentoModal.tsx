@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
-import { X, Headphones, CheckCircle2, Save, Loader2, AlertCircle } from "lucide-react";
+import {
+  X,
+  Headphones,
+  CheckCircle2,
+  Save,
+  Loader2,
+  AlertCircle,
+  FileCheck,
+  FileX,
+  AlertTriangle,
+  Plus,
+} from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   equipeEscolarService,
@@ -26,20 +37,55 @@ function formatToDateTimeLocal(dateStr?: string | null): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-const SUGESTOES_JUSTIFICATIVA = [
-  "Estudante reconheceu a conduta inadequada e comprometeu-se com a mudança de postura e foco nas aulas.",
-  "Estudante relatou dificuldades de concentração e compreensão do conteúdo pedagógico.",
-  "Estudante justificou ausências por motivos de saúde/força maior com documentação comprobatória.",
-  "Estudante alegou desentendimento interpessoal pontual e aceitou diálogo mediado com os colegas.",
-  "Responsável legal compareceu ao atendimento e alinhou rotina de estudos em ambiente familiar."
+interface SugestaoItem {
+  label: string;
+  text: string;
+}
+
+const SUGESTOES_JUSTIFICATIVA: SugestaoItem[] = [
+  {
+    label: "Mudança de postura",
+    text: "Estudante reconheceu a conduta inadequada e comprometeu-se com a mudança de postura e foco nas aulas.",
+  },
+  {
+    label: "Dificuldade pedagógica",
+    text: "Estudante relatou dificuldades de concentração e compreensão do conteúdo pedagógico.",
+  },
+  {
+    label: "Atestado / Saúde",
+    text: "Estudante justificou ausências por motivos de saúde/força maior com documentação comprobatória.",
+  },
+  {
+    label: "Conflito interpessoal",
+    text: "Estudante alegou desentendimento interpessoal pontual e aceitou diálogo mediado com os colegas.",
+  },
+  {
+    label: "Alinhamento familiar",
+    text: "Responsável legal compareceu ao atendimento e alinhou rotina de estudos em ambiente familiar.",
+  },
 ];
 
-const SUGESTOES_PARECER = [
-  "Orientado(a) quanto às normas regimentais e convivência escolar. Alinhado plano de acompanhamento pedagógico.",
-  "Encaminhado(a) para apoio pedagógico e reforço escolar no contraturno.",
-  "Agendada reunião de alinhamento com os responsáveis legais para acompanhamento da frequência e rendimento.",
-  "Estudante advertido(a) formalmente com termo de compromisso pedagógico assinado.",
-  "Alinhado acompanhamento conjunto e contínuo entre coordenação pedagógica e docentes da turma."
+const SUGESTOES_PARECER: SugestaoItem[] = [
+  {
+    label: "Normas regimentais",
+    text: "Orientado(a) quanto às normas regimentais e convivência escolar. Alinhado plano de acompanhamento pedagógico.",
+  },
+  {
+    label: "Reforço no contraturno",
+    text: "Encaminhado(a) para apoio pedagógico e reforço escolar no contraturno.",
+  },
+  {
+    label: "Reunião c/ responsáveis",
+    text: "Agendada reunião de alinhamento com os responsáveis legais para acompanhamento da frequência e rendimento.",
+  },
+  {
+    label: "Termo de compromisso",
+    text: "Estudante advertido(a) formalmente com termo de compromisso pedagógico assinado.",
+  },
+  {
+    label: "Acompanhamento conjunto",
+    text: "Alinhado acompanhamento conjunto e contínuo entre coordenação pedagógica e docentes da turma.",
+  },
 ];
 
 export function EquipeEscolarAtendimentoModal({
@@ -206,17 +252,7 @@ export function EquipeEscolarAtendimentoModal({
         {/* Body */}
         <div className={styles.body}>
           {errorMsg && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              padding: "0.75rem 1rem",
-              borderRadius: "var(--radius)",
-              backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
-              color: "var(--color-primary)",
-              fontSize: "0.875rem",
-              border: "1px solid var(--color-primary)"
-            }}>
+            <div className={styles.errorAlert}>
               <AlertCircle size={18} />
               <span>{errorMsg}</span>
             </div>
@@ -226,15 +262,7 @@ export function EquipeEscolarAtendimentoModal({
           <div className={styles.summaryCard}>
             <div className={styles.summaryHeader}>
               <span className={styles.fiapNumber}>{ocorrencia.numero_sequencial}</span>
-              <span style={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                padding: "0.2rem 0.5rem",
-                borderRadius: "var(--radius)",
-                backgroundColor: "color-mix(in srgb, var(--color-primary) 15%, transparent)",
-                color: "var(--color-primary)"
-              }}>
+              <span className={styles.tipoBadge}>
                 {ocorrencia.tipo}
               </span>
             </div>
@@ -300,17 +328,18 @@ export function EquipeEscolarAtendimentoModal({
               </label>
 
               <div className={styles.sugestoesContainer}>
-                <span className={styles.sugestoesLabel}>Sugestões rápidas de preenchimento:</span>
+                <span className={styles.sugestoesLabel}>Sugestões rápidas de justificativa:</span>
                 <div className={styles.chipsGrid}>
                   {SUGESTOES_JUSTIFICATIVA.map((sugestao, idx) => (
                     <button
                       key={idx}
                       type="button"
                       className={styles.chipButton}
-                      onClick={() => setJustificativaAluno((prev) => (prev ? `${prev}\n${sugestao}` : sugestao))}
-                      title="Clique para adicionar este texto"
+                      onClick={() => setJustificativaAluno((prev) => (prev ? `${prev}\n${sugestao.text}` : sugestao.text))}
+                      title={`Inserir: "${sugestao.text}"`}
                     >
-                      + {sugestao}
+                      <Plus size={13} className={styles.chipPlus} />
+                      <span>{sugestao.label}</span>
                     </button>
                   ))}
                 </div>
@@ -333,7 +362,7 @@ export function EquipeEscolarAtendimentoModal({
               <label className={styles.label}>
                 Parecer, Recomendações e Encaminhamentos Acordados (Equipe Escolar)
                 <span className={styles.required}>*</span>
-                <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "var(--color-text-secondary)", marginLeft: "6px" }}>
+                <span className={styles.labelHint}>
                   (Obrigatório para concluir e assinar a FIAP)
                 </span>
               </label>
@@ -346,10 +375,11 @@ export function EquipeEscolarAtendimentoModal({
                       key={idx}
                       type="button"
                       className={styles.chipButton}
-                      onClick={() => setParecerAqv((prev) => (prev ? `${prev}\n${sugestao}` : sugestao))}
-                      title="Clique para adicionar este texto"
+                      onClick={() => setParecerAqv((prev) => (prev ? `${prev}\n${sugestao.text}` : sugestao.text))}
+                      title={`Inserir: "${sugestao.text}"`}
                     >
-                      + {sugestao}
+                      <Plus size={13} className={styles.chipPlus} />
+                      <span>{sugestao.label}</span>
                     </button>
                   ))}
                 </div>
@@ -367,118 +397,98 @@ export function EquipeEscolarAtendimentoModal({
 
             {/* Triagem de Compensação de Ausências (Exclusivo para FIAP de Falta acima do Limite) */}
             {isFaltaEstourada && (
-              <div
-                className={styles.formGroupFull}
-                style={{
-                  backgroundColor: "color-mix(in srgb, var(--color-primary) 5%, transparent)",
-                  border: "1px solid color-mix(in srgb, var(--color-primary) 30%, transparent)",
-                  borderRadius: "var(--radius)",
-                  padding: "1rem 1.15rem",
-                  marginTop: "0.25rem",
-                }}
-              >
-                <label
-                  className={styles.label}
-                  style={{
-                    fontSize: "0.875rem",
-                    color: "var(--color-primary)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  <AlertCircle size={17} />
-                  <strong>Compensação de Ausências (Faltas Acima do Limite de 100%)</strong>
-                  <span className={styles.required}>*</span>
-                </label>
-                <p
-                  style={{
-                    fontSize: "0.8rem",
-                    color: "var(--color-text-secondary)",
-                    margin: "4px 0 12px 0",
-                  }}
-                >
-                  Defina se o estudante terá direito a compensar as ausências excedentes via Plano de Recuperação:
+              <div className={`${styles.formGroupFull} ${styles.decisionSection}`}>
+                <div className={styles.decisionHeader}>
+                  <div className={styles.decisionTitleGroup}>
+                    <AlertTriangle size={18} className={styles.decisionIcon} />
+                    <span className={styles.decisionTitle}>
+                      Decisão sobre Compensação de Ausências (Faltas Acima do Limite de 100%)
+                    </span>
+                  </div>
+                  <span className={styles.decisionRequiredBadge}>Obrigatório</span>
+                </div>
+
+                <p className={styles.decisionDescription}>
+                  Defina se o estudante terá direito a compensar as ausências excedentes por meio de Plano de Recuperação (PCA):
                 </p>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "0.85rem",
-                      cursor: "pointer",
-                      fontWeight: 500,
-                    }}
+                <div className={styles.radioCardsGrid}>
+                  {/* Opção: Não Autorizado */}
+                  <button
+                    type="button"
+                    className={`${styles.radioCard} ${
+                      compensacaoFaltasAutorizada === "nao_autorizado" ? styles.radioCardDangerSelected : ""
+                    }`}
+                    onClick={() => setCompensacaoFaltasAutorizada("nao_autorizado")}
                   >
-                    <input
-                      type="radio"
-                      name="compensacao_faltas"
-                      value="nao_autorizado"
-                      checked={compensacaoFaltasAutorizada === "nao_autorizado"}
-                      onChange={() => setCompensacaoFaltasAutorizada("nao_autorizado")}
-                    />
-                    <span style={{ color: "var(--color-danger, #e30613)" }}>
-                      🔴 <strong>Não Autorizado:</strong> Faltas injustificadas / Sem amparo legal (Não gera plano para o professor).
-                    </span>
-                  </label>
+                    <div className={styles.radioCardTop}>
+                      <div className={styles.radioIndicator}>
+                        {compensacaoFaltasAutorizada === "nao_autorizado" && <span className={styles.radioDot} />}
+                      </div>
+                      <div className={`${styles.cardIconBadge} ${styles.iconBadgeDanger}`}>
+                        <FileX size={15} />
+                      </div>
+                      <span className={styles.radioCardLabel}>Não Autorizado</span>
+                    </div>
+                    <p className={styles.radioCardDesc}>
+                      Faltas injustificadas ou sem amparo legal. Finaliza sem gerar plano de compensação.
+                    </p>
+                  </button>
 
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "0.85rem",
-                      cursor: "pointer",
-                      fontWeight: 500,
-                    }}
+                  {/* Opção: Com Atestado Médico */}
+                  <button
+                    type="button"
+                    className={`${styles.radioCard} ${
+                      compensacaoFaltasAutorizada === "autorizado_atestado" ? styles.radioCardSuccessSelected : ""
+                    }`}
+                    onClick={() => setCompensacaoFaltasAutorizada("autorizado_atestado")}
                   >
-                    <input
-                      type="radio"
-                      name="compensacao_faltas"
-                      value="autorizado_atestado"
-                      checked={compensacaoFaltasAutorizada === "autorizado_atestado"}
-                      onChange={() => setCompensacaoFaltasAutorizada("autorizado_atestado")}
-                    />
-                    <span style={{ color: "var(--color-success, #16a34a)" }}>
-                      🟢 <strong>Sim — Com Atestado Médico / Amparo Legal:</strong> Justificativa protocolada e comprovada.
-                    </span>
-                  </label>
+                    <div className={styles.radioCardTop}>
+                      <div className={styles.radioIndicator}>
+                        {compensacaoFaltasAutorizada === "autorizado_atestado" && <span className={styles.radioDot} />}
+                      </div>
+                      <div className={`${styles.cardIconBadge} ${styles.iconBadgeSuccess}`}>
+                        <FileCheck size={15} />
+                      </div>
+                      <span className={styles.radioCardLabel}>Com Atestado / Amparo</span>
+                    </div>
+                    <p className={styles.radioCardDesc}>
+                      Justificativa médica ou legal comprovada. Autoriza docente a elaborar plano.
+                    </p>
+                  </button>
 
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "0.85rem",
-                      cursor: "pointer",
-                      fontWeight: 500,
-                    }}
+                  {/* Opção: Em Caráter Excepcional */}
+                  <button
+                    type="button"
+                    className={`${styles.radioCard} ${
+                      compensacaoFaltasAutorizada === "autorizado_excepcional" ? styles.radioCardWarningSelected : ""
+                    }`}
+                    onClick={() => setCompensacaoFaltasAutorizada("autorizado_excepcional")}
                   >
-                    <input
-                      type="radio"
-                      name="compensacao_faltas"
-                      value="autorizado_excepcional"
-                      checked={compensacaoFaltasAutorizada === "autorizado_excepcional"}
-                      onChange={() => setCompensacaoFaltasAutorizada("autorizado_excepcional")}
-                    />
-                    <span style={{ color: "#d97706" }}>
-                      🟡 <strong>Sim — Em Caráter Excepcional:</strong> Aprovado pela Gestão / Direção Escolar.
-                    </span>
-                  </label>
+                    <div className={styles.radioCardTop}>
+                      <div className={styles.radioIndicator}>
+                        {compensacaoFaltasAutorizada === "autorizado_excepcional" && <span className={styles.radioDot} />}
+                      </div>
+                      <div className={`${styles.cardIconBadge} ${styles.iconBadgeWarning}`}>
+                        <AlertCircle size={15} />
+                      </div>
+                      <span className={styles.radioCardLabel}>Caráter Excepcional</span>
+                    </div>
+                    <p className={styles.radioCardDesc}>
+                      Aprovado pela Gestão / Direção Escolar. Requer justificativa institucional abaixo.
+                    </p>
+                  </button>
                 </div>
 
                 {compensacaoFaltasAutorizada === "autorizado_excepcional" && (
-                  <div style={{ marginTop: "12px" }}>
-                    <label className={styles.label} style={{ fontSize: "0.8rem" }}>
+                  <div className={styles.excepcionalidadeBox}>
+                    <label className={styles.label}>
                       Justificativa da Excepcionalidade (Aprovada pela Direção/Gestão){" "}
                       <span className={styles.required}>*</span>
                     </label>
                     <textarea
                       className={styles.textarea}
                       rows={2}
-                      style={{ minHeight: "3.5rem", marginTop: "4px" }}
                       placeholder="Descreva detalhadamente o motivo da concessão excepcional sem atestado (ex: vulnerabilidade social, luto, alinhamento institucional)..."
                       value={motivoExcepcionalidade}
                       onChange={(e) => setMotivoExcepcionalidade(e.target.value)}
@@ -489,19 +499,21 @@ export function EquipeEscolarAtendimentoModal({
             )}
 
             {/* Checkbox de Confirmação de Assinatura */}
-            <div
-              className={styles.formGroupFull}
-              style={{ cursor: "pointer" }}
-              onClick={() => setConfirmarAssinatura(!confirmarAssinatura)}
-            >
-              <div className={styles.signatureCard}>
-                <input
-                  type="checkbox"
-                  className={styles.checkbox}
-                  checked={confirmarAssinatura}
-                  onChange={(e) => setConfirmarAssinatura(e.target.checked)}
-                  onClick={(e) => e.stopPropagation()}
-                />
+            <div className={styles.formGroupFull}>
+              <div
+                className={`${styles.signatureCard} ${confirmarAssinatura ? styles.signatureCardActive : ""}`}
+                onClick={() => setConfirmarAssinatura(!confirmarAssinatura)}
+              >
+                <div className={styles.signatureCheckboxWrapper}>
+                  <input
+                    type="checkbox"
+                    id="confirmar_assinatura_chk"
+                    className={styles.checkbox}
+                    checked={confirmarAssinatura}
+                    onChange={(e) => setConfirmarAssinatura(e.target.checked)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
                 <div className={styles.signatureInfo}>
                   <span className={styles.signatureTitle}>
                     Documento físico da FIAP assinado pelo estudante ou responsável legal
@@ -526,27 +538,41 @@ export function EquipeEscolarAtendimentoModal({
             Cancelar
           </button>
 
-          {!confirmarAssinatura && (
+          {!confirmarAssinatura ? (
+            <>
+              <button
+                type="button"
+                className={`${styles.saveDraftBtn} ${isSubmitting ? styles.btnDisabled : ""}`}
+                onClick={() => handleSubmit(false)}
+                disabled={isSubmitting}
+                title="Salvar parecer mantendo a FIAP aguardando colheita de assinatura física"
+              >
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                <span>Salvar (Aguardar Assinatura)</span>
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.confirmBtn} ${isSubmitting ? styles.btnDisabled : ""}`}
+                onClick={() => handleSubmit(true)}
+                disabled={isSubmitting}
+                title="Concluir o atendimento formalizando a assinatura"
+              >
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                <span>Concluir & Confirmar Assinatura</span>
+              </button>
+            </>
+          ) : (
             <button
               type="button"
-              className={`${styles.saveDraftBtn} ${isSubmitting ? styles.btnDisabled : ""}`}
-              onClick={() => handleSubmit(false)}
+              className={`${styles.confirmBtn} ${isSubmitting ? styles.btnDisabled : ""}`}
+              onClick={() => handleSubmit(true)}
               disabled={isSubmitting}
             >
-              {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              <span>Salvar (Aguardar Assinatura)</span>
+              {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              <span>Salvar e Concluir FIAP (Assinado)</span>
             </button>
           )}
-
-          <button
-            type="button"
-            className={`${styles.confirmBtn} ${isSubmitting ? styles.btnDisabled : ""}`}
-            onClick={() => handleSubmit(true)}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-            <span>{confirmarAssinatura ? "Salvar e Concluir FIAP" : "Concluir & Confirmar Assinatura"}</span>
-          </button>
         </div>
       </div>
     </div>

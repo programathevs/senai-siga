@@ -20,7 +20,13 @@ class AuditoriaController extends Controller
         // Filtro por Ação
         if ($acao = $request->input('acao')) {
             if ($acao !== 'todas') {
-                $query->where('acao', $acao);
+                if ($acao === 'encaminhamento_equipe_escolar' || $acao === 'encaminhamento_aqv') {
+                    $query->whereIn('acao', ['encaminhamento_equipe_escolar', 'encaminhamento_aqv']);
+                } elseif ($acao === 'atendimento_equipe_escolar' || $acao === 'atendimento_aqv') {
+                    $query->whereIn('acao', ['atendimento_equipe_escolar', 'atendimento_aqv']);
+                } else {
+                    $query->where('acao', $acao);
+                }
             }
         }
 

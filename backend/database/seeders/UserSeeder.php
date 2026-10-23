@@ -39,14 +39,6 @@ class UserSeeder extends Seeder
                 'role' => 'equipe_escolar',
                 'deve_trocar_senha' => false,
             ],
-            [
-                'name' => 'Equipe Escolar SENAI (Legado)',
-                'email' => 'aqv@senai.br',
-                'email_verified_at' => now(),
-                'password' => Hash::make('password'),
-                'role' => 'equipe_escolar',
-                'deve_trocar_senha' => false,
-            ],
             // 8 Professores Oficiais
             [
                 'name' => 'Florisvaldo Antonio Crepaldi Junior',

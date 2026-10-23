@@ -81,7 +81,12 @@ class RelatorioController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $status = $request->input('status');
+            if (in_array($status, ['enviado_aqv', 'enviado_equipe_escolar'])) {
+                $query->whereIn('status', ['enviado_aqv', 'enviado_equipe_escolar']);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         // Filtro por Intervalo de Datas
@@ -110,7 +115,7 @@ class RelatorioController extends Controller
             COUNT(CASE WHEN ocorrencias.tipo = "falta" THEN 1 END) as total_faltas,
             COUNT(CASE WHEN ocorrencias.tipo = "comportamento" THEN 1 END) as total_comportamento,
             COUNT(CASE WHEN ocorrencias.tipo = "desempenho" THEN 1 END) as total_desempenho,
-            COUNT(CASE WHEN ocorrencias.status = "enviado_aqv" THEN 1 END) as total_aqv,
+            COUNT(CASE WHEN ocorrencias.status IN ("enviado_aqv", "enviado_equipe_escolar") THEN 1 END) as total_aqv,
             COUNT(CASE WHEN ocorrencias.status IN ("assinado", "impresso") THEN 1 END) as total_resolvidas,
             COUNT(DISTINCT ocorrencias.aluno_id) as alunos_unicos
         ')->first();

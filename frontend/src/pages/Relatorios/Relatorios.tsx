@@ -28,6 +28,7 @@ import type { Ocorrencia } from "../../services/ocorrenciaService";
 import { Pagination } from "../../components/Pagination/Pagination";
 import type { PaginationMeta } from "../../types/pagination";
 import { OcorrenciaDetalhesModal } from "../Ocorrencias/OcorrenciaDetalhesModal";
+import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
 import styles from "./Relatorios.module.css";
 
 function formatDate(dateStr?: string | null) {
@@ -469,7 +470,8 @@ export function Relatorios() {
             >
               <option value="">Todos os Status</option>
               <option value="pendente">Pendente de Envio</option>
-              <option value="enviado_aqv">Encaminhado à Equipe Escolar</option>
+              <option value="enviado_equipe_escolar">Enviado Equipe Escolar</option>
+              <option value="aguardando_assinatura">Aguardando Assinatura</option>
               <option value="pdf_gerado">PDF Gerado</option>
               <option value="impresso">Impresso</option>
               <option value="assinado">Assinado</option>
@@ -663,40 +665,7 @@ export function Relatorios() {
                         </td>
 
                         <td className={styles.td}>
-                          <span
-                            className={styles.statusPill}
-                            style={{
-                              backgroundColor:
-                                oc.status === "enviado_aqv"
-                                  ? "rgba(0, 89, 168, 0.12)"
-                                  : oc.status === "pendente"
-                                    ? "rgba(217, 119, 6, 0.12)"
-                                    : "rgba(16, 185, 129, 0.12)",
-                              color:
-                                oc.status === "enviado_aqv"
-                                  ? "var(--color-primary)"
-                                  : oc.status === "pendente"
-                                    ? "var(--color-warning)"
-                                    : "var(--color-success)",
-                            }}
-                          >
-                            <span
-                              className={styles.statusDot}
-                              style={{
-                                backgroundColor:
-                                  oc.status === "enviado_aqv"
-                                    ? "var(--color-primary)"
-                                    : oc.status === "pendente"
-                                      ? "var(--color-warning)"
-                                      : "var(--color-success)",
-                              }}
-                            />
-                            {oc.status === "enviado_aqv"
-                              ? "Encaminhado à Equipe Escolar"
-                              : oc.status === "pendente"
-                                ? "Pendente"
-                                : "Concluído"}
-                          </span>
+                          <StatusBadge status={oc.status} showDot />
                         </td>
 
                         <td className={styles.td}>

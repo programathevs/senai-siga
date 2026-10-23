@@ -79,21 +79,16 @@ class Ocorrencia extends Model
             return false;
         }
 
+        // Para ocorrências do tipo falta, só há plano pendente caso a Equipe Escolar
+        // já tenha atendido o aluno e autorizado a compensação de faltas (com atestado ou excepcional)
         if ($this->tipo === 'falta') {
-            $unidades = $this->relationLoaded('unidades')
-                ? $this->unidades
-                : $this->unidades()->get();
+            $aqvRec = $this->relationLoaded('aqvRecebimento')
+                ? $this->aqvRecebimento
+                : $this->aqvRecebimento()->first();
 
-            if ($unidades->isEmpty()) {
-                return false;
-            }
+            $autorizado = $aqvRec && in_array($aqvRec->compensacao_faltas_autorizada, ['autorizado_atestado', 'autorizado_excepcional']);
 
-            return $unidades->contains(function ($unidade) {
-                if ($unidade->limite_faltas_aulas > 0) {
-                    return $unidade->quantidade_faltas > $unidade->limite_faltas_aulas;
-                }
-                return $unidade->percentual_atingido > 100.0;
-            });
+            return (bool) $autorizado;
         }
 
         return true;
@@ -167,16 +162,19 @@ class Ocorrencia extends Model
     }
 
     /**
-     * Gera o próximo número sequencial anual no padrão institucional FIAP-AAAA-XXXX.
+     * Gera o próximo número sequencial anual no padrão institucional AAAA-XXXX (ex: 2026-0008).
      */
     public static function gerarProximoNumeroSequencial(): string
     {
         $anoAtual = Carbon::now()->year;
-        $prefixo = "FIAP-{$anoAtual}-";
+        $prefixo = "{$anoAtual}-";
 
-        $ultimaOcorrencia = static::where('numero_sequencial', 'like', "{$prefixo}%")
-            ->orderBy('id', 'desc')
-            ->first();
+        $ultimaOcorrencia = static::where(function ($q) use ($anoAtual) {
+            $q->where('numero_sequencial', 'like', "{$anoAtual}-%")
+              ->orWhere('numero_sequencial', 'like', "FIAP-{$anoAtual}-%");
+        })
+        ->orderBy('id', 'desc')
+        ->first();
 
         if (! $ultimaOcorrencia) {
             return "{$prefixo}0001";

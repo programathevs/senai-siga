@@ -64,7 +64,7 @@ export function Sidebar() {
       to: "/meus-alunos",
       label: "Meus Alunos",
       icon: Users,
-      allowedRoles: ["gestor", "instrutor"],
+      allowedRoles: ["instrutor"],
     },
     {
       to: "/cursos",
@@ -92,7 +92,7 @@ export function Sidebar() {
     },
     {
       to: "/encaminhamentos-equipe-escolar",
-      label: "Equipe Escolar",
+      label: "Atendimento Equipe Escolar",
       icon: Headphones,
       allowedRoles: ["gestor", "equipe_escolar", "aqv"],
     },

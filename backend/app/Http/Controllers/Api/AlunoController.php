@@ -258,6 +258,23 @@ class AlunoController extends Controller
     }
 
     /**
+     * Remove a foto do aluno e exclui permanentemente o arquivo físico do disco.
+     */
+    public function deleteFoto(Aluno $aluno): JsonResponse
+    {
+        if ($aluno->foto && Storage::disk('public')->exists($aluno->foto)) {
+            Storage::disk('public')->delete($aluno->foto);
+        }
+
+        $aluno->update(['foto' => null]);
+
+        return response()->json([
+            'message' => 'Foto do aluno removida com sucesso.',
+            'data' => $aluno->fresh()->load(['turma.curso', 'turmas.curso']),
+        ]);
+    }
+
+    /**
      * Remove o registro do aluno do sistema.
      */
     public function destroy(Aluno $aluno): JsonResponse
@@ -298,7 +315,7 @@ class AlunoController extends Controller
                 'estatisticas' => [
                     'total_ocorrencias' => $ocorrencias->count(),
                     'total_faltas' => $totalFaltas,
-                    'planos_recuperacao_ativos' => $ocorrencias->where('status', 'enviado_aqv')->count(),
+                    'planos_recuperacao_ativos' => $ocorrencias->whereIn('status', ['enviado_aqv', 'enviado_equipe_escolar'])->count(),
                 ],
                 'ocorrencias' => $ocorrencias,
             ],

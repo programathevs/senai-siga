@@ -34,6 +34,7 @@ import { ConfirmRestoreModal } from "./ConfirmRestoreModal";
 import { PlanoRecuperacaoModal } from "../PlanosRecuperacao/PlanoRecuperacaoModal";
 import { ClipboardCheck } from "lucide-react";
 import { showAvatarToast } from "../../utils/toast";
+import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
 import styles from "./Ocorrencias.module.css";
 
 function formatDate(dateStr?: string | null) {
@@ -457,7 +458,8 @@ export function Ocorrencias() {
         >
           <option value="">Todos os Status</option>
           <option value="pendente">Pendente</option>
-          <option value="enviado_equipe_escolar">Enviado à Equipe Escolar</option>
+          <option value="enviado_equipe_escolar">Enviado Equipe Escolar</option>
+          <option value="aguardando_assinatura">Aguardando Assinatura</option>
           <option value="pdf_gerado">PDF Gerado</option>
           <option value="impresso">Impresso</option>
           <option value="assinado">Assinado</option>
@@ -674,42 +676,10 @@ export function Ocorrencias() {
 
                       {/* Status */}
                       <td className={styles.td}>
-                        {isDeleted ? (
-                          <span className={`${styles.statusBadge} ${styles.statusExcluido}`}>
-                            Excluída
-                          </span>
-                        ) : (
+                        <StatusBadge status={isDeleted ? "excluida" : oc.status} />
+
+                        {!isDeleted && (
                           <>
-                            {oc.status === "pendente" && (
-                              <span className={`${styles.statusBadge} ${styles.statusPendente}`}>
-                                Pendente
-                              </span>
-                            )}
-                            {(oc.status === "enviado_equipe_escolar" || oc.status === "enviado_aqv") && (
-                              <span className={`${styles.statusBadge} ${styles.statusEnviadoAqv}`}>
-                                Equipe Escolar
-                              </span>
-                            )}
-                            {oc.status === "aguardando_assinatura" && (
-                              <span className={styles.statusBadge} style={{ background: "rgba(245, 158, 11, 0.15)", color: "#d97706", borderColor: "rgba(245, 158, 11, 0.3)" }}>
-                                Aguardando Assinatura
-                              </span>
-                            )}
-                            {oc.status === "pdf_gerado" && (
-                              <span className={`${styles.statusBadge} ${styles.statusPdfGerado}`}>
-                                PDF Gerado
-                              </span>
-                            )}
-                            {oc.status === "impresso" && (
-                              <span className={`${styles.statusBadge} ${styles.statusPdfGerado}`}>
-                                Impresso
-                              </span>
-                            )}
-                            {oc.status === "assinado" && (
-                              <span className={`${styles.statusBadge} ${styles.statusAssinado}`}>
-                                Assinado
-                              </span>
-                            )}
                             {oc.has_plano_pendente && oc.tipo === "desempenho" && (
                               <div style={{ marginTop: "4px" }}>
                                 <span
@@ -906,7 +876,7 @@ export function Ocorrencias() {
                       total_comportamento: salvo.tipo === "comportamento" ? prev.total_comportamento + 1 : prev.total_comportamento,
                       total_desempenho: salvo.tipo === "desempenho" ? prev.total_desempenho + 1 : prev.total_desempenho,
                       total_pendente: salvo.status === "pendente" ? prev.total_pendente + 1 : prev.total_pendente,
-                      total_aqv: salvo.status === "enviado_aqv" ? prev.total_aqv + 1 : prev.total_aqv,
+                      total_aqv: (salvo.status === "enviado_equipe_escolar" || salvo.status === "enviado_aqv") ? prev.total_aqv + 1 : prev.total_aqv,
                     }
                   : null
               );
