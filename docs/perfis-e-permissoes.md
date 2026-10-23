@@ -8,15 +8,15 @@ O sistema possui controle de acesso baseado em papéis (Role-Based Access Contro
 
 | Perfil | Descrição |
 | :--- | :--- |
-| **Admin** | Administrador geral do sistema. Gerencia cadastros base, usuários e parâmetros da aplicação. |
+| **Gestor** | Gestor e administrador geral da unidade escolar. Gerencia cadastros base, usuários e parâmetros da aplicação. |
 | **Instrutor** | Docente responsável por turmas e unidades curriculares. Registra advertências e acompanha seus alunos. |
-| **AQV** | Analista de Qualidade de Vida (AQV) / Coordenação Pedagógica. Recebe notificações, atende alunos, colhe assinaturas e gerencia justificativas. |
+| **Equipe Escolar** | Equipe Escolar / Coordenação Pedagógica. Recebe notificações regimentais, acolhe alunos, emite pareceres, colhe assinaturas e gerencia justificativas. |
 
 ---
 
 ## 2. Matriz de Permissões
 
-| Funcionalidade | Admin | Instrutor | AQV |
+| Funcionalidade | Gestor | Instrutor | Equipe Escolar |
 | :--- | :---: | :---: | :---: |
 | Gerenciamento de Usuários e Permissões | ✅ | ❌ | ❌ |
 | Registro de FIAP (Falta, Comportamento, Desempenho) | ✅ | ✅ | ❌ |

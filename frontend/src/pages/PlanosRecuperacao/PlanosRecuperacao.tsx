@@ -526,6 +526,7 @@ export function PlanosRecuperacao() {
         canEdit={Boolean(
           selectedPlanoPdf &&
           !selectedPlanoPdf.deleted_at &&
+          user?.role !== "equipe_escolar" &&
           user?.role !== "aqv" &&
           (user?.role === "gestor" ||
             (user?.role === "instrutor" && selectedPlanoPdf.status_processo !== "concluido"))

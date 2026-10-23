@@ -97,7 +97,7 @@ export function EquipeEscolarAtendimentoModal({
   const { user } = useAuth();
 
   const [justificativaAluno, setJustificativaAluno] = useState("");
-  const [parecerAqv, setParecerAqv] = useState("");
+  const [parecerEquipeEscolar, setParecerEquipeEscolar] = useState("");
   const [dataAtendimento, setDataAtendimento] = useState("");
   const [confirmarAssinatura, setConfirmarAssinatura] = useState(false);
   const [compensacaoFaltasAutorizada, setCompensacaoFaltasAutorizada] = useState<
@@ -117,20 +117,21 @@ export function EquipeEscolarAtendimentoModal({
   // Inicializa os campos quando a ocorrência for selecionada
   useEffect(() => {
     if (ocorrencia) {
-      setJustificativaAluno(ocorrencia.aqv_recebimento?.justificativa_aluno || "");
-      setParecerAqv(ocorrencia.aqv_recebimento?.parecer_aqv || "");
+      const recebimento = ocorrencia.equipe_escolar_recebimento || ocorrencia.aqv_recebimento;
+      setJustificativaAluno(recebimento?.justificativa_aluno || "");
+      setParecerEquipeEscolar(recebimento?.parecer_equipe_escolar || recebimento?.parecer_aqv || "");
       setDataAtendimento(
-        formatToDateTimeLocal(ocorrencia.aqv_recebimento?.data_atendimento)
+        formatToDateTimeLocal(recebimento?.data_atendimento)
       );
       setConfirmarAssinatura(
         ocorrencia.status === "assinado" ||
-          Boolean(ocorrencia.aqv_recebimento?.confirmado_em)
+          Boolean(recebimento?.confirmado_em)
       );
       setCompensacaoFaltasAutorizada(
-        (ocorrencia.aqv_recebimento as any)?.compensacao_faltas_autorizada || "pendente"
+        (recebimento as any)?.compensacao_faltas_autorizada || "pendente"
       );
       setMotivoExcepcionalidade(
-        (ocorrencia.aqv_recebimento as any)?.motivo_excepcionalidade || ""
+        (recebimento as any)?.motivo_excepcionalidade || ""
       );
       setErrorMsg(null);
     }
@@ -165,7 +166,7 @@ export function EquipeEscolarAtendimentoModal({
 
     const willConfirm = confirmSignatureNow || confirmarAssinatura;
 
-    if (willConfirm && !parecerAqv.trim()) {
+    if (willConfirm && !parecerEquipeEscolar.trim()) {
       setErrorMsg(
         "O parecer da Equipe Escolar é obrigatório para confirmar a assinatura e concluir a FIAP."
       );
@@ -198,8 +199,8 @@ export function EquipeEscolarAtendimentoModal({
     try {
       await equipeEscolarService.salvarAtendimento(ocorrencia.id, {
         justificativa_aluno: justificativaAluno.trim(),
-        parecer_aqv: parecerAqv.trim(),
-        parecer_equipe_escolar: parecerAqv.trim(),
+        parecer_aqv: parecerEquipeEscolar.trim(),
+        parecer_equipe_escolar: parecerEquipeEscolar.trim(),
         data_atendimento: dataAtendimento || undefined,
         confirmar_assinatura: willConfirm,
         compensacao_faltas_autorizada: isFaltaEstourada ? compensacaoFaltasAutorizada : undefined,
@@ -375,7 +376,7 @@ export function EquipeEscolarAtendimentoModal({
                       key={idx}
                       type="button"
                       className={styles.chipButton}
-                      onClick={() => setParecerAqv((prev) => (prev ? `${prev}\n${sugestao.text}` : sugestao.text))}
+                      onClick={() => setParecerEquipeEscolar((prev) => (prev ? `${prev}\n${sugestao.text}` : sugestao.text))}
                       title={`Inserir: "${sugestao.text}"`}
                     >
                       <Plus size={13} className={styles.chipPlus} />
@@ -388,8 +389,8 @@ export function EquipeEscolarAtendimentoModal({
               <textarea
                 className={styles.textarea}
                 placeholder="Orientações prestadas pela equipe escolar, compromissos pactuados, necessidade de plano de recuperação ou encaminhamentos externos..."
-                value={parecerAqv}
-                onChange={(e) => setParecerAqv(e.target.value)}
+                value={parecerEquipeEscolar}
+                onChange={(e) => setParecerEquipeEscolar(e.target.value)}
                 disabled={isSubmitting}
                 rows={3}
               />

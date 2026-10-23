@@ -11,6 +11,15 @@ class EquipeEscolarAtendimentoRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('parecer_equipe_escolar') && ! $this->has('parecer_aqv')) {
+            $this->merge([
+                'parecer_aqv' => $this->input('parecer_equipe_escolar'),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         $confirmarAssinatura = $this->boolean('confirmar_assinatura');

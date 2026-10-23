@@ -18,7 +18,7 @@ class DashboardController extends Controller
 {
     /**
      * Retorna estatísticas consolidadas, KPIs, distribuição e ocorrências recentes
-     * de acordo com o escopo de visibilidade do usuário (Instrutor, Admin ou AQV).
+     * de acordo com o escopo de visibilidade do usuário (Instrutor, Admin ou Equipe Escolar).
      */
     public function stats(Request $request): JsonResponse
     {
@@ -59,7 +59,7 @@ class DashboardController extends Controller
                 COUNT(CASE WHEN data_ocorrencia BETWEEN ? AND ? THEN 1 END) as total_mes,
                 COUNT(CASE WHEN data_ocorrencia BETWEEN ? AND ? THEN 1 END) as total_mes_anterior,
                 COUNT(CASE WHEN status = "pendente" THEN 1 END) as pendentes,
-                COUNT(CASE WHEN status IN ("enviado_aqv", "enviado_equipe_escolar") THEN 1 END) as encaminhadas_aqv,
+                COUNT(CASE WHEN status IN ("enviado_equipe_escolar", "enviado_aqv") THEN 1 END) as encaminhadas_aqv,
                 COUNT(CASE WHEN status IN ("assinado", "impresso") THEN 1 END) as resolvidas,
                 COUNT(CASE WHEN tipo = "falta" THEN 1 END) as tipo_falta,
                 COUNT(CASE WHEN tipo = "comportamento" THEN 1 END) as tipo_comportamento,
@@ -98,6 +98,7 @@ class DashboardController extends Controller
         // 3. Distribuição por status
         $distribuicaoStatus = [
             'pendente' => $pendentes,
+            'enviado_equipe_escolar' => $encaminhadasAqv,
             'enviado_aqv' => $encaminhadasAqv,
             'pdf_gerado' => (int) ($kpisRaw?->status_pdf_gerado ?? 0),
             'impresso' => (int) ($kpisRaw?->status_impresso ?? 0),
@@ -207,9 +208,9 @@ class DashboardController extends Controller
                 })
                 ->values();
 
-            // Funil AQV
+            // Funil Equipe Escolar
             $aqvTotal = Ocorrencia::where(function ($q) {
-                $q->whereIn('status', ['enviado_aqv', 'enviado_equipe_escolar'])
+                $q->whereIn('status', ['enviado_equipe_escolar', 'enviado_aqv'])
                     ->orWhere('status', 'assinado')
                     ->orWhereHas('equipeEscolarRecebimento');
             })->count();
@@ -241,6 +242,7 @@ class DashboardController extends Controller
                 'distribuicao_cursos' => $distribuicaoCursos,
                 'top_ucs_criticas' => $topUcsCriticas,
                 'funil_aqv' => $funilAqv,
+                'funil_equipe_escolar' => $funilAqv,
             ];
         }
 
@@ -256,6 +258,7 @@ class DashboardController extends Controller
                     'diferenca_mes' => $diferencaMes,
                     'pendentes' => $pendentes,
                     'encaminhadas_aqv' => $encaminhadasAqv,
+                    'encaminhadas_equipe_escolar' => $encaminhadasAqv,
                     'resolvidas' => $resolvidas,
                     'alunos_em_alerta' => $alunosEmAlerta,
                 ],

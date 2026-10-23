@@ -6,6 +6,7 @@ export interface DashboardKPIs {
   total_mes_anterior: number;
   diferenca_mes: number;
   pendentes: number;
+  encaminhadas_equipe_escolar?: number;
   encaminhadas_aqv: number;
   resolvidas: number;
   alunos_em_alerta: number;
@@ -47,6 +48,8 @@ export interface FunilAqv {
   concluidos: number;
 }
 
+export type FunilEquipeEscolar = FunilAqv;
+
 export interface MetricasGestao {
   total_alunos_ativos: number;
   alunos_sem_turma: number;
@@ -56,6 +59,7 @@ export interface MetricasGestao {
   taxa_resolucao: number;
   distribuicao_cursos: DistribuicaoCurso[];
   top_ucs_criticas: TopUcCritica[];
+  funil_equipe_escolar?: FunilEquipeEscolar;
   funil_aqv: FunilAqv;
 }
 
@@ -72,6 +76,7 @@ export interface DashboardStats {
   };
   distribuicao_status: {
     pendente: number;
+    enviado_equipe_escolar?: number;
     enviado_aqv: number;
     pdf_gerado: number;
     impresso: number;

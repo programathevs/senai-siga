@@ -29,8 +29,8 @@ Route::middleware(['auth.early', 'auth:sanctum'])->group(function () {
     Route::post('/first-access/update-password', [FirstAccessController::class, 'updatePassword'])
         ->name('first-access.update-password');
 
-    // --- LEITURA DE CURSOS, TURMAS, ALUNOS E INSTRUTORES (Gestor, Instrutor e AQV) ---
-    Route::middleware('role:gestor,instrutor,aqv')->group(function () {
+    // --- LEITURA DE CURSOS, TURMAS, ALUNOS E INSTRUTORES (Gestor, Instrutor e Equipe Escolar) ---
+    Route::middleware('role:gestor,instrutor,equipe_escolar,aqv')->group(function () {
         Route::get('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'index'])->name('cursos.index');
         Route::get('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'show'])->name('cursos.show');
 

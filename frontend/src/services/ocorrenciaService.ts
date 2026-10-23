@@ -77,17 +77,29 @@ export interface Ocorrencia {
   instrutores?: Instrutor[];
   edicoes?: OcorrenciaEdicao[];
   has_plano_pendente?: boolean;
+  equipe_escolar_recebimento?: {
+    id?: number;
+    justificativa_aluno?: string | null;
+    parecer_aqv?: string | null;
+    parecer_equipe_escolar?: string | null;
+    status_atendimento?: string;
+    compensacao_faltas_autorizada?: string | null;
+  } | null;
   aqv_recebimento?: {
     id?: number;
     justificativa_aluno?: string | null;
     parecer_aqv?: string | null;
+    parecer_equipe_escolar?: string | null;
     status_atendimento?: string;
+    compensacao_faltas_autorizada?: string | null;
   } | null;
   aqvRecebimento?: {
     id?: number;
     justificativa_aluno?: string | null;
     parecer_aqv?: string | null;
+    parecer_equipe_escolar?: string | null;
     status_atendimento?: string;
+    compensacao_faltas_autorizada?: string | null;
   } | null;
   planos_recuperacao?: any[];
   planosRecuperacao?: any[];
@@ -101,6 +113,7 @@ export interface OcorrenciaEstatisticas {
   total_falta: number;
   total_comportamento: number;
   total_desempenho: number;
+  total_equipe_escolar?: number;
   total_aqv: number;
   total_pendente: number;
 }
@@ -194,11 +207,15 @@ export const ocorrenciaService = {
     await api.delete(`/api/ocorrencias/${id}`);
   },
 
-  async encaminharAqv(id: number): Promise<Ocorrencia> {
+  async encaminharEquipeEscolar(id: number): Promise<Ocorrencia> {
     const response = await api.post<{ message: string; data: Ocorrencia }>(
-      `/api/ocorrencias/${id}/encaminhar-aqv`
+      `/api/ocorrencias/${id}/encaminhar-equipe-escolar`
     );
     return response.data.data;
+  },
+
+  async encaminharAqv(id: number): Promise<Ocorrencia> {
+    return this.encaminharEquipeEscolar(id);
   },
 
   async restaurarOcorrencia(id: number): Promise<Ocorrencia> {

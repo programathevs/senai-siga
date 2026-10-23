@@ -394,7 +394,7 @@ export function Relatorios() {
             <div>
               <span className={styles.summaryLabel}>Encaminhadas à Equipe Escolar</span>
               <div className={styles.summaryValue} style={{ color: "#0059a8" }}>
-                {resumoGeral.total_aqv}
+                {resumoGeral.total_equipe_escolar ?? resumoGeral.total_aqv}
               </div>
             </div>
             <div

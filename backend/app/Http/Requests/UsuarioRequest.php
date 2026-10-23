@@ -52,7 +52,7 @@ class UsuarioRequest extends FormRequest
             'email.email' => 'Por favor, informe um endereço de e-mail válido.',
             'email.unique' => 'Já existe um usuário cadastrado com este e-mail.',
             'role.required' => 'O perfil de acesso do usuário é obrigatório.',
-            'role.in' => 'O perfil selecionado deve ser Gestor, Instrutor ou AQV.',
+            'role.in' => 'O perfil selecionado deve ser Gestor, Instrutor ou Equipe Escolar.',
             'telefone.max' => 'O telefone deve ter no máximo 20 caracteres.',
             'foto.image' => 'O arquivo enviado deve ser uma imagem válida.',
             'foto.mimes' => 'A foto deve ser nos formatos JPEG, PNG, JPG ou WEBP.',

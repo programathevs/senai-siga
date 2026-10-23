@@ -71,8 +71,8 @@ class OcorrenciaController extends Controller
         // Filtro por Status
         if ($request->filled('status')) {
             $status = $request->input('status');
-            if (in_array($status, ['enviado_aqv', 'enviado_equipe_escolar'])) {
-                $query->whereIn('status', ['enviado_aqv', 'enviado_equipe_escolar']);
+            if (in_array($status, ['enviado_equipe_escolar', 'enviado_aqv'])) {
+                $query->whereIn('status', ['enviado_equipe_escolar', 'enviado_aqv']);
             } else {
                 $query->where('status', $status);
             }
@@ -142,7 +142,7 @@ class OcorrenciaController extends Controller
                 COUNT(CASE WHEN tipo = "falta" THEN 1 END) as total_falta,
                 COUNT(CASE WHEN tipo = "comportamento" THEN 1 END) as total_comportamento,
                 COUNT(CASE WHEN tipo = "desempenho" THEN 1 END) as total_desempenho,
-                COUNT(CASE WHEN status IN ("enviado_aqv", "enviado_equipe_escolar") THEN 1 END) as total_aqv,
+                COUNT(CASE WHEN status IN ("enviado_equipe_escolar", "enviado_aqv") THEN 1 END) as total_equipe_escolar,
                 COUNT(CASE WHEN status = "pendente" THEN 1 END) as total_pendente
             ', [$startOfMonth, $endOfMonth])
             ->first();
@@ -152,7 +152,8 @@ class OcorrenciaController extends Controller
             'total_falta' => (int) ($statsRaw?->total_falta ?? 0),
             'total_comportamento' => (int) ($statsRaw?->total_comportamento ?? 0),
             'total_desempenho' => (int) ($statsRaw?->total_desempenho ?? 0),
-            'total_aqv' => (int) ($statsRaw?->total_aqv ?? 0),
+            'total_equipe_escolar' => (int) ($statsRaw?->total_equipe_escolar ?? 0),
+            'total_aqv' => (int) ($statsRaw?->total_equipe_escolar ?? 0),
             'total_pendente' => (int) ($statsRaw?->total_pendente ?? 0),
         ];
 
@@ -280,9 +281,9 @@ class OcorrenciaController extends Controller
     public function update(OcorrenciaRequest $request, Ocorrencia $ocorrencia): JsonResponse
     {
         $user = $request->user();
-        if ($user && $user->hasRole('aqv')) {
+        if ($user && $user->hasRole(['equipe_escolar', 'aqv'])) {
             return response()->json([
-                'message' => 'O perfil AQV não possui permissão para editar os dados da FIAP.',
+                'message' => 'O perfil de Equipe Escolar não possui permissão para editar os dados da FIAP.',
             ], 403);
         }
 

@@ -56,7 +56,7 @@ class RegisterUserRequest extends FormRequest
             'email.unique' => 'Este e-mail já está cadastrado no sistema.',
             'password.required' => 'A senha é obrigatória.',
             'role.required' => 'O perfil é obrigatório.',
-            'role.Illuminate\Validation\Rules\Enum' => 'O perfil informado é inválido. Valores aceitos: admin, instrutor, aqv.',
+            'role.Illuminate\Validation\Rules\Enum' => 'O perfil informado é inválido. Valores aceitos: gestor, instrutor, equipe_escolar.',
         ];
     }
 }

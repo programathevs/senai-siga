@@ -213,7 +213,7 @@ export function Auditoria() {
           <h1 className={styles.pageTitle}>Logs de Auditoria do Sistema</h1>
           <p className={styles.pageSubtitle}>
             Histórico imutável de operações regimentais: criação de FIAPs, alterações com justificativa,
-            acolhimentos da AQV, assinaturas e planos de recuperação.
+            acolhimentos da Equipe Escolar, assinaturas e planos de recuperação.
           </p>
         </div>
 
@@ -274,13 +274,13 @@ export function Auditoria() {
           </div>
         </article>
 
-        {/* Acolhimentos AQV */}
+        {/* Acolhimentos Equipe Escolar */}
         <article className={styles.kpiCard}>
           <div className={styles.kpiTopRow}>
             <div>
               <span className={styles.kpiLabel}>Acolhimentos Equipe Escolar</span>
               <div className={styles.kpiValue} style={{ color: "#8b5cf6" }}>
-                {stats?.atendimentos_aqv ?? 0}
+                {stats?.atendimentos_equipe_escolar ?? stats?.atendimentos_aqv ?? 0}
               </div>
             </div>
             <div

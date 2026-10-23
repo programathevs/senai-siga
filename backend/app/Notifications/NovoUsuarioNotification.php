@@ -26,7 +26,7 @@ class NovoUsuarioNotification extends Notification implements ShouldQueue
     {
         $roleTitle = match ($this->role) {
             'gestor' => 'Gestor Escolar',
-            'aqv' => 'Analista de Qualidade de Vida (AQV)',
+            'equipe_escolar', 'aqv' => 'Equipe Escolar',
             default => 'Instrutor / Docente',
         };
 

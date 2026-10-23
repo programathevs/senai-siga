@@ -170,8 +170,8 @@ class AlunoSeeder extends Seeder
             }
         }
 
-        // 4. Turma I1HSA (30 alunos)
-        $turmaI1HSA = Turma::where('nome', 'I1HSA')->first();
+        // 4. Turma DES-I1HSA (30 alunos)
+        $turmaI1HSA = Turma::where('nome', 'DES-I1HSA')->orWhere('nome', 'I1HSA')->first();
         $alunosI1HSA = [
             ['matricula' => '26171001', 'nome' => 'Ana Beatriz Araújo Camargo', 'status' => 'ativo'],
             ['matricula' => '26171002', 'nome' => 'Andrey Batista de Souza', 'status' => 'ativo'],

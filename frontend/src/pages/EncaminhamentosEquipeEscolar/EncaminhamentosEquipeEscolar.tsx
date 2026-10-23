@@ -182,8 +182,9 @@ export function EncaminhamentosEquipeEscolar() {
   }
 
   function handleOpenConfirmAssinatura(item: EquipeEscolarEncaminhamentoItem) {
-    const hasJustificativa = Boolean(item.aqv_recebimento?.justificativa_aluno?.trim());
-    const hasParecer = Boolean(item.aqv_recebimento?.parecer_aqv?.trim());
+    const rec = item.equipe_escolar_recebimento || item.aqv_recebimento;
+    const hasJustificativa = Boolean(rec?.justificativa_aluno?.trim());
+    const hasParecer = Boolean((rec?.parecer_equipe_escolar || rec?.parecer_aqv)?.trim());
 
     if (!hasJustificativa || !hasParecer) {
       showAvatarToast(
@@ -212,9 +213,10 @@ export function EncaminhamentosEquipeEscolar() {
   }
 
   function renderStatusBadge(item: EquipeEscolarEncaminhamentoItem) {
+    const rec = item.equipe_escolar_recebimento || item.aqv_recebimento;
     const isAssinado =
       item.status === "assinado" ||
-      item.aqv_recebimento?.status_atendimento === "concluido";
+      rec?.status_atendimento === "concluido";
 
     if (isAssinado) {
       return (
@@ -225,7 +227,7 @@ export function EncaminhamentosEquipeEscolar() {
       );
     }
 
-    if (item.aqv_recebimento?.status_atendimento === "em_atendimento") {
+    if (rec?.status_atendimento === "em_atendimento") {
       return (
         <span className={`${styles.statusBadge} ${styles.statusEmAtendimento}`}>
           <FileSignature size={13} />
@@ -428,12 +430,13 @@ export function EncaminhamentosEquipeEscolar() {
                     typeof item.registrado_por === "object"
                       ? item.registrado_por?.name
                       : item.registrado_por_user?.name || "Docente";
+                  const rec = item.equipe_escolar_recebimento || item.aqv_recebimento;
                   const isAssinado =
                     item.status === "assinado" ||
-                    item.aqv_recebimento?.status_atendimento === "concluido";
+                    rec?.status_atendimento === "concluido";
                   const hasAtendimentoCompleto = Boolean(
-                    item.aqv_recebimento?.justificativa_aluno?.trim() &&
-                    item.aqv_recebimento?.parecer_aqv?.trim()
+                    rec?.justificativa_aluno?.trim() &&
+                    (rec?.parecer_equipe_escolar || rec?.parecer_aqv)?.trim()
                   );
 
                   return (

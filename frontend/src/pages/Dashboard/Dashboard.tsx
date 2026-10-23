@@ -433,7 +433,7 @@ export function Dashboard() {
               </button>
             </article>
 
-            {/* Bloco 3: Funil de Resoluções AQV */}
+            {/* Bloco 3: Funil de Resoluções da Equipe Escolar */}
             <article className={styles.analyticsCard}>
               <div>
                 <div className={styles.analyticsHeader}>
@@ -442,7 +442,7 @@ export function Dashboard() {
                     <span className={styles.analyticsTitle}>Funil de Atendimento da Equipe Escolar</span>
                   </div>
                   <span className={styles.analyticsBadge} style={{ backgroundColor: "color-mix(in srgb, #0059a8 12%, transparent)", color: "#0059a8" }}>
-                    {stats.metricas_gestao.funil_aqv.total} Total
+                    {(stats.metricas_gestao.funil_equipe_escolar ?? stats.metricas_gestao.funil_aqv).total} Total
                   </span>
                 </div>
 
@@ -622,7 +622,7 @@ export function Dashboard() {
             <div>
               <span className={styles.kpiLabel}>Encaminhadas à Equipe Escolar</span>
               <div className={styles.kpiValue} style={{ color: "#0059a8" }}>
-                {isLoading ? <Loader2 size={24} className="animate-spin" /> : kpis?.encaminhadas_aqv ?? 0}
+                {isLoading ? <Loader2 size={24} className="animate-spin" /> : (kpis?.encaminhadas_equipe_escolar ?? kpis?.encaminhadas_aqv ?? 0)}
               </div>
             </div>
             <div
@@ -639,7 +639,7 @@ export function Dashboard() {
             <span>Em mediação pedagógica</span>
             <span style={{ fontWeight: 700, color: "#0059a8" }}>
               {kpis && kpis.total_mes > 0
-                ? `${Math.round((kpis.encaminhadas_aqv / kpis.total_mes) * 100)}%`
+                ? `${Math.round(((kpis.encaminhadas_equipe_escolar ?? kpis.encaminhadas_aqv) / kpis.total_mes) * 100)}%`
                 : "0%"}
             </span>
           </div>

@@ -53,4 +53,4 @@ Antes de enviar seu PR:
      php artisan migrate:status
      ```
 3. **Validação manual**:
-   - Teste o fluxo modificado no navegador garantindo que os perfis de acesso (`Admin`, `Instrutor`, `AQV`) comportam-se como esperado.
+   - Teste o fluxo modificado no navegador garantindo que os perfis de acesso (`Admin`, `Instrutor`, `Equipe Escolar`) comportam-se como esperado.
