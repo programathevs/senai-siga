@@ -88,6 +88,12 @@ Route::middleware(['auth.early', 'auth:sanctum'])->group(function () {
         Route::post('/ocorrencias/{id}/restaurar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'restaurar'])->name('ocorrencias.restaurar');
         Route::post('/planos-recuperacao/{id}/restaurar', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'restaurar'])->name('planos-recuperacao.restaurar');
 
+        // --- INTEGRAÇÃO E IMPORTAÇÃO SGSET / PLANILHA (Apenas Gestor) ---
+        Route::get('/sgset/status', [\App\Http\Controllers\Api\SgsetController::class, 'status'])->name('sgset.status');
+        Route::post('/alunos/importar', [\App\Http\Controllers\Api\SgsetController::class, 'importarAlunos'])->name('alunos.importar');
+        Route::post('/turmas/importar', [\App\Http\Controllers\Api\SgsetController::class, 'importarTurmas'])->name('turmas.importar');
+        Route::post('/sgset/sincronizar-geral', [\App\Http\Controllers\Api\SgsetController::class, 'sincronizarGeral'])->name('sgset.sincronizar-geral');
+
         // --- AUDITORIA & RASTREABILIDADE (Apenas Gestor) ---
         Route::get('/auditoria', [\App\Http\Controllers\Api\AuditoriaController::class, 'index'])->name('auditoria.index');
         Route::get('/auditoria/stats', [\App\Http\Controllers\Api\AuditoriaController::class, 'stats'])->name('auditoria.stats');
