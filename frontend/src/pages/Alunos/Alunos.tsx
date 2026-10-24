@@ -12,6 +12,7 @@ import {
   Camera,
   X,
   Check,
+  CloudDownload,
 } from "lucide-react";
 import { alunoService, type Aluno } from "../../services/alunoService";
 import { turmaService, type Turma } from "../../services/turmaService";
@@ -21,6 +22,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { formatPhoneNumber } from "../../utils/formatters";
 import { AlunoModal } from "./AlunoModal";
 import { AlunoHistoricoModal } from "./AlunoHistoricoModal";
+import { ImportarAlunosModal } from "./ImportarAlunosModal";
 import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
 import { UserAvatar } from "../../components/UserAvatar/UserAvatar";
 import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
@@ -55,6 +57,7 @@ export function Alunos() {
 
   // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingAluno, setEditingAluno] = useState<Aluno | null>(null);
   const [historicoAlunoId, setHistoricoAlunoId] = useState<number | null>(null);
   const [alunoToDelete, setAlunoToDelete] = useState<Aluno | null>(null);
@@ -281,10 +284,22 @@ export function Alunos() {
           </div>
 
           {isGestor && (
-            <button type="button" className={styles.addBtn} onClick={handleOpenCreateModal}>
-              <Plus size={18} />
-              Novo Aluno
-            </button>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <button
+                type="button"
+                className={styles.importBtn}
+                onClick={() => setIsImportModalOpen(true)}
+                title="Importar alunos do SGSET ou planilha Excel"
+              >
+                <CloudDownload size={18} />
+                <span>Importar Alunos</span>
+              </button>
+
+              <button type="button" className={styles.addBtn} onClick={handleOpenCreateModal}>
+                <Plus size={18} />
+                Novo Aluno
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -307,7 +322,7 @@ export function Alunos() {
           onChange={(e) => setSelectedTurmaId(e.target.value)}
         >
           <option value="">Todas as Turmas</option>
-          <option value="sem_turma">Sem turma alocada</option>
+          <option value="sem_turma">📋 Sem turma alocada</option>
           {turmas.map((t) => (
             <option key={t.id} value={t.id}>
               {t.nome}
@@ -726,6 +741,13 @@ export function Alunos() {
             : []
         }
         warningText="Esta ação removerá o cadastro do estudante no sistema. O histórico também será afetado."
+      />
+
+      {/* Modal de Importação SGSET / Excel */}
+      <ImportarAlunosModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => loadAlunos(page, perPage)}
       />
     </div>
   );

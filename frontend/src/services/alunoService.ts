@@ -10,9 +10,13 @@ export interface Aluno {
   matricula: string;
   ra?: string;
   cpf: string | null;
+  rg?: string | null;
   data_nascimento: string | null;
   is_maior_de_idade?: boolean;
+  nome_pai?: string | null;
+  nome_mae?: string | null;
   email: string | null;
+  email_educacional?: string | null;
   telefone: string | null;
   foto?: string | null;
   foto_url?: string | null;

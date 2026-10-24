@@ -22,12 +22,14 @@ import {
   Award,
   CheckCircle2,
   History,
+  CloudDownload,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { dashboardService, type DashboardStats } from "../../services/dashboardService";
 import type { Ocorrencia } from "../../services/ocorrenciaService";
 import { OcorrenciaDetalhesModal } from "../Ocorrencias/OcorrenciaDetalhesModal";
 import { OcorrenciaModal } from "../Ocorrencias/OcorrenciaModal";
+import { ImportarAlunosModal } from "../Alunos/ImportarAlunosModal";
 import { getStatusConfig } from "../../components/StatusBadge/StatusBadge";
 import styles from "./Dashboard.module.css";
 
@@ -57,6 +59,7 @@ export function Dashboard() {
   // Modais integrados
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
 
   async function loadDashboard(signal?: AbortSignal) {
     try {
@@ -169,15 +172,27 @@ export function Dashboard() {
           </button>
 
           {user?.role === "gestor" && (
-            <button
-              type="button"
-              className={styles.secondaryBtn}
-              onClick={() => navigate("/auditoria")}
-              title="Acessar Logs de Auditoria do Sistema"
-            >
-              <History size={16} />
-              <span>Auditoria</span>
-            </button>
+            <>
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={() => setIsSyncModalOpen(true)}
+                title="Sincronizar base geral com o SGSET (Escola 512)"
+              >
+                <CloudDownload size={16} />
+                <span>Sincronizar SGSET</span>
+              </button>
+
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={() => navigate("/auditoria")}
+                title="Acessar Logs de Auditoria do Sistema"
+              >
+                <History size={16} />
+                <span>Auditoria</span>
+              </button>
+            </>
           )}
 
           {user?.role === "instrutor" && (
@@ -1043,6 +1058,13 @@ export function Dashboard() {
           setIsCreateModalOpen(false);
           loadDashboard();
         }}
+      />
+
+      {/* Modal de Sincronização Geral SGSET / Planilha */}
+      <ImportarAlunosModal
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        onSuccess={() => loadDashboard()}
       />
     </div>
   );
