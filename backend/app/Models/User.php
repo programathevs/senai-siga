@@ -82,9 +82,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasRole(UserRole::INSTRUTOR);
     }
 
+    public function isEquipeEscolar(): bool
+    {
+        return $this->hasRole([UserRole::EQUIPE_ESCOLAR, UserRole::AQV]);
+    }
+
     public function isAQV(): bool
     {
-        return $this->hasRole(UserRole::AQV);
+        return $this->isEquipeEscolar();
     }
 
     /**

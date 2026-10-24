@@ -19,8 +19,8 @@ export function Configuracoes() {
   const roleText =
     user?.role === "gestor"
       ? "Gestão Escolar & Direção"
-      : user?.role === "aqv"
-        ? "Analista de Qualidade de Vida (AQV)"
+      : user?.role === "equipe_escolar" || user?.role === "aqv"
+        ? "Equipe Escolar"
         : "Instrutor";
 
   function handleSavePreferences(e: React.FormEvent) {

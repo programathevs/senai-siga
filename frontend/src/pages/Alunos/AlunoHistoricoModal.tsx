@@ -158,7 +158,7 @@ export const AlunoHistoricoModal: React.FC<AlunoHistoricoModalProps> = ({
                   <p className={styles.kpiValue} style={{ color: "#10b981" }}>
                     {data?.estatisticas?.planos_recuperacao_ativos || 0}
                   </p>
-                  <p className={styles.kpiLabel}>Encaminhadas ao AQV</p>
+                  <p className={styles.kpiLabel}>Encaminhadas à Equipe Escolar</p>
                 </div>
               </div>
 

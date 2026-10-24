@@ -14,23 +14,23 @@ import {
   Headphones,
 } from "lucide-react";
 import {
-  aqvService,
-  type AqvEncaminhamentoItem,
-  type AqvStats,
-  type AqvFiltros,
-} from "../../services/aqvService";
+  equipeEscolarService,
+  type EquipeEscolarEncaminhamentoItem,
+  type EquipeEscolarStats,
+  type EquipeEscolarFiltros,
+} from "../../services/equipeEscolarService";
 import { turmaService, type Turma } from "../../services/turmaService";
 import { Pagination } from "../../components/Pagination/Pagination";
-import { AqvAtendimentoModal } from "./AqvAtendimentoModal";
+import { EquipeEscolarAtendimentoModal } from "./EquipeEscolarAtendimentoModal";
 import { OcorrenciaDetalhesModal } from "../Ocorrencias/OcorrenciaDetalhesModal";
 import { AlunoHistoricoModal } from "../Alunos/AlunoHistoricoModal";
 import { ConfirmAssinaturaModal } from "./ConfirmAssinaturaModal";
 import { showAvatarToast } from "../../utils/toast";
-import styles from "./EncaminhamentosAqv.module.css";
+import styles from "./EncaminhamentosEquipeEscolar.module.css";
 
-export function EncaminhamentosAqv() {
-  const [items, setItems] = useState<AqvEncaminhamentoItem[]>([]);
-  const [stats, setStats] = useState<AqvStats>({
+export function EncaminhamentosEquipeEscolar() {
+  const [items, setItems] = useState<EquipeEscolarEncaminhamentoItem[]>([]);
+  const [stats, setStats] = useState<EquipeEscolarStats>({
     total_encaminhados: 0,
     aguardando_atendimento: 0,
     em_atendimento: 0,
@@ -47,22 +47,22 @@ export function EncaminhamentosAqv() {
 
   // Filtros
   const [search, setSearch] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<AqvFiltros["status"]>("");
-  const [selectedTipo, setSelectedTipo] = useState<AqvFiltros["tipo"]>("");
+  const [selectedStatus, setSelectedStatus] = useState<EquipeEscolarFiltros["status"]>("");
+  const [selectedTipo, setSelectedTipo] = useState<EquipeEscolarFiltros["tipo"]>("");
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>("");
 
   // Modais
   const [atendimentoModalOpen, setAtendimentoModalOpen] = useState(false);
-  const [selectedOcorrencia, setSelectedOcorrencia] = useState<AqvEncaminhamentoItem | null>(null);
+  const [selectedOcorrencia, setSelectedOcorrencia] = useState<EquipeEscolarEncaminhamentoItem | null>(null);
 
   const [detalhesModalOpen, setDetalhesModalOpen] = useState(false);
-  const [detalhesOcorrencia, setDetalhesOcorrencia] = useState<AqvEncaminhamentoItem | null>(null);
+  const [detalhesOcorrencia, setDetalhesOcorrencia] = useState<EquipeEscolarEncaminhamentoItem | null>(null);
 
   const [historicoModalOpen, setHistoricoModalOpen] = useState(false);
   const [historicoAlunoId, setHistoricoAlunoId] = useState<number | null>(null);
 
   const [confirmAssinaturaModalOpen, setConfirmAssinaturaModalOpen] = useState(false);
-  const [itemParaAssinar, setItemParaAssinar] = useState<AqvEncaminhamentoItem | null>(null);
+  const [itemParaAssinar, setItemParaAssinar] = useState<EquipeEscolarEncaminhamentoItem | null>(null);
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -76,7 +76,7 @@ export function EncaminhamentosAqv() {
         setTurmas(res.data || []);
       } catch (err: any) {
         if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
-          console.error("Erro ao carregar turmas para filtro AQV:", err);
+          console.error("Erro ao carregar turmas para filtro da Equipe Escolar:", err);
         }
       }
     }
@@ -87,10 +87,10 @@ export function EncaminhamentosAqv() {
   // Carrega estatísticas dos KPIs
   const loadStats = useCallback(async () => {
     try {
-      const data = await aqvService.getAqvStats();
+      const data = await equipeEscolarService.getStats();
       setStats(data);
     } catch (err) {
-      console.error("Erro ao carregar estatísticas da AQV:", err);
+      console.error("Erro ao carregar estatísticas da Equipe Escolar:", err);
     }
   }, []);
 
@@ -99,7 +99,7 @@ export function EncaminhamentosAqv() {
     async (currentPage: number, currentPerPage: number, signal?: AbortSignal) => {
       setIsLoading(true);
       try {
-        const response = await aqvService.getEncaminhamentos(
+        const response = await equipeEscolarService.getEncaminhamentos(
           {
             search: search.trim() || undefined,
             status: selectedStatus || undefined,
@@ -118,7 +118,7 @@ export function EncaminhamentosAqv() {
         if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
           return;
         }
-        console.error("Erro ao carregar encaminhamentos da AQV:", err);
+        console.error("Erro ao carregar encaminhamentos da Equipe Escolar:", err);
       } finally {
         setIsLoading(false);
       }
@@ -166,12 +166,12 @@ export function EncaminhamentosAqv() {
     setSelectedTurmaId("");
   }
 
-  function handleOpenAtendimento(item: AqvEncaminhamentoItem) {
+  function handleOpenAtendimento(item: EquipeEscolarEncaminhamentoItem) {
     setSelectedOcorrencia(item);
     setAtendimentoModalOpen(true);
   }
 
-  function handleOpenDetalhes(item: AqvEncaminhamentoItem) {
+  function handleOpenDetalhes(item: EquipeEscolarEncaminhamentoItem) {
     setDetalhesOcorrencia(item);
     setDetalhesModalOpen(true);
   }
@@ -181,9 +181,10 @@ export function EncaminhamentosAqv() {
     setHistoricoModalOpen(true);
   }
 
-  function handleOpenConfirmAssinatura(item: AqvEncaminhamentoItem) {
-    const hasJustificativa = Boolean(item.aqv_recebimento?.justificativa_aluno?.trim());
-    const hasParecer = Boolean(item.aqv_recebimento?.parecer_aqv?.trim());
+  function handleOpenConfirmAssinatura(item: EquipeEscolarEncaminhamentoItem) {
+    const rec = item.equipe_escolar_recebimento || item.aqv_recebimento;
+    const hasJustificativa = Boolean(rec?.justificativa_aluno?.trim());
+    const hasParecer = Boolean((rec?.parecer_equipe_escolar || rec?.parecer_aqv)?.trim());
 
     if (!hasJustificativa || !hasParecer) {
       showAvatarToast(
@@ -202,7 +203,7 @@ export function EncaminhamentosAqv() {
   async function handleConfirmAssinaturaSubmit() {
     if (!itemParaAssinar) return;
     try {
-      await aqvService.confirmarAssinatura(itemParaAssinar.id);
+      await equipeEscolarService.confirmarAssinatura(itemParaAssinar.id);
       loadEncaminhamentos(page, perPage);
       loadStats();
     } catch (err) {
@@ -211,10 +212,11 @@ export function EncaminhamentosAqv() {
     }
   }
 
-  function renderStatusBadge(item: AqvEncaminhamentoItem) {
+  function renderStatusBadge(item: EquipeEscolarEncaminhamentoItem) {
+    const rec = item.equipe_escolar_recebimento || item.aqv_recebimento;
     const isAssinado =
       item.status === "assinado" ||
-      item.aqv_recebimento?.status_atendimento === "concluido";
+      rec?.status_atendimento === "concluido";
 
     if (isAssinado) {
       return (
@@ -225,7 +227,7 @@ export function EncaminhamentosAqv() {
       );
     }
 
-    if (item.aqv_recebimento?.status_atendimento === "em_atendimento") {
+    if (rec?.status_atendimento === "em_atendimento") {
       return (
         <span className={`${styles.statusBadge} ${styles.statusEmAtendimento}`}>
           <FileSignature size={13} />
@@ -257,9 +259,9 @@ export function EncaminhamentosAqv() {
       {/* Cabeçalho */}
       <div className={styles.pageHeader}>
         <div className={styles.titleGroup}>
-          <h1 className={styles.title}>Encaminhamentos AQV</h1>
+          <h1 className={styles.title}>Atendimentos da Equipe Escolar</h1>
           <p className={styles.subtitle}>
-            Analista de Qualidade de Vida • Gestão de Acolhimento e Justificativas de FIAPs
+            Equipe Escolar • Gestão de Acolhimento, Análise de Planos e Justificativas de FIAPs
           </p>
         </div>
       </div>
@@ -347,7 +349,7 @@ export function EncaminhamentosAqv() {
 
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as AqvFiltros["status"])}
+            onChange={(e) => setSelectedStatus(e.target.value as EquipeEscolarFiltros["status"])}
             className={styles.select}
           >
             <option value="">Status: Todos</option>
@@ -358,7 +360,7 @@ export function EncaminhamentosAqv() {
 
           <select
             value={selectedTipo}
-            onChange={(e) => setSelectedTipo(e.target.value as AqvFiltros["tipo"])}
+            onChange={(e) => setSelectedTipo(e.target.value as EquipeEscolarFiltros["tipo"])}
             className={styles.select}
           >
             <option value="">Tipo: Todos</option>
@@ -398,7 +400,7 @@ export function EncaminhamentosAqv() {
         {isLoading ? (
           <div className={styles.loadingWrapper}>
             <Loader2 size={24} className="animate-spin" />
-            <span>Carregando fila de encaminhamentos da AQV...</span>
+            <span>Carregando fila de encaminhamentos da Equipe Escolar...</span>
           </div>
         ) : items.length === 0 ? (
           <div className={styles.emptyState}>
@@ -418,7 +420,7 @@ export function EncaminhamentosAqv() {
                   <th>Tipo</th>
                   <th>Data Registro</th>
                   <th>Notificante</th>
-                  <th>Status AQV</th>
+                  <th>Status Equipe Escolar</th>
                   <th style={{ textAlign: "right" }}>Ações</th>
                 </tr>
               </thead>
@@ -428,12 +430,13 @@ export function EncaminhamentosAqv() {
                     typeof item.registrado_por === "object"
                       ? item.registrado_por?.name
                       : item.registrado_por_user?.name || "Docente";
+                  const rec = item.equipe_escolar_recebimento || item.aqv_recebimento;
                   const isAssinado =
                     item.status === "assinado" ||
-                    item.aqv_recebimento?.status_atendimento === "concluido";
+                    rec?.status_atendimento === "concluido";
                   const hasAtendimentoCompleto = Boolean(
-                    item.aqv_recebimento?.justificativa_aluno?.trim() &&
-                    item.aqv_recebimento?.parecer_aqv?.trim()
+                    rec?.justificativa_aluno?.trim() &&
+                    (rec?.parecer_equipe_escolar || rec?.parecer_aqv)?.trim()
                   );
 
                   return (
@@ -489,7 +492,7 @@ export function EncaminhamentosAqv() {
                             <FilePenLine size={16} />
                           </button>
 
-                          {/* Confirmação Rápida de Assinatura (Exibido apenas quando justificativa e parecer já foram salvos) */}
+                          {/* Confirmação Rápida de Assinatura */}
                           {!isAssinado && hasAtendimentoCompleto && (
                             <button
                               type="button"
@@ -538,9 +541,9 @@ export function EncaminhamentosAqv() {
         )}
       </div>
 
-      {/* Modal de Atendimento AQV */}
+      {/* Modal de Atendimento Equipe Escolar */}
       {atendimentoModalOpen && (
-        <AqvAtendimentoModal
+        <EquipeEscolarAtendimentoModal
           isOpen={atendimentoModalOpen}
           onClose={() => {
             setAtendimentoModalOpen(false);
@@ -562,7 +565,7 @@ export function EncaminhamentosAqv() {
             setDetalhesModalOpen(false);
             setDetalhesOcorrencia(null);
           }}
-          ocorrencia={detalhesOcorrencia}
+          ocorrencia={detalhesOcorrencia as any}
         />
       )}
 

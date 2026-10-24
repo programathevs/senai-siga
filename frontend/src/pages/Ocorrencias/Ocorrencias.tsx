@@ -28,12 +28,13 @@ import type { PaginationMeta } from "../../types/pagination";
 import { useAuth } from "../../contexts/AuthContext";
 import { OcorrenciaModal } from "./OcorrenciaModal";
 import { OcorrenciaDetalhesModal } from "./OcorrenciaDetalhesModal";
-import { ConfirmAqvModal } from "./ConfirmAqvModal";
+import { ConfirmEquipeEscolarModal } from "./ConfirmEquipeEscolarModal";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { ConfirmRestoreModal } from "./ConfirmRestoreModal";
 import { PlanoRecuperacaoModal } from "../PlanosRecuperacao/PlanoRecuperacaoModal";
 import { ClipboardCheck } from "lucide-react";
 import { showAvatarToast } from "../../utils/toast";
+import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
 import styles from "./Ocorrencias.module.css";
 
 function formatDate(dateStr?: string | null) {
@@ -72,7 +73,7 @@ export function Ocorrencias() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingOcorrencia, setEditingOcorrencia] = useState<Ocorrencia | null>(null);
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
-  const [ocorrenciaAqvPending, setOcorrenciaAqvPending] = useState<Ocorrencia | null>(null);
+  const [ocorrenciaEquipeEscolarPending, setOcorrenciaEquipeEscolarPending] = useState<Ocorrencia | null>(null);
   const [ocorrenciaDeletePending, setOcorrenciaDeletePending] = useState<Ocorrencia | null>(null);
   const [ocorrenciaRestorePending, setOcorrenciaRestorePending] = useState<Ocorrencia | null>(null);
 
@@ -98,8 +99,14 @@ export function Ocorrencias() {
 
   const canCreate = user?.role === "instrutor";
 
-  function canSendAqv(oc: Ocorrencia): boolean {
-    if (oc.status === "enviado_aqv" || oc.status === "assinado" || !user) return false;
+  function canSendEquipeEscolar(oc: Ocorrencia): boolean {
+    if (
+      oc.status === "enviado_equipe_escolar" ||
+      oc.status === "enviado_aqv" ||
+      oc.status === "aguardando_assinatura" ||
+      oc.status === "assinado" ||
+      !user
+    ) return false;
     if (user.role === "gestor") return true;
     if (user.role === "instrutor") {
       const regId = typeof oc.registrado_por === "number" ? oc.registrado_por : oc.registrado_por?.id;
@@ -267,15 +274,15 @@ export function Ocorrencias() {
     }
   }
 
-  function handleEncaminharAqv(ocOrId: Ocorrencia | number) {
+  function handleEncaminharEquipeEscolar(ocOrId: Ocorrencia | number) {
     const targetOc =
       typeof ocOrId === "number"
         ? ocorrencias.find((o) => o.id === ocOrId) || selectedDetalhes
         : ocOrId;
 
-    if (targetOc?.has_plano_pendente) {
+    if (targetOc?.tipo === "desempenho" && targetOc?.has_plano_pendente) {
       showAvatarToast(
-        "Não é possível encaminhar para a AQV pois esta FIAP possui um Plano de Recuperação pendente.",
+        "Para FIAP de aproveitamento pedagógico, elabore o plano antes de encaminhar para a Equipe Escolar.",
         "Atenção",
         "warning"
       );
@@ -283,16 +290,16 @@ export function Ocorrencias() {
     }
 
     if (targetOc) {
-      setOcorrenciaAqvPending(targetOc);
+      setOcorrenciaEquipeEscolarPending(targetOc);
     }
   }
 
-  async function handleConfirmEncaminharAqv() {
-    if (!ocorrenciaAqvPending) return;
-    const oc = ocorrenciaAqvPending;
+  async function handleConfirmEncaminharEquipeEscolar() {
+    if (!ocorrenciaEquipeEscolarPending) return;
+    const oc = ocorrenciaEquipeEscolarPending;
 
     try {
-      await ocorrenciaService.encaminharAqv(oc.id);
+      await ocorrenciaService.encaminharEquipeEscolar(oc.id);
       showAvatarToast(
         `FIAP "${oc.numero_sequencial}" encaminhada com sucesso!`
       );
@@ -303,7 +310,7 @@ export function Ocorrencias() {
       }
     } catch (err: any) {
       showAvatarToast(
-        err.response?.data?.message || "Erro ao encaminhar para o AQV.",
+        err.response?.data?.message || "Erro ao encaminhar para a Equipe Escolar.",
         "Erro",
         "error"
       );
@@ -400,9 +407,9 @@ export function Ocorrencias() {
           </div>
           <div className={styles.kpiContent}>
             <span className={styles.kpiValue} style={{ color: "#7c3aed" }}>
-              {estatisticas?.total_aqv ?? ocorrencias.filter((o) => o.status === "enviado_aqv").length}
+              {estatisticas?.total_equipe_escolar ?? estatisticas?.total_aqv ?? ocorrencias.filter((o) => o.status === "enviado_equipe_escolar" || o.status === "enviado_aqv").length}
             </span>
-            <span className={styles.kpiLabel}>Encaminhadas AQV</span>
+            <span className={styles.kpiLabel}>Equipe Escolar</span>
           </div>
         </div>
       </div>
@@ -451,7 +458,8 @@ export function Ocorrencias() {
         >
           <option value="">Todos os Status</option>
           <option value="pendente">Pendente</option>
-          <option value="enviado_aqv">Enviado ao AQV</option>
+          <option value="enviado_equipe_escolar">Enviado Equipe Escolar</option>
+          <option value="aguardando_assinatura">Aguardando Assinatura</option>
           <option value="pdf_gerado">PDF Gerado</option>
           <option value="impresso">Impresso</option>
           <option value="assinado">Assinado</option>
@@ -507,8 +515,12 @@ export function Ocorrencias() {
                   );
                   const isDeleted = Boolean(oc.deleted_at);
 
+                  const isBloqueadoAssinatura = oc.status === "aguardando_assinatura" || oc.status === "assinado";
+
                   const canEdit =
                     !isDeleted &&
+                    !isBloqueadoAssinatura &&
+                    user?.role !== "equipe_escolar" &&
                     user?.role !== "aqv" &&
                     (user?.role === "gestor" ||
                       (user?.role === "instrutor" && isOwner));
@@ -664,47 +676,50 @@ export function Ocorrencias() {
 
                       {/* Status */}
                       <td className={styles.td}>
-                        {isDeleted ? (
-                          <span className={`${styles.statusBadge} ${styles.statusExcluido}`}>
-                            Excluída
-                          </span>
-                        ) : (
+                        <StatusBadge status={isDeleted ? "excluida" : oc.status} />
+
+                        {!isDeleted && (
                           <>
-                            {oc.status === "pendente" && (
-                              <span className={`${styles.statusBadge} ${styles.statusPendente}`}>
-                                Pendente
-                              </span>
-                            )}
-                            {oc.status === "enviado_aqv" && (
-                              <span className={`${styles.statusBadge} ${styles.statusEnviadoAqv}`}>
-                                Enviado ao AQV
-                              </span>
-                            )}
-                            {oc.status === "pdf_gerado" && (
-                              <span className={`${styles.statusBadge} ${styles.statusPdfGerado}`}>
-                                PDF Gerado
-                              </span>
-                            )}
-                            {oc.status === "impresso" && (
-                              <span className={`${styles.statusBadge} ${styles.statusPdfGerado}`}>
-                                Impresso
-                              </span>
-                            )}
-                            {oc.status === "assinado" && (
-                              <span className={`${styles.statusBadge} ${styles.statusAssinado}`}>
-                                Assinado
-                              </span>
-                            )}
-                            {oc.has_plano_pendente && (
+                            {oc.has_plano_pendente && oc.tipo === "desempenho" && (
                               <div style={{ marginTop: "4px" }}>
                                 <span
                                   className={styles.planoPendenteBadge}
-                                  title="Esta FIAP necessita da elaboração de um Plano de Recuperação"
+                                  title="Esta FIAP necessita da elaboração de um Plano de Recuperação pedagógica"
                                 >
                                   Plano Pendente
                                 </span>
                               </div>
                             )}
+                            {oc.tipo === "falta" && (() => {
+                              const authFaltas = (oc.aqv_recebimento || (oc as any).aqvRecebimento)?.compensacao_faltas_autorizada;
+                              if (authFaltas === "autorizado_atestado" || authFaltas === "autorizado_excepcional") {
+                                return (
+                                  <div style={{ marginTop: "4px" }}>
+                                    <span
+                                      className={styles.planoPendenteBadge}
+                                      style={{ backgroundColor: "rgba(22, 163, 74, 0.12)", color: "#16a34a", borderColor: "rgba(22, 163, 74, 0.3)" }}
+                                      title="Compensação de faltas autorizada pela Equipe Escolar"
+                                    >
+                                      Compensação Autorizada
+                                    </span>
+                                  </div>
+                                );
+                              }
+                              if (authFaltas === "nao_autorizado") {
+                                return (
+                                  <div style={{ marginTop: "4px" }}>
+                                    <span
+                                      className={styles.planoPendenteBadge}
+                                      style={{ backgroundColor: "rgba(227, 6, 19, 0.1)", color: "#e30613", borderColor: "rgba(227, 6, 19, 0.25)" }}
+                                      title="Compensação de faltas indeferida pela Equipe Escolar"
+                                    >
+                                      Sem Compensação
+                                    </span>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
                           </>
                         )}
                       </td>
@@ -721,16 +736,31 @@ export function Ocorrencias() {
                             <Eye size={16} />
                           </button>
 
-                          {oc.has_plano_pendente && !isDeleted && user?.role !== "aqv" && (
-                            <button
-                              type="button"
-                              className={`${styles.actionBtn} ${styles.planoBtn}`}
-                              onClick={() => handleOpenPlanoModal(oc)}
-                              title="Criar Plano de Recuperação para esta FIAP"
-                            >
-                              <ClipboardCheck size={15} />
-                            </button>
-                          )}
+                          {(() => {
+                            const authFaltas = (oc.aqv_recebimento || (oc as any).aqvRecebimento)?.compensacao_faltas_autorizada;
+                            const podeCriarPlanoFalta = oc.tipo === "falta" && (authFaltas === "autorizado_atestado" || authFaltas === "autorizado_excepcional");
+                            const podeCriarPlanoDesempenho = oc.tipo === "desempenho" && oc.has_plano_pendente;
+
+                            if (!isDeleted && user?.role !== "equipe_escolar" && user?.role !== "aqv") {
+                              if (podeCriarPlanoFalta || podeCriarPlanoDesempenho) {
+                                return (
+                                  <button
+                                    type="button"
+                                    className={`${styles.actionBtn} ${styles.planoBtn}`}
+                                    onClick={() => handleOpenPlanoModal(oc)}
+                                    title={
+                                      oc.tipo === "falta"
+                                        ? "Elaborar Plano de Compensação de Ausência (Autorizado pela Equipe Escolar)"
+                                        : "Elaborar Plano de Recuperação Pedagógica"
+                                    }
+                                  >
+                                    <ClipboardCheck size={15} />
+                                  </button>
+                                );
+                              }
+                            }
+                            return null;
+                          })()}
 
                           {canRestore && (
                             <button
@@ -744,21 +774,21 @@ export function Ocorrencias() {
                             </button>
                           )}
 
-                          {canSendAqv(oc) && !isDeleted && (
+                          {canSendEquipeEscolar(oc) && !isDeleted && (
                             <button
                               type="button"
                               className={`${styles.actionBtn} ${styles.aqvBtn}`}
-                              onClick={() => handleEncaminharAqv(oc)}
-                              disabled={oc.has_plano_pendente}
+                              onClick={() => handleEncaminharEquipeEscolar(oc)}
+                              disabled={oc.tipo === "desempenho" && oc.has_plano_pendente}
                               style={
-                                oc.has_plano_pendente
+                                oc.tipo === "desempenho" && oc.has_plano_pendente
                                   ? { opacity: 0.4, cursor: "not-allowed", borderColor: "var(--color-border)" }
                                   : undefined
                               }
                               title={
-                                oc.has_plano_pendente
-                                  ? "Não é possível encaminhar para a AQV enquanto o Plano de Recuperação estiver pendente"
-                                  : "Encaminhar para o AQV"
+                                oc.tipo === "desempenho" && oc.has_plano_pendente
+                                  ? "Para FIAP de aproveitamento pedagógico, elabore o plano antes de encaminhar à Equipe Escolar"
+                                  : "Encaminhar para a Equipe Escolar"
                               }
                             >
                               <Send size={15} />
@@ -846,7 +876,8 @@ export function Ocorrencias() {
                       total_comportamento: salvo.tipo === "comportamento" ? prev.total_comportamento + 1 : prev.total_comportamento,
                       total_desempenho: salvo.tipo === "desempenho" ? prev.total_desempenho + 1 : prev.total_desempenho,
                       total_pendente: salvo.status === "pendente" ? prev.total_pendente + 1 : prev.total_pendente,
-                      total_aqv: salvo.status === "enviado_aqv" ? prev.total_aqv + 1 : prev.total_aqv,
+                      total_equipe_escolar: (salvo.status === "enviado_equipe_escolar" || salvo.status === "enviado_aqv") ? (prev.total_equipe_escolar ?? prev.total_aqv) + 1 : prev.total_equipe_escolar,
+                      total_aqv: (salvo.status === "enviado_equipe_escolar" || salvo.status === "enviado_aqv") ? prev.total_aqv + 1 : prev.total_aqv,
                     }
                   : null
               );
@@ -886,14 +917,15 @@ export function Ocorrencias() {
         isOpen={Boolean(selectedDetalhes)}
         onClose={() => setSelectedDetalhes(null)}
         ocorrencia={selectedDetalhes}
-        onEncaminharAqv={handleEncaminharAqv}
+        onEncaminharEquipeEscolar={handleEncaminharEquipeEscolar}
+        onEncaminharAqv={handleEncaminharEquipeEscolar}
         onEdit={(oc) => {
           setSelectedDetalhes(null);
           handleOpenEdit(oc);
         }}
         canEdit={(() => {
           if (!selectedDetalhes || !user) return false;
-          if (user.role === "aqv") return false;
+          if (user.role === "equipe_escolar" || user.role === "aqv") return false;
           if (user.role === "gestor") return true;
           const cId =
             typeof selectedDetalhes.registrado_por === "object" && selectedDetalhes.registrado_por !== null
@@ -905,12 +937,12 @@ export function Ocorrencias() {
         })()}
       />
 
-      {/* Modal de Confirmação para Envio ao AQV */}
-      <ConfirmAqvModal
-        isOpen={Boolean(ocorrenciaAqvPending)}
-        onClose={() => setOcorrenciaAqvPending(null)}
-        onConfirm={handleConfirmEncaminharAqv}
-        ocorrencia={ocorrenciaAqvPending}
+      {/* Modal de Confirmação para Envio à Equipe Escolar */}
+      <ConfirmEquipeEscolarModal
+        isOpen={Boolean(ocorrenciaEquipeEscolarPending)}
+        onClose={() => setOcorrenciaEquipeEscolarPending(null)}
+        onConfirm={handleConfirmEncaminharEquipeEscolar}
+        ocorrencia={ocorrenciaEquipeEscolarPending}
       />
 
       {/* Modal de Confirmação de Exclusão */}

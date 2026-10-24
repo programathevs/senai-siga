@@ -10,6 +10,8 @@ import {
   Eye,
   Loader2,
   RotateCcw,
+  Headphones,
+  AlertTriangle,
 } from "lucide-react";
 import {
   planoRecuperacaoService,
@@ -20,6 +22,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Pagination } from "../../components/Pagination/Pagination";
 import { PlanoRecuperacaoModal } from "./PlanoRecuperacaoModal";
 import { PlanoPdfModal } from "./PlanoPdfModal";
+import { PlanoParecerModal } from "./PlanoParecerModal";
 import { ConfirmDeletePlanoModal } from "./ConfirmDeletePlanoModal";
 import { ConfirmRestorePlanoModal } from "./ConfirmRestorePlanoModal";
 import { showAvatarToast } from "../../utils/toast";
@@ -53,6 +56,9 @@ export function PlanosRecuperacao() {
   // PDF Modal
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [selectedPlanoPdf, setSelectedPlanoPdf] = useState<PlanoRecuperacao | null>(null);
+
+  // Parecer Equipe Escolar Modal
+  const [selectedPlanoParecer, setSelectedPlanoParecer] = useState<PlanoRecuperacao | null>(null);
 
   const isFirstRender = useRef(true);
   const prevSearchRef = useRef(search);
@@ -196,7 +202,7 @@ export function PlanosRecuperacao() {
           </p>
         </div>
 
-        {user?.role !== "aqv" && (
+        {user?.role !== "equipe_escolar" && user?.role !== "aqv" && (
           <button type="button" className={styles.addBtn} onClick={handleCreateNew}>
             <Plus size={18} />
             <span>Novo Plano de Recuperação</span>
@@ -234,9 +240,11 @@ export function PlanosRecuperacao() {
           onChange={(e) => setSelectedStatus(e.target.value)}
         >
           <option value="">Todos os Status</option>
-          <option value="rascunho">Em Elaboração (Rascunho)</option>
+          <option value="em_analise">Em Análise (Equipe Escolar)</option>
           <option value="aguardando_visto">Aguardando Visto</option>
           <option value="concluido">Concluído</option>
+          <option value="recusado">Recusado</option>
+          <option value="rascunho">Em Elaboração (Rascunho)</option>
           {user?.role === "gestor" && (
             <option value="excluidos">Excluídos / Arquivados (Lixeira)</option>
           )}
@@ -284,11 +292,15 @@ export function PlanosRecuperacao() {
                     creatorId !== undefined &&
                     plano.status_processo !== "concluido");
 
+                const isEquipeEscolar = user?.role === "equipe_escolar" || user?.role === "aqv" || user?.role === "gestor";
+                const canDarParecer = !isDeleted && isEquipeEscolar && plano.status_processo === "em_analise";
+
                 const canEdit =
                   !isDeleted &&
+                  user?.role !== "equipe_escolar" &&
                   user?.role !== "aqv" &&
                   (user?.role === "gestor" ||
-                    (user?.role === "instrutor" && plano.status_processo !== "concluido"));
+                    (user?.role === "instrutor" && plano.status_processo !== "concluido" && plano.status_processo !== "recusado"));
 
                 const ucsText = plano.unidades && plano.unidades.length > 0
                   ? plano.unidades.map((u) => u.sigla || u.nome).join(", ")
@@ -355,10 +367,23 @@ export function PlanosRecuperacao() {
                           <CheckCircle2 size={12} />
                           Concluído
                         </span>
+                      ) : plano.status_processo === "recusado" ? (
+                        <span
+                          className={`${styles.statusBadge} ${styles.statusRecusado}`}
+                          title={plano.parecer_equipe_escolar ? `Parecer Equipe Escolar: ${plano.parecer_equipe_escolar}` : "Plano Recusado pela Equipe Escolar"}
+                        >
+                          <AlertTriangle size={12} />
+                          Recusado
+                        </span>
                       ) : plano.status_processo === "aguardando_visto" ? (
                         <span className={`${styles.statusBadge} ${styles.statusVisto}`}>
                           <Clock size={12} />
                           Aguardando Visto
+                        </span>
+                      ) : plano.status_processo === "em_analise" ? (
+                        <span className={`${styles.statusBadge} ${styles.statusEmAnalise}`}>
+                          <Clock size={12} />
+                          Em Análise
                         </span>
                       ) : (
                         <span className={`${styles.statusBadge} ${styles.statusRascunho}`}>
@@ -395,6 +420,17 @@ export function PlanosRecuperacao() {
                         >
                           <Eye size={16} />
                         </button>
+
+                        {canDarParecer && (
+                          <button
+                            type="button"
+                            className={`${styles.actionBtn} ${styles.actionBtnParecer}`}
+                            onClick={() => setSelectedPlanoParecer(plano)}
+                            title="Analisar Plano (Parecer da Equipe Escolar: Aceitar/Recusar)"
+                          >
+                            <Headphones size={16} />
+                          </button>
+                        )}
 
                         {canEdit && (
                           <button
@@ -490,6 +526,7 @@ export function PlanosRecuperacao() {
         canEdit={Boolean(
           selectedPlanoPdf &&
           !selectedPlanoPdf.deleted_at &&
+          user?.role !== "equipe_escolar" &&
           user?.role !== "aqv" &&
           (user?.role === "gestor" ||
             (user?.role === "instrutor" && selectedPlanoPdf.status_processo !== "concluido"))
@@ -516,6 +553,14 @@ export function PlanosRecuperacao() {
         }}
         onConfirm={handleConfirmRestore}
         plano={planoToRestore}
+      />
+
+      {/* Modal de Análise e Parecer da Equipe Escolar */}
+      <PlanoParecerModal
+        isOpen={Boolean(selectedPlanoParecer)}
+        onClose={() => setSelectedPlanoParecer(null)}
+        onSuccess={() => loadPlanos(true)}
+        plano={selectedPlanoParecer}
       />
     </div>
   );

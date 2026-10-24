@@ -10,9 +10,13 @@ export interface Aluno {
   matricula: string;
   ra?: string;
   cpf: string | null;
+  rg?: string | null;
   data_nascimento: string | null;
   is_maior_de_idade?: boolean;
+  nome_pai?: string | null;
+  nome_mae?: string | null;
   email: string | null;
+  email_educacional?: string | null;
   telefone: string | null;
   foto?: string | null;
   foto_url?: string | null;
@@ -20,6 +24,7 @@ export interface Aluno {
   created_at: string;
   updated_at: string;
   turma?: Turma;
+  turmas?: Array<Turma & { pivot?: { ra?: string; status?: string } }>;
 }
 
 export interface AlunoOption {
@@ -32,6 +37,8 @@ export interface AlunoOption {
 
 export interface AlunoPayload {
   turma_id?: number | null;
+  segunda_turma_id?: number | null;
+  segundo_ra?: string | null;
   nome: string;
   matricula: string;
   cpf?: string | null;
@@ -88,6 +95,8 @@ export const alunoService = {
       if (payload.email) formData.append("email", payload.email);
       if (payload.telefone) formData.append("telefone", payload.telefone);
       if (payload.status) formData.append("status", payload.status);
+      if (payload.segunda_turma_id) formData.append("segunda_turma_id", String(payload.segunda_turma_id));
+      if (payload.segundo_ra) formData.append("segundo_ra", payload.segundo_ra);
       formData.append("foto", payload.foto);
 
       const response = await api.post<{ message: string; data: Aluno }>("/api/alunos", formData, {
@@ -107,6 +116,8 @@ export const alunoService = {
       formData.append("nome", payload.nome);
       formData.append("matricula", payload.matricula);
       if (payload.turma_id !== undefined) formData.append("turma_id", payload.turma_id ? String(payload.turma_id) : "");
+      if (payload.segunda_turma_id !== undefined) formData.append("segunda_turma_id", payload.segunda_turma_id ? String(payload.segunda_turma_id) : "");
+      if (payload.segundo_ra !== undefined) formData.append("segundo_ra", payload.segundo_ra || "");
       if (payload.cpf !== undefined) formData.append("cpf", payload.cpf || "");
       if (payload.data_nascimento !== undefined) formData.append("data_nascimento", payload.data_nascimento || "");
       if (payload.email !== undefined) formData.append("email", payload.email || "");
@@ -122,6 +133,20 @@ export const alunoService = {
     }
 
     const response = await api.put<{ message: string; data: Aluno }>(`/api/alunos/${id}`, payload);
+    return response.data.data;
+  },
+
+  async uploadFoto(id: number, file: File): Promise<Aluno> {
+    const formData = new FormData();
+    formData.append("foto", file);
+    const response = await api.post<{ message: string; data: Aluno }>(`/api/alunos/${id}/foto`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data.data;
+  },
+
+  async deleteFoto(id: number): Promise<Aluno> {
+    const response = await api.delete<{ message: string; data: Aluno }>(`/api/alunos/${id}/foto`);
     return response.data.data;
   },
 

@@ -84,7 +84,7 @@ class UsuarioController extends Controller
     }
 
     /**
-     * Cadastra um novo usuário com o perfil selecionado (Gestor, AQV ou Instrutor).
+     * Cadastra um novo usuário com o perfil selecionado (Gestor, Equipe Escolar ou Instrutor).
      */
     public function store(UsuarioRequest $request): JsonResponse
     {

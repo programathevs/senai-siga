@@ -8,7 +8,12 @@ export type PlanoTipoPrograma =
   | "compensacao_ausencia"
   | "recuperacao_final";
 
-export type PlanoStatusProcesso = "rascunho" | "aguardando_visto" | "concluido";
+export type PlanoStatusProcesso =
+  | "em_analise"
+  | "aguardando_visto"
+  | "concluido"
+  | "recusado"
+  | "rascunho";
 export type PlanoConceito = "aprovado" | "reprovado";
 
 export interface PlanoFrequencia {
@@ -44,6 +49,10 @@ export interface PlanoRecuperacao {
   visto_professor?: string | null;
   conceito?: PlanoConceito | null;
   status_processo?: PlanoStatusProcesso;
+  parecer_equipe_escolar?: string | null;
+  analisado_por?: number | null;
+  analisado_por_user?: { id: number; name: string; email: string };
+  analisado_em?: string | null;
   registro_desempenho?: string | null;
   frequencias?: PlanoFrequencia[];
   created_at?: string;
@@ -138,6 +147,17 @@ export const planoRecuperacaoService = {
   async restaurar(id: number): Promise<PlanoRecuperacao> {
     const response = await api.post<{ message: string; data: PlanoRecuperacao }>(
       `/api/planos-recuperacao/${id}/restaurar`
+    );
+    return response.data.data;
+  },
+
+  async emitirParecerEquipeEscolar(
+    id: number,
+    payload: { decisao: "aceito" | "recusado"; parecer?: string }
+  ): Promise<PlanoRecuperacao> {
+    const response = await api.post<{ message: string; data: PlanoRecuperacao }>(
+      `/api/planos-recuperacao/${id}/parecer-equipe-escolar`,
+      payload
     );
     return response.data.data;
   },

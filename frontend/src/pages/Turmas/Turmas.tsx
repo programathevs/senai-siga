@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Plus, Search, Edit2, Trash2, Users, School, Calendar, BookOpen, Loader2 } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Users, School, Calendar, BookOpen, Loader2, CloudDownload } from "lucide-react";
 import { turmaService, type Turma } from "../../services/turmaService";
 import { cursoService, type Curso } from "../../services/cursoService";
 import { Pagination } from "../../components/Pagination/Pagination";
@@ -7,6 +7,7 @@ import type { PaginationMeta } from "../../types/pagination";
 import { useAuth } from "../../contexts/AuthContext";
 import { TurmaModal } from "./TurmaModal";
 import { TurmaAlunosModal } from "./TurmaAlunosModal";
+import { ImportarTurmasModal } from "./ImportarTurmasModal";
 import { ConfirmModal } from "../../components/ConfirmModal/ConfirmModal";
 import { showAvatarToast } from "../../utils/toast";
 import styles from "./Turmas.module.css";
@@ -27,6 +28,7 @@ export function Turmas() {
 
   // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingTurma, setEditingTurma] = useState<Turma | null>(null);
   const [selectedTurmaIdParaAlunos, setSelectedTurmaIdParaAlunos] = useState<number | null>(null);
   const [turmaToDelete, setTurmaToDelete] = useState<Turma | null>(null);
@@ -150,10 +152,22 @@ export function Turmas() {
         </div>
 
         {isGestor && (
-          <button type="button" className={styles.addBtn} onClick={handleOpenCreateModal}>
-            <Plus size={18} />
-            Nova Turma
-          </button>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <button
+              type="button"
+              className={styles.importBtn}
+              onClick={() => setIsImportModalOpen(true)}
+              title="Importar turmas e cursos do SGSET ou planilha Excel"
+            >
+              <CloudDownload size={18} />
+              <span>Importar Turmas</span>
+            </button>
+
+            <button type="button" className={styles.addBtn} onClick={handleOpenCreateModal}>
+              <Plus size={18} />
+              Nova Turma
+            </button>
+          </div>
         )}
       </div>
 
@@ -354,6 +368,13 @@ export function Turmas() {
             : []
         }
         warningText="Os alunos vinculados permanecerão no sistema como alunos sem turma. Esta ação não apaga o cadastro dos estudantes."
+      />
+
+      {/* Modal de Importação SGSET / Excel */}
+      <ImportarTurmasModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => loadTurmas(page, perPage)}
       />
     </div>
   );

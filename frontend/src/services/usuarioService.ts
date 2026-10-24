@@ -1,7 +1,7 @@
 import { api } from "./api";
 import type { PaginatedResponse } from "../types/pagination";
 
-export type UserRoleType = "gestor" | "instrutor" | "aqv";
+export type UserRoleType = "gestor" | "instrutor" | "equipe_escolar" | "aqv";
 
 export interface Usuario {
   id: number;

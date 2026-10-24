@@ -242,23 +242,23 @@ export const UsuarioModal: React.FC<UsuarioModalProps> = ({
                 </p>
               </div>
 
-              {/* AQV */}
+              {/* Equipe Escolar */}
               <div
                 className={`${styles.roleCard} ${
-                  role === "aqv" ? styles.roleCardActiveAqv : ""
+                  role === "equipe_escolar" || role === "aqv" ? styles.roleCardActiveEquipeEscolar : ""
                 }`}
-                onClick={() => setRole("aqv")}
+                onClick={() => setRole("equipe_escolar")}
                 role="button"
                 tabIndex={0}
               >
                 <div className={styles.roleHeader}>
-                  <div className={`${styles.roleIconBadge} ${styles.roleIconAqv}`}>
+                  <div className={`${styles.roleIconBadge} ${styles.roleIconEquipeEscolar}`}>
                     <HeartHandshake size={16} />
                   </div>
-                  <span className={styles.roleTitle}>AQV</span>
+                  <span className={styles.roleTitle}>Equipe Escolar</span>
                 </div>
                 <p className={styles.roleDesc}>
-                  Analista de Qualidade de Vida, acolhimento e encaminhamentos.
+                  Equipe multidisciplinar, acolhimento, análise de planos e encaminhamentos.
                 </p>
               </div>
             </div>

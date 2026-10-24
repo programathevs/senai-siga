@@ -20,7 +20,13 @@ class AuditoriaController extends Controller
         // Filtro por Ação
         if ($acao = $request->input('acao')) {
             if ($acao !== 'todas') {
-                $query->where('acao', $acao);
+                if ($acao === 'encaminhamento_equipe_escolar' || $acao === 'encaminhamento_aqv') {
+                    $query->whereIn('acao', ['encaminhamento_equipe_escolar', 'encaminhamento_aqv']);
+                } elseif ($acao === 'atendimento_equipe_escolar' || $acao === 'atendimento_aqv') {
+                    $query->whereIn('acao', ['atendimento_equipe_escolar', 'atendimento_aqv']);
+                } else {
+                    $query->where('acao', $acao);
+                }
             }
         }
 
@@ -73,7 +79,7 @@ class AuditoriaController extends Controller
         $totalLogs = AuditoriaLog::count();
         $logsHoje = AuditoriaLog::whereDate('created_at', $hoje)->count();
         $edicoesFiap = AuditoriaLog::where('acao', 'edicao_fiap')->count();
-        $atendimentosAqv = AuditoriaLog::where('acao', 'atendimento_aqv')->count();
+        $atendimentosEquipeEscolar = AuditoriaLog::whereIn('acao', ['atendimento_equipe_escolar', 'atendimento_aqv'])->count();
         $assinaturasFiap = AuditoriaLog::where('acao', 'assinatura_fiap')->count();
         $planosCriados = AuditoriaLog::whereIn('acao', ['criacao_plano', 'atualizacao_plano'])->count();
 
@@ -81,7 +87,8 @@ class AuditoriaController extends Controller
             'total_logs' => $totalLogs,
             'logs_hoje' => $logsHoje,
             'edicoes_fiap' => $edicoesFiap,
-            'atendimentos_aqv' => $atendimentosAqv,
+            'atendimentos_equipe_escolar' => $atendimentosEquipeEscolar,
+            'atendimentos_aqv' => $atendimentosEquipeEscolar,
             'assinaturas_fiap' => $assinaturasFiap,
             'planos_recuperacao' => $planosCriados,
         ]);

@@ -258,56 +258,65 @@
 .typeBadge {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.55rem;
-  border-radius: var(--radius);
-  font-size: 0.75rem;
-  font-weight: 700;
+  justify-content: center;
+  height: 1.45rem;
+  padding: 0 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .typeFalta {
   background-color: color-mix(in srgb, #f59e0b 14%, transparent);
   color: #d97706;
+  border: 1px solid color-mix(in srgb, #f59e0b 25%, transparent);
 }
 
 .typeComportamento {
   background-color: color-mix(in srgb, #ef4444 14%, transparent);
   color: #dc2626;
+  border: 1px solid color-mix(in srgb, #ef4444 25%, transparent);
 }
 
 .typeDesempenho {
   background-color: color-mix(in srgb, #3b82f6 14%, transparent);
   color: #2563eb;
+  border: 1px solid color-mix(in srgb, #3b82f6 25%, transparent);
 }
 
 .statusBadge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
-  padding: 0.25rem 0.65rem;
-  border-radius: var(--radius);
-  font-size: 0.75rem;
+  height: 1.45rem;
+  padding: 0 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.725rem;
   font-weight: 600;
+  line-height: 1;
   white-space: nowrap;
 }
 
 .statusPendente {
   background-color: color-mix(in srgb, #f59e0b 14%, transparent);
   color: #d97706;
-  border: 1px solid color-mix(in srgb, #f59e0b 30%, transparent);
+  border: 1px solid color-mix(in srgb, #f59e0b 25%, transparent);
 }
 
 .statusEmAtendimento {
   background-color: color-mix(in srgb, #6366f1 14%, transparent);
   color: #6366f1;
-  border: 1px solid color-mix(in srgb, #6366f1 30%, transparent);
+  border: 1px solid color-mix(in srgb, #6366f1 25%, transparent);
 }
 
 .statusConcluido {
   background-color: color-mix(in srgb, var(--color-success) 14%, transparent);
   color: var(--color-success);
-  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-success) 25%, transparent);
 }
 
 .actionsCell {

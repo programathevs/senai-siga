@@ -30,28 +30,31 @@ class AuthenticateEarly
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $isMeRoute = $request->is('api/me') || $request->path() === 'api/me';
-        $startTime = microtime(true);
-
-        if ($request->isMethod('OPTIONS')) {
+        if (app()->runningUnitTests() || $request->isMethod('OPTIONS')) {
             return $next($request);
         }
 
-        if ($isMeRoute) {
-            $this->logTerminal("console.time('me-route')");
-            $this->logTerminal(sprintf(
-                "[me-route] [Linha %d] Nova requisição recebida na rota GET /api/me.",
-                __LINE__
-            ));
+        $isMeRoute = $request->is('api/me') || $request->path() === 'api/me';
+        $startTime = microtime(true);
+
+        // O Early Return antecipado aplica-se especificamente para a rota /api/me
+        if (! $isMeRoute) {
+            return $next($request);
         }
+
+        $this->logTerminal("console.time('me-route')");
+        $this->logTerminal(sprintf(
+            "[me-route] [Linha %d] Nova requisição recebida na rota GET /api/me.",
+            __LINE__
+        ));
 
         // Se a rota for pública, libera imediatamente sem validação prévia de credenciais
         if ($this->isPublicRoute($request)) {
             return $next($request);
         }
 
-        // Aplica early return principalmente na rota /api/me e rotas protegidas
-        if ($isMeRoute || $this->requiresAuthentication($request)) {
+        // Aplica early return na rota /api/me
+        if ($isMeRoute) {
             $checkStart = microtime(true);
 
             if ($isMeRoute) {

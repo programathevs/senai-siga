@@ -7,7 +7,7 @@ import {
 } from "react";
 import { api } from "../services/api";
 
-export type UserRole = "gestor" | "instrutor" | "aqv";
+export type UserRole = "gestor" | "instrutor" | "equipe_escolar" | "aqv";
 
 export interface User {
   id: number;

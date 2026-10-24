@@ -17,8 +17,12 @@ class Aluno extends Model
         'nome',
         'matricula',
         'cpf',
+        'rg',
         'data_nascimento',
+        'nome_pai',
+        'nome_mae',
         'email',
+        'email_educacional',
         'telefone',
         'foto',
         'status',
@@ -62,6 +66,16 @@ class Aluno extends Model
     public function turma(): BelongsTo
     {
         return $this->belongsTo(Turma::class);
+    }
+
+    /**
+     * Turmas vinculadas ao aluno com RAs específicos (suporte a múltiplas turmas).
+     */
+    public function turmas(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Turma::class, 'aluno_turmas')
+            ->withPivot('ra', 'status')
+            ->withTimestamps();
     }
 
     /**

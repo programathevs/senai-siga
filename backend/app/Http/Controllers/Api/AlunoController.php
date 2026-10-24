@@ -26,9 +26,12 @@ class AlunoController extends Controller
             if ($request->filled('turma_id')) {
                 $turmaId = $request->input('turma_id');
                 if ($turmaId === 'sem_turma') {
-                    $optionsQuery->whereNull('turma_id');
+                    $optionsQuery->whereNull('turma_id')->whereDoesntHave('turmas');
                 } else {
-                    $optionsQuery->where('turma_id', $turmaId);
+                    $optionsQuery->where(function ($q) use ($turmaId) {
+                        $q->where('turma_id', $turmaId)
+                          ->orWhereHas('turmas', fn ($qt) => $qt->where('turmas.id', $turmaId));
+                    });
                 }
             }
 
@@ -45,13 +48,23 @@ class AlunoController extends Controller
             }
 
             $alunosOptions = $optionsQuery->orderBy('nome', 'asc')
-                ->select(['id', 'nome', 'matricula as ra'])
+                ->with(['turmas'])
                 ->get()
-                ->map(fn ($aluno) => [
-                    'id' => $aluno->id,
-                    'nome' => $aluno->nome,
-                    'ra' => $aluno->ra ?? $aluno->matricula,
-                ]);
+                ->map(function ($aluno) use ($request) {
+                    $turmaId = $request->input('turma_id');
+                    $raEspecifico = $aluno->matricula;
+                    if ($turmaId && $turmaId !== 'sem_turma') {
+                        $turmaVinculada = $aluno->turmas->firstWhere('id', (int) $turmaId);
+                        if ($turmaVinculada && !empty($turmaVinculada->pivot->ra)) {
+                            $raEspecifico = $turmaVinculada->pivot->ra;
+                        }
+                    }
+                    return [
+                        'id' => $aluno->id,
+                        'nome' => $aluno->nome,
+                        'ra' => $raEspecifico,
+                    ];
+                });
 
             return response()->json([
                 'data' => $alunosOptions,
@@ -62,7 +75,7 @@ class AlunoController extends Controller
             ]);
         }
 
-        $query = Aluno::with('turma.curso');
+        $query = Aluno::with(['turma.curso', 'turmas.curso']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -77,9 +90,12 @@ class AlunoController extends Controller
         if ($request->filled('turma_id')) {
             $turmaId = $request->input('turma_id');
             if ($turmaId === 'sem_turma') {
-                $query->whereNull('turma_id');
+                $query->whereNull('turma_id')->whereDoesntHave('turmas');
             } else {
-                $query->where('turma_id', $turmaId);
+                $query->where(function ($q) use ($turmaId) {
+                    $q->where('turma_id', $turmaId)
+                      ->orWhereHas('turmas', fn ($qt) => $qt->where('turmas.id', $turmaId));
+                });
             }
         }
 
@@ -126,6 +142,9 @@ class AlunoController extends Controller
     public function store(AlunoRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $segundaTurmaId = $data['segunda_turma_id'] ?? null;
+        $segundoRa = $data['segundo_ra'] ?? null;
+        unset($data['segunda_turma_id'], $data['segundo_ra']);
 
         if ($request->hasFile('foto')) {
             $data['foto'] = $request->file('foto')->store('avatars/alunos', 'public');
@@ -133,9 +152,23 @@ class AlunoController extends Controller
 
         $aluno = Aluno::create($data);
 
+        // Vincula a turma principal na tabela aluno_turmas
+        if (!empty($aluno->turma_id)) {
+            $aluno->turmas()->syncWithoutDetaching([
+                $aluno->turma_id => ['ra' => $aluno->matricula, 'status' => 'ativo'],
+            ]);
+        }
+
+        // Vincula a 2ª turma caso fornecida
+        if (!empty($segundaTurmaId)) {
+            $aluno->turmas()->syncWithoutDetaching([
+                $segundaTurmaId => ['ra' => $segundoRa ?: $aluno->matricula, 'status' => 'ativo'],
+            ]);
+        }
+
         return response()->json([
             'message' => 'Aluno cadastrado com sucesso.',
-            'data' => $aluno->load('turma.curso'),
+            'data' => $aluno->load(['turma.curso', 'turmas.curso']),
         ], 201);
     }
 
@@ -145,7 +178,7 @@ class AlunoController extends Controller
     public function show(Aluno $aluno): JsonResponse
     {
         return response()->json([
-            'data' => $aluno->load('turma.curso'),
+            'data' => $aluno->load(['turma.curso', 'turmas.curso']),
         ]);
     }
 
@@ -155,6 +188,9 @@ class AlunoController extends Controller
     public function update(AlunoRequest $request, Aluno $aluno): JsonResponse
     {
         $data = $request->validated();
+        $segundaTurmaId = array_key_exists('segunda_turma_id', $data) ? $data['segunda_turma_id'] : null;
+        $segundoRa = array_key_exists('segundo_ra', $data) ? $data['segundo_ra'] : null;
+        unset($data['segunda_turma_id'], $data['segundo_ra']);
 
         if ($request->boolean('remover_foto')) {
             if ($aluno->foto && Storage::disk('public')->exists($aluno->foto)) {
@@ -170,9 +206,71 @@ class AlunoController extends Controller
 
         $aluno->update($data);
 
+        // Sincroniza turma principal e 2ª turma na tabela aluno_turmas
+        $turmasSync = [];
+        if (!empty($aluno->turma_id)) {
+            $turmasSync[$aluno->turma_id] = [
+                'ra' => $aluno->matricula,
+                'status' => 'ativo',
+            ];
+        }
+
+        if (!empty($segundaTurmaId)) {
+            $turmasSync[$segundaTurmaId] = [
+                'ra' => $segundoRa ?: $aluno->matricula,
+                'status' => 'ativo',
+            ];
+        }
+
+        $aluno->turmas()->sync($turmasSync);
+
         return response()->json([
             'message' => 'Aluno atualizado com sucesso.',
-            'data' => $aluno->load('turma.curso'),
+            'data' => $aluno->load(['turma.curso', 'turmas.curso']),
+        ]);
+    }
+
+    /**
+     * Upload de foto do aluno (usado tanto por Gestores quanto por Professores).
+     */
+    public function uploadFoto(Request $request, Aluno $aluno): JsonResponse
+    {
+        $request->validate([
+            'foto' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+        ], [
+            'foto.required' => 'Selecione uma imagem para o aluno.',
+            'foto.image' => 'O arquivo enviado deve ser uma imagem válida.',
+            'foto.mimes' => 'A foto deve ser nos formatos JPEG, PNG, JPG ou WEBP.',
+            'foto.max' => 'A foto não pode ultrapassar o tamanho de 2MB.',
+        ]);
+
+        if ($aluno->foto && Storage::disk('public')->exists($aluno->foto)) {
+            Storage::disk('public')->delete($aluno->foto);
+        }
+
+        $fotoPath = $request->file('foto')->store('avatars/alunos', 'public');
+        $aluno->update(['foto' => $fotoPath]);
+
+        return response()->json([
+            'message' => 'Foto do aluno atualizada com sucesso.',
+            'data' => $aluno->fresh()->load(['turma.curso', 'turmas.curso']),
+        ]);
+    }
+
+    /**
+     * Remove a foto do aluno e exclui permanentemente o arquivo físico do disco.
+     */
+    public function deleteFoto(Aluno $aluno): JsonResponse
+    {
+        if ($aluno->foto && Storage::disk('public')->exists($aluno->foto)) {
+            Storage::disk('public')->delete($aluno->foto);
+        }
+
+        $aluno->update(['foto' => null]);
+
+        return response()->json([
+            'message' => 'Foto do aluno removida com sucesso.',
+            'data' => $aluno->fresh()->load(['turma.curso', 'turmas.curso']),
         ]);
     }
 
@@ -217,7 +315,7 @@ class AlunoController extends Controller
                 'estatisticas' => [
                     'total_ocorrencias' => $ocorrencias->count(),
                     'total_faltas' => $totalFaltas,
-                    'planos_recuperacao_ativos' => $ocorrencias->where('status', 'enviado_aqv')->count(),
+                    'planos_recuperacao_ativos' => $ocorrencias->whereIn('status', ['enviado_aqv', 'enviado_equipe_escolar'])->count(),
                 ],
                 'ocorrencias' => $ocorrencias,
             ],

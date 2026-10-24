@@ -27,7 +27,7 @@ class OcorrenciaRequest extends FormRequest
             'recomendacoes_gestao' => ['nullable', 'string'],
             'providencias_gestao' => ['nullable', 'string'],
             'outras_observacoes' => ['nullable', 'string'],
-            'status' => ['nullable', Rule::in(['pendente', 'pdf_gerado', 'enviado_aqv', 'impresso', 'assinado'])],
+            'status' => ['nullable', Rule::in(['pendente', 'pdf_gerado', 'enviado_aqv', 'enviado_equipe_escolar', 'aguardando_assinatura', 'impresso', 'assinado'])],
             'motivo_edicao' => ['nullable', 'string', 'max:1000'],
             'unidades' => ['nullable', 'array'],
             'unidades.*.unidade_curricular_id' => ['required_with:unidades', 'exists:unidades_curriculares,id'],

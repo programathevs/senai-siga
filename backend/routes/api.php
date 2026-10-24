@@ -29,8 +29,8 @@ Route::middleware(['auth.early', 'auth:sanctum'])->group(function () {
     Route::post('/first-access/update-password', [FirstAccessController::class, 'updatePassword'])
         ->name('first-access.update-password');
 
-    // --- LEITURA DE CURSOS, TURMAS, ALUNOS E INSTRUTORES (Gestor, Instrutor e AQV) ---
-    Route::middleware('role:gestor,instrutor,aqv')->group(function () {
+    // --- LEITURA DE CURSOS, TURMAS, ALUNOS E INSTRUTORES (Gestor, Instrutor e Equipe Escolar) ---
+    Route::middleware('role:gestor,instrutor,equipe_escolar,aqv')->group(function () {
         Route::get('/cursos', [\App\Http\Controllers\Api\CursoController::class, 'index'])->name('cursos.index');
         Route::get('/cursos/{curso}', [\App\Http\Controllers\Api\CursoController::class, 'show'])->name('cursos.show');
 
@@ -88,14 +88,20 @@ Route::middleware(['auth.early', 'auth:sanctum'])->group(function () {
         Route::post('/ocorrencias/{id}/restaurar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'restaurar'])->name('ocorrencias.restaurar');
         Route::post('/planos-recuperacao/{id}/restaurar', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'restaurar'])->name('planos-recuperacao.restaurar');
 
+        // --- INTEGRAÇÃO E IMPORTAÇÃO SGSET / PLANILHA (Apenas Gestor) ---
+        Route::get('/sgset/status', [\App\Http\Controllers\Api\SgsetController::class, 'status'])->name('sgset.status');
+        Route::post('/alunos/importar', [\App\Http\Controllers\Api\SgsetController::class, 'importarAlunos'])->name('alunos.importar');
+        Route::post('/turmas/importar', [\App\Http\Controllers\Api\SgsetController::class, 'importarTurmas'])->name('turmas.importar');
+        Route::post('/sgset/sincronizar-geral', [\App\Http\Controllers\Api\SgsetController::class, 'sincronizarGeral'])->name('sgset.sincronizar-geral');
+
         // --- AUDITORIA & RASTREABILIDADE (Apenas Gestor) ---
         Route::get('/auditoria', [\App\Http\Controllers\Api\AuditoriaController::class, 'index'])->name('auditoria.index');
         Route::get('/auditoria/stats', [\App\Http\Controllers\Api\AuditoriaController::class, 'stats'])->name('auditoria.stats');
     });
 
     // --- GESTÃO DE OCORRÊNCIAS / FIAPS ---
-    // Leitura: Gestor, Instrutor e AQV
-    Route::middleware('role:gestor,instrutor,aqv')->group(function () {
+    // Leitura: Gestor, Instrutor e Equipe Escolar
+    Route::middleware('role:gestor,instrutor,equipe_escolar,aqv')->group(function () {
         Route::get('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'index'])->name('ocorrencias.index');
         Route::get('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'show'])->name('ocorrencias.show');
 
@@ -109,7 +115,12 @@ Route::middleware(['auth.early', 'auth:sanctum'])->group(function () {
         Route::post('/ocorrencias', [\App\Http\Controllers\Api\OcorrenciaController::class, 'store'])->name('ocorrencias.store');
         Route::put('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'update'])->name('ocorrencias.update');
         Route::delete('/ocorrencias/{ocorrencia}', [\App\Http\Controllers\Api\OcorrenciaController::class, 'destroy'])->name('ocorrencias.destroy');
+        Route::post('/ocorrencias/{ocorrencia}/encaminhar-equipe-escolar', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharEquipeEscolar'])->name('ocorrencias.encaminhar-equipe-escolar');
         Route::post('/ocorrencias/{ocorrencia}/encaminhar-aqv', [\App\Http\Controllers\Api\OcorrenciaController::class, 'encaminharAqv'])->name('ocorrencias.encaminhar-aqv');
+
+        // Upload e exclusão de foto do aluno
+        Route::post('/alunos/{aluno}/foto', [\App\Http\Controllers\Api\AlunoController::class, 'uploadFoto'])->name('alunos.upload-foto');
+        Route::delete('/alunos/{aluno}/foto', [\App\Http\Controllers\Api\AlunoController::class, 'deleteFoto'])->name('alunos.delete-foto');
 
         // Planos de Recuperação (Escrita)
         Route::post('/planos-recuperacao', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'store'])->name('planos-recuperacao.store');
@@ -117,11 +128,20 @@ Route::middleware(['auth.early', 'auth:sanctum'])->group(function () {
         Route::delete('/planos-recuperacao/{plano}', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'destroy'])->name('planos-recuperacao.destroy');
     });
 
-    // --- MÓDULO AQV (Analista de Qualidade de Vida / Coordenação Pedagógica) ---
-    Route::middleware('role:gestor,aqv')->group(function () {
-        Route::get('/aqv/encaminhamentos', [\App\Http\Controllers\Api\AqvController::class, 'index'])->name('aqv.encaminhamentos.index');
-        Route::get('/aqv/stats', [\App\Http\Controllers\Api\AqvController::class, 'stats'])->name('aqv.stats');
-        Route::post('/aqv/encaminhamentos/{ocorrencia}/atendimento', [\App\Http\Controllers\Api\AqvController::class, 'salvarAtendimento'])->name('aqv.encaminhamentos.atendimento');
-        Route::post('/aqv/encaminhamentos/{ocorrencia}/confirmar-assinatura', [\App\Http\Controllers\Api\AqvController::class, 'confirmarAssinatura'])->name('aqv.encaminhamentos.confirmar-assinatura');
+    // --- MÓDULO EQUIPE ESCOLAR (Atendimento Pedagógico e Parecer de Planos) ---
+    Route::middleware('role:gestor,equipe_escolar,aqv')->group(function () {
+        Route::get('/equipe-escolar/encaminhamentos', [\App\Http\Controllers\Api\EquipeEscolarController::class, 'index'])->name('equipe-escolar.encaminhamentos.index');
+        Route::get('/equipe-escolar/stats', [\App\Http\Controllers\Api\EquipeEscolarController::class, 'stats'])->name('equipe-escolar.stats');
+        Route::post('/equipe-escolar/encaminhamentos/{ocorrencia}/atendimento', [\App\Http\Controllers\Api\EquipeEscolarController::class, 'salvarAtendimento'])->name('equipe-escolar.encaminhamentos.atendimento');
+        Route::post('/equipe-escolar/encaminhamentos/{ocorrencia}/confirmar-assinatura', [\App\Http\Controllers\Api\EquipeEscolarController::class, 'confirmarAssinatura'])->name('equipe-escolar.encaminhamentos.confirmar-assinatura');
+
+        // Parecer e decisão sobre Planos de Recuperação (Aceite ou Recusa com justificativa)
+        Route::post('/planos-recuperacao/{plano}/parecer-equipe-escolar', [\App\Http\Controllers\Api\PlanoRecuperacaoController::class, 'parecerEquipeEscolar'])->name('planos-recuperacao.parecer-equipe-escolar');
+
+        // Aliases para rotas legadas AQV
+        Route::get('/aqv/encaminhamentos', [\App\Http\Controllers\Api\EquipeEscolarController::class, 'index'])->name('aqv.encaminhamentos.index');
+        Route::get('/aqv/stats', [\App\Http\Controllers\Api\EquipeEscolarController::class, 'stats'])->name('aqv.stats');
+        Route::post('/aqv/encaminhamentos/{ocorrencia}/atendimento', [\App\Http\Controllers\Api\EquipeEscolarController::class, 'salvarAtendimento'])->name('aqv.encaminhamentos.atendimento');
+        Route::post('/aqv/encaminhamentos/{ocorrencia}/confirmar-assinatura', [\App\Http\Controllers\Api\EquipeEscolarController::class, 'confirmarAssinatura'])->name('aqv.encaminhamentos.confirmar-assinatura');
     });
 });

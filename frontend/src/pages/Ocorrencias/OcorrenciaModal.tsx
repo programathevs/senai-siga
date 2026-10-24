@@ -278,7 +278,7 @@ export function OcorrenciaModal({
       "Participar das aulas efetivamente e evitar a faltar, reforçamos que a compensação de ausência ocorre com apresentação de justificativa em período oposto ao horário de aula. Conforme orientações realizadas as faltas comprometem o aproveitamento e bom andamento do curso. Reforçamos que será considerado promovido o aluno que obtiver ao final de cada semestre letivo, em todos os componentes curriculares, nota final igual ou superior a 50 (cinquenta) e frequência igual ou superior a 75% calculados sobre o total de aulas dadas."
     );
     setProvidenciasGestao("");
-    setOutrasObservacoes("----");
+    setOutrasObservacoes("");
     setMotivoEdicao("");
     setErrorMessage("");
   }
@@ -381,7 +381,7 @@ export function OcorrenciaModal({
         );
       } else if (tipo === "comportamento") {
         setProvidenciasGestao(
-          `Ciência do estudante e de seus responsáveis quanto às normas regimentais e de segurança do SENAI. Acompanhamento pela equipe pedagógica/AQV para garantir a adequação comportamental de ${nomeAluno}.`
+          `Ciência do estudante e de seus responsáveis quanto às normas regimentais e de segurança do SENAI. Acompanhamento pela Equipe Escolar para garantir a adequação comportamental de ${nomeAluno}.`
         );
       } else if (tipo === "desempenho") {
         setProvidenciasGestao(
@@ -426,7 +426,7 @@ export function OcorrenciaModal({
           );
         }
       }
-      setOutrasObservacoes("----");
+      setOutrasObservacoes("");
     }
   }, [tipo, shouldUpdateDefaults]);
 
@@ -682,9 +682,11 @@ export function OcorrenciaModal({
       const isEdit = Boolean(isEditing && ocorrenciaToEdit);
 
       if (isEditing && ocorrenciaToEdit) {
-        const hadAqvFlow =
+        const hadEquipeEscolarFlow =
+          ocorrenciaToEdit.status === "enviado_equipe_escolar" ||
           ocorrenciaToEdit.status === "enviado_aqv" ||
           ocorrenciaToEdit.status === "assinado" ||
+          Boolean((ocorrenciaToEdit as any).equipe_escolar_recebimento) ||
           Boolean((ocorrenciaToEdit as any).aqv_recebimento);
 
         const updated = await ocorrenciaService.updateOcorrencia(ocorrenciaToEdit.id, payload);
@@ -698,9 +700,9 @@ export function OcorrenciaModal({
             "Plano Arquivado",
             "warning"
           );
-        } else if (hadAqvFlow) {
+        } else if (hadEquipeEscolarFlow) {
           showAvatarToast(
-            "FIAP atualizada com sucesso! O status retornou para Pendente para que você possa revisá-la e reenviá-la ao AQV.",
+            "FIAP atualizada com sucesso! O status retornou para Pendente para que você possa revisá-la e reenviá-la à Equipe Escolar.",
             "Processo Reiniciado",
             "warning"
           );
@@ -711,7 +713,7 @@ export function OcorrenciaModal({
         const created = await ocorrenciaService.createOcorrencia(payload);
         savedOcorrencia = created;
         showAvatarToast("FIAP cadastrada com sucesso!");
-        if (onOpenPlanoModal && created.has_plano_pendente) {
+        if (onOpenPlanoModal && created.tipo === "desempenho" && created.has_plano_pendente) {
           onOpenPlanoModal(created);
         }
       }
@@ -1233,28 +1235,15 @@ export function OcorrenciaModal({
               />
             </div>
 
-            <div className={styles.formGrid}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Recomendações do Instrutor</label>
-                <textarea
-                  className={styles.textarea}
-                  rows={2}
-                  placeholder="Orientações e prazos para o aluno..."
-                  value={recomendacoesProfessor}
-                  onChange={(e) => setRecomendacoesProfessor(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Providências da Gestão Escolar / AQV</label>
-                <textarea
-                  className={styles.textarea}
-                  rows={2}
-                  placeholder="Medidas adotadas pela coordenação / encaminhamentos..."
-                  value={providenciasGestao}
-                  onChange={(e) => setProvidenciasGestao(e.target.value)}
-                />
-              </div>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Recomendações do Instrutor</label>
+              <textarea
+                className={styles.textarea}
+                rows={2}
+                placeholder="Orientações e prazos para o aluno..."
+                value={recomendacoesProfessor}
+                onChange={(e) => setRecomendacoesProfessor(e.target.value)}
+              />
             </div>
           </div>
 

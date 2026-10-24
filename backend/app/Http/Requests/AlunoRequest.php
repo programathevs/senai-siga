@@ -24,6 +24,8 @@ class AlunoRequest extends FormRequest
 
         return [
             'turma_id' => ['nullable', 'exists:turmas,id'],
+            'segunda_turma_id' => ['nullable', 'different:turma_id', 'exists:turmas,id'],
+            'segundo_ra' => ['nullable', 'string', 'max:50'],
             'nome' => ['required', 'string', 'max:255'],
             'matricula' => [
                 'required',

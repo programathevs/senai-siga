@@ -161,7 +161,7 @@
   box-shadow: 0 0 0 1px #059669;
 }
 
-.roleCardActiveAqv {
+.roleCardActiveEquipeEscolar {
   border-color: #d97706 !important;
   background-color: color-mix(in srgb, #d97706 8%, var(--color-surface)) !important;
   box-shadow: 0 0 0 1px #d97706;
@@ -194,7 +194,7 @@
   color: #059669;
 }
 
-.roleIconAqv {
+.roleIconEquipeEscolar {
   background-color: color-mix(in srgb, #d97706 15%, transparent);
   color: #d97706;
 }

@@ -25,16 +25,16 @@ A FIAP pode ser registrada sob três motivações:
 [Backend] Gera o documento em PDF
        │
        ▼
-[Backend] Dispara e-mail automático para equipe da AQV
+[Backend] Dispara e-mail automático para a Equipe Escolar
        │
        ▼
-[AQV] Recebe e-mail, atende o aluno e registra a justificativa no sistema
+[Equipe Escolar] Recebe e-mail, atende o aluno e registra a justificativa no sistema
        │
        ▼
-[AQV] Confirma a entrega física e a assinatura do documento
+[Equipe Escolar] Confirma a entrega física e a assinatura do documento
        │
        ▼ (Se necessário)
-[Instrutor / AQV] Abertura de Plano de Recuperação vinculado à FIAP
+[Instrutor / Equipe Escolar] Abertura de Plano de Recuperação vinculado à FIAP
 ```
 
 ---
@@ -47,12 +47,12 @@ A FIAP pode ser registrada sob três motivações:
 
 ### 3.2. Geração de PDF e Notificação por E-mail
 - O backend gera o arquivo PDF padronizado com os dados do registro.
-- Um e-mail com a notificação da ocorrência e o link/anexo é enviado automaticamente para a equipe da AQV.
+- Um e-mail com a notificação da ocorrência e o link/anexo é enviado automaticamente para a Equipe Escolar.
 
-### 3.3. Acompanhamento pela AQV
-- A equipe da AQV convoca o estudante.
+### 3.3. Acompanhamento pela Equipe Escolar
+- A Equipe Escolar convoca o estudante.
 - A justificativa apresentada pelo aluno é lançada no sistema.
-- A AQV coleta a assinatura no documento físico e confirma o status de entrega e assinatura no sistema.
+- A Equipe Escolar coleta a assinatura no documento físico e confirma o status de entrega e assinatura no sistema.
 
 ### 3.4. Plano de Recuperação
 - Para FIAPs que demandam recuperação de conteúdo ou recuperação pedagógica, pode ser aberto um **Plano de Recuperação** formalmente atrelado àquela FIAP.

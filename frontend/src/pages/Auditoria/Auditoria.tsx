@@ -146,19 +146,28 @@ export function Auditoria() {
           bg: "color-mix(in srgb, #0284c7 14%, transparent)",
           color: "#0284c7",
         };
+      case "encaminhamento_equipe_escolar":
       case "encaminhamento_aqv":
         return {
           icon: <Headphones size={12} />,
-          label: "Encaminhado AQV",
-          bg: "color-mix(in srgb, #0059a8 14%, transparent)",
-          color: "#0059a8",
+          label: "Encaminhado à Equipe Escolar",
+          bg: "color-mix(in srgb, #7c3aed 14%, transparent)",
+          color: "#7c3aed",
         };
+      case "atendimento_equipe_escolar":
       case "atendimento_aqv":
         return {
           icon: <ShieldCheck size={12} />,
-          label: "Acolhimento AQV",
+          label: "Acolhimento Equipe Escolar",
           bg: "color-mix(in srgb, #8b5cf6 14%, transparent)",
           color: "#8b5cf6",
+        };
+      case "parecer_equipe_escolar_plano":
+        return {
+          icon: <ShieldCheck size={12} />,
+          label: "Parecer Equipe Escolar (Plano)",
+          bg: "color-mix(in srgb, #7c3aed 14%, transparent)",
+          color: "#7c3aed",
         };
       case "assinatura_fiap":
         return {
@@ -204,7 +213,7 @@ export function Auditoria() {
           <h1 className={styles.pageTitle}>Logs de Auditoria do Sistema</h1>
           <p className={styles.pageSubtitle}>
             Histórico imutável de operações regimentais: criação de FIAPs, alterações com justificativa,
-            acolhimentos da AQV, assinaturas e planos de recuperação.
+            acolhimentos da Equipe Escolar, assinaturas e planos de recuperação.
           </p>
         </div>
 
@@ -265,13 +274,13 @@ export function Auditoria() {
           </div>
         </article>
 
-        {/* Acolhimentos AQV */}
+        {/* Acolhimentos Equipe Escolar */}
         <article className={styles.kpiCard}>
           <div className={styles.kpiTopRow}>
             <div>
-              <span className={styles.kpiLabel}>Acolhimentos AQV</span>
+              <span className={styles.kpiLabel}>Acolhimentos Equipe Escolar</span>
               <div className={styles.kpiValue} style={{ color: "#8b5cf6" }}>
-                {stats?.atendimentos_aqv ?? 0}
+                {stats?.atendimentos_equipe_escolar ?? stats?.atendimentos_aqv ?? 0}
               </div>
             </div>
             <div
@@ -361,8 +370,9 @@ export function Auditoria() {
               <option value="edicao_fiap">Edição de FIAP (com Versão)</option>
               <option value="exclusao_fiap">Exclusão de FIAP</option>
               <option value="restauracao_fiap">Restauração de FIAP</option>
-              <option value="encaminhamento_aqv">Encaminhamento à AQV</option>
-              <option value="atendimento_aqv">Acolhimento Pedagógico AQV</option>
+              <option value="encaminhamento_equipe_escolar">Encaminhamento à Equipe Escolar</option>
+              <option value="atendimento_equipe_escolar">Acolhimento Equipe Escolar</option>
+              <option value="parecer_equipe_escolar_plano">Parecer Equipe Escolar (Plano)</option>
               <option value="assinatura_fiap">Assinatura Física Confirmada</option>
               <option value="criacao_plano">Criação de Plano PRP/PCA</option>
               <option value="atualizacao_plano">Atualização de Plano</option>

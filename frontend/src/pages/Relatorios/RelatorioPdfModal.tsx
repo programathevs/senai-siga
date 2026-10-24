@@ -214,7 +214,7 @@ export function RelatorioPdfModal({
                 </div>
 
                 <div className={styles.summaryBox}>
-                  <span className={styles.summaryBoxLabel}>Encaminhadas AQV</span>
+                  <span className={styles.summaryBoxLabel}>Encaminhadas à Equipe Escolar</span>
                   <div className={styles.summaryBoxValue} style={{ color: "#0059a8" }}>
                     {resumoGeral.total_aqv}
                   </div>
@@ -269,11 +269,13 @@ export function RelatorioPdfModal({
                           </td>
                           <td className={styles.reportTd}>{formatDate(oc.data_ocorrencia)}</td>
                           <td className={styles.reportTd}>
-                            {oc.status === "enviado_aqv"
-                              ? "Encaminhado AQV"
+                            {oc.status === "enviado_equipe_escolar" || oc.status === "enviado_aqv"
+                              ? "Enviado Equipe Escolar"
                               : oc.status === "pendente"
                                 ? "Pendente"
-                                : "Concluído"}
+                                : oc.status === "aguardando_assinatura"
+                                  ? "Aguardando Assinatura"
+                                  : "Concluído"}
                           </td>
                         </tr>
                       ))

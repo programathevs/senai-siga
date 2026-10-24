@@ -16,7 +16,7 @@ return new class extends Migration
                 $table->foreignId('unidade_curricular_id')->nullable()->after('turma_uc_id')->constrained('unidades_curriculares')->nullOnDelete();
             }
             if (!Schema::hasColumn('planos_recuperacao', 'status_processo')) {
-                $table->enum('status_processo', ['rascunho', 'aguardando_visto', 'concluido'])->default('rascunho')->after('conceito');
+                $table->enum('status_processo', ['em_analise', 'aguardando_visto', 'concluido', 'recusado', 'rascunho'])->default('em_analise')->after('conceito');
             }
             if (!Schema::hasColumn('planos_recuperacao', 'periodo_inicio')) {
                 $table->date('periodo_inicio')->nullable()->after('periodo_previsto');

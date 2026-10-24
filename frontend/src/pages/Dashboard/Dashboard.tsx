@@ -22,12 +22,15 @@ import {
   Award,
   CheckCircle2,
   History,
+  CloudDownload,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { dashboardService, type DashboardStats } from "../../services/dashboardService";
 import type { Ocorrencia } from "../../services/ocorrenciaService";
 import { OcorrenciaDetalhesModal } from "../Ocorrencias/OcorrenciaDetalhesModal";
 import { OcorrenciaModal } from "../Ocorrencias/OcorrenciaModal";
+import { ImportarAlunosModal } from "../Alunos/ImportarAlunosModal";
+import { getStatusConfig } from "../../components/StatusBadge/StatusBadge";
 import styles from "./Dashboard.module.css";
 
 function formatDate(dateStr?: string | null) {
@@ -56,6 +59,7 @@ export function Dashboard() {
   // Modais integrados
   const [selectedDetalhes, setSelectedDetalhes] = useState<Ocorrencia | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
 
   async function loadDashboard(signal?: AbortSignal) {
     try {
@@ -98,51 +102,23 @@ export function Dashboard() {
         String(oc.aluno?.turma_id) === selectedTurmaId;
 
       const matchesStatus =
-        selectedStatus === "todos" || oc.status === selectedStatus;
+        selectedStatus === "todos" ||
+        oc.status === selectedStatus ||
+        ((selectedStatus === "enviado_equipe_escolar" || selectedStatus === "enviado_aqv") &&
+          (oc.status === "enviado_equipe_escolar" || oc.status === "enviado_aqv"));
 
       return matchesSearch && matchesTurma && matchesStatus;
     });
   }, [stats, searchTerm, selectedTurmaId, selectedStatus]);
 
   function getStatusStyle(status: string) {
-    switch (status) {
-      case "enviado_aqv":
-        return {
-          bg: "color-mix(in srgb, var(--color-primary) 10%, transparent)",
-          color: "var(--color-primary)",
-          dot: "var(--color-primary)",
-          label: "Encaminhado AQV",
-        };
-      case "pendente":
-        return {
-          bg: "color-mix(in srgb, var(--color-warning) 12%, transparent)",
-          color: "var(--color-warning)",
-          dot: "var(--color-warning)",
-          label: "Pendente de Envio",
-        };
-      case "assinado":
-      case "impresso":
-        return {
-          bg: "color-mix(in srgb, var(--color-success) 12%, transparent)",
-          color: "var(--color-success)",
-          dot: "var(--color-success)",
-          label: status === "assinado" ? "Assinado" : "Impresso",
-        };
-      case "pdf_gerado":
-        return {
-          bg: "color-mix(in srgb, #0059a8 12%, transparent)",
-          color: "#0059a8",
-          dot: "#0059a8",
-          label: "PDF Gerado",
-        };
-      default:
-        return {
-          bg: "var(--color-surface)",
-          color: "var(--color-text-secondary)",
-          dot: "var(--color-text-secondary)",
-          label: status,
-        };
-    }
+    const config = getStatusConfig(status);
+    return {
+      bg: config.bg,
+      color: config.color,
+      dot: config.dot,
+      label: config.label,
+    };
   }
 
   const kpis = stats?.kpis;
@@ -166,8 +142,8 @@ export function Dashboard() {
           <h1 className={styles.pageTitle}>
             {user?.role === "gestor"
               ? "Painel de Gestão Escolar"
-              : user?.role === "aqv"
-                ? "Painel do Analista de Qualidade de Vida (AQV)"
+              : user?.role === "equipe_escolar" || user?.role === "aqv"
+                ? "Painel da Equipe Escolar"
                 : "Painel do Docente"}
           </h1>
           <p className={styles.pageSubtitle}>
@@ -196,15 +172,27 @@ export function Dashboard() {
           </button>
 
           {user?.role === "gestor" && (
-            <button
-              type="button"
-              className={styles.secondaryBtn}
-              onClick={() => navigate("/auditoria")}
-              title="Acessar Logs de Auditoria do Sistema"
-            >
-              <History size={16} />
-              <span>Auditoria</span>
-            </button>
+            <>
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={() => setIsSyncModalOpen(true)}
+                title="Sincronizar base geral com o SGSET (Escola 512)"
+              >
+                <CloudDownload size={16} />
+                <span>Sincronizar SGSET</span>
+              </button>
+
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={() => navigate("/auditoria")}
+                title="Acessar Logs de Auditoria do Sistema"
+              >
+                <History size={16} />
+                <span>Auditoria</span>
+              </button>
+            </>
           )}
 
           {user?.role === "instrutor" && (
@@ -460,16 +448,16 @@ export function Dashboard() {
               </button>
             </article>
 
-            {/* Bloco 3: Funil de Resoluções AQV */}
+            {/* Bloco 3: Funil de Resoluções da Equipe Escolar */}
             <article className={styles.analyticsCard}>
               <div>
                 <div className={styles.analyticsHeader}>
                   <div className={styles.analyticsTitleGroup}>
                     <Headphones size={18} color="#0059a8" />
-                    <span className={styles.analyticsTitle}>Funil de Atendimento AQV</span>
+                    <span className={styles.analyticsTitle}>Funil de Atendimento da Equipe Escolar</span>
                   </div>
                   <span className={styles.analyticsBadge} style={{ backgroundColor: "color-mix(in srgb, #0059a8 12%, transparent)", color: "#0059a8" }}>
-                    {stats.metricas_gestao.funil_aqv.total} Total
+                    {(stats.metricas_gestao.funil_equipe_escolar ?? stats.metricas_gestao.funil_aqv).total} Total
                   </span>
                 </div>
 
@@ -539,9 +527,9 @@ export function Dashboard() {
               <button
                 type="button"
                 className={styles.cardFooterBtn}
-                onClick={() => navigate("/aqv")}
+                onClick={() => navigate("/encaminhamentos-equipe-escolar")}
               >
-                <span>Acessar fila completa do AQV</span>
+                <span>Acessar fila da Equipe Escolar</span>
                 <ArrowRight size={14} />
               </button>
             </article>
@@ -629,27 +617,27 @@ export function Dashboard() {
           </div>
         </article>
 
-        {/* Card 3: Encaminhadas AQV */}
+        {/* Card 3: Encaminhadas à Equipe Escolar */}
         <article
-          className={`${styles.kpiCard} ${styles.kpiCardAqv}`}
+          className={`${styles.kpiCard} ${styles.kpiCardEquipeEscolar}`}
           onClick={() =>
             navigate(
               user?.role === "instrutor"
-                ? "/ocorrencias?status=enviado_aqv"
-                : "/encaminhamentos-aqv"
+                ? "/ocorrencias?status=enviado_equipe_escolar"
+                : "/encaminhamentos-equipe-escolar"
             )
           }
           title={
             user?.role === "instrutor"
-              ? "Ver ocorrências encaminhadas à AQV"
-              : "Acessar fila de encaminhamentos da AQV"
+              ? "Ver ocorrências encaminhadas à Equipe Escolar"
+              : "Acessar fila da Equipe Escolar"
           }
         >
           <div className={styles.kpiTopRow}>
             <div>
-              <span className={styles.kpiLabel}>Encaminhadas à AQV</span>
+              <span className={styles.kpiLabel}>Encaminhadas à Equipe Escolar</span>
               <div className={styles.kpiValue} style={{ color: "#0059a8" }}>
-                {isLoading ? <Loader2 size={24} className="animate-spin" /> : kpis?.encaminhadas_aqv ?? 0}
+                {isLoading ? <Loader2 size={24} className="animate-spin" /> : (kpis?.encaminhadas_equipe_escolar ?? kpis?.encaminhadas_aqv ?? 0)}
               </div>
             </div>
             <div
@@ -666,7 +654,7 @@ export function Dashboard() {
             <span>Em mediação pedagógica</span>
             <span style={{ fontWeight: 700, color: "#0059a8" }}>
               {kpis && kpis.total_mes > 0
-                ? `${Math.round((kpis.encaminhadas_aqv / kpis.total_mes) * 100)}%`
+                ? `${Math.round(((kpis.encaminhadas_equipe_escolar ?? kpis.encaminhadas_aqv) / kpis.total_mes) * 100)}%`
                 : "0%"}
             </span>
           </div>
@@ -743,7 +731,8 @@ export function Dashboard() {
             >
               <option value="todos">Todos os Status</option>
               <option value="pendente">Pendente de Envio</option>
-              <option value="enviado_aqv">Encaminhado AQV</option>
+              <option value="enviado_equipe_escolar">Enviado Equipe Escolar</option>
+              <option value="aguardando_assinatura">Aguardando Assinatura</option>
               <option value="pdf_gerado">PDF Gerado</option>
               <option value="impresso">Impresso</option>
               <option value="assinado">Assinado</option>
@@ -1069,6 +1058,13 @@ export function Dashboard() {
           setIsCreateModalOpen(false);
           loadDashboard();
         }}
+      />
+
+      {/* Modal de Sincronização Geral SGSET / Planilha */}
+      <ImportarAlunosModal
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        onSuccess={() => loadDashboard()}
       />
     </div>
   );

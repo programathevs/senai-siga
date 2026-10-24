@@ -32,11 +32,11 @@ class UserSeeder extends Seeder
                 'deve_trocar_senha' => false,
             ],
             [
-                'name' => 'Equipe AQV SENAI',
-                'email' => 'aqv@senai.br',
+                'name' => 'Equipe Escolar SENAI',
+                'email' => 'equipe.escolar@senai.br',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
-                'role' => 'aqv',
+                'role' => 'equipe_escolar',
                 'deve_trocar_senha' => false,
             ],
             // 8 Professores Oficiais

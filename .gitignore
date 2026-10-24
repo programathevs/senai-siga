@@ -52,6 +52,7 @@ frontend/pnpm-debug.log*
 # ==========================================
 .idea/
 .vscode/
+.antigravity/
 *.suo
 *.ntvs*
 *.njsproj

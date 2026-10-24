@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { Send, X, Loader2, Headphones, User, FileText, Calendar } from "lucide-react";
 import type { Ocorrencia } from "../../services/ocorrenciaService";
-import styles from "./ConfirmAqvModal.module.css";
+import styles from "./ConfirmEquipeEscolarModal.module.css";
 
-interface ConfirmAqvModalProps {
+interface ConfirmEquipeEscolarModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
   ocorrencia: Ocorrencia | null;
 }
 
-export function ConfirmAqvModal({
+export function ConfirmEquipeEscolarModal({
   isOpen,
   onClose,
   onConfirm,
   ocorrencia,
-}: ConfirmAqvModalProps) {
+}: ConfirmEquipeEscolarModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen || !ocorrencia) return null;
@@ -46,7 +46,7 @@ export function ConfirmAqvModal({
               <Headphones size={22} color="var(--color-primary)" />
             </div>
             <div>
-              <h3 className={styles.title}>Encaminhar FIAP</h3>
+              <h3 className={styles.title}>Encaminhar FIAP à Equipe Escolar</h3>
             </div>
           </div>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Fechar">
@@ -97,7 +97,6 @@ export function ConfirmAqvModal({
               </div>
             </div>
           </div>
-
         </div>
 
         {/* Rodapé com Botões */}
@@ -124,7 +123,7 @@ export function ConfirmAqvModal({
             ) : (
               <>
                 <Send size={16} />
-                Sim, enviar para a AQV
+                Sim, enviar para a Equipe Escolar
               </>
             )}
           </button>

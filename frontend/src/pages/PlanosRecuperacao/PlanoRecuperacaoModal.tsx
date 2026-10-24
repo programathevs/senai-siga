@@ -70,7 +70,7 @@ export function PlanoRecuperacaoModal({
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
   const [conceito, setConceito] = useState<PlanoConceito | "">("");
-  const [statusProcesso, setStatusProcesso] = useState<PlanoStatusProcesso>("rascunho");
+  const [statusProcesso, setStatusProcesso] = useState<PlanoStatusProcesso>("em_analise");
   const [registroDesempenho, setRegistroDesempenho] = useState("");
 
   // Cursos e Múltiplas Unidades Curriculares Vinculadas
@@ -174,7 +174,7 @@ export function PlanoRecuperacaoModal({
       setPeriodoInicio("");
       setPeriodoFim("");
       setConceito("");
-      setStatusProcesso("rascunho");
+      setStatusProcesso("em_analise");
       setRegistroDesempenho("");
       setFrequencias([]);
 
@@ -203,7 +203,7 @@ export function PlanoRecuperacaoModal({
       setPeriodoInicio("");
       setPeriodoFim("");
       setConceito("");
-      setStatusProcesso("rascunho");
+      setStatusProcesso("em_analise");
       setRegistroDesempenho("");
       setFrequencias([]);
       setSelectedUcIds([]);
@@ -705,9 +705,8 @@ export function PlanoRecuperacaoModal({
                 return (
                   <label
                     key={prop.id}
-                    className={`${styles.checkboxItem} ${
-                      isActive ? styles.checkboxItemActive : ""
-                    }`}
+                    className={`${styles.checkboxItem} ${isActive ? styles.checkboxItemActive : ""
+                      }`}
                   >
                     <input
                       type="checkbox"

@@ -268,6 +268,18 @@
   border: 1px solid color-mix(in srgb, #d97706 30%, transparent);
 }
 
+.statusEmAnalise {
+  background: color-mix(in srgb, #f59e0b 14%, transparent);
+  color: #b45309;
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, transparent);
+}
+
+.statusRecusado {
+  background: color-mix(in srgb, #ef4444 14%, transparent);
+  color: #dc2626;
+  border: 1px solid color-mix(in srgb, #ef4444 35%, transparent);
+}
+
 .statusConcluido {
   background: color-mix(in srgb, #166534 12%, transparent);
   color: #22c55e;
@@ -342,6 +354,18 @@
   border-color: #0284c7;
   color: #0284c7;
   background-color: color-mix(in srgb, #0284c7 10%, transparent);
+}
+
+.actionBtnParecer {
+  color: #0d9488;
+  border-color: color-mix(in srgb, #0d9488 35%, transparent);
+  background-color: color-mix(in srgb, #0d9488 8%, transparent);
+}
+
+.actionBtnParecer:hover {
+  border-color: #0f766e;
+  color: #0f766e;
+  background-color: color-mix(in srgb, #0d9488 18%, transparent);
 }
 
 .actionBtnRestore:hover {

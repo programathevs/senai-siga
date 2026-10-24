@@ -20,7 +20,7 @@ return new class extends Migration
             $table->text('providencias_gestao')->nullable();
             $table->text('outras_observacoes')->nullable();
             $table->date('data_ocorrencia');
-            $table->enum('status', ['pendente', 'pdf_gerado', 'enviado_aqv', 'impresso', 'assinado'])
+            $table->enum('status', ['pendente', 'pdf_gerado', 'enviado_aqv', 'enviado_equipe_escolar', 'aguardando_assinatura', 'impresso', 'assinado'])
                 ->default('pendente');
             $table->string('pdf_path')->nullable();
             $table->timestamps();
